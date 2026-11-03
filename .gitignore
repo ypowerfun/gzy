@@ -1,0 +1,17 @@
+# Gerado na hora de montar os instaladores (não vai para o repositório)
+node_modules/
+outputs/
+saida/
+servidor/build/
+servidor/stage/
+servidor/server/runtime/
+servidor/server/dados/
+*.exe
+!servidor/server/runtimes/**
+*.log
+__pycache__/
+# Dados e pareamentos de TV de testes locais
+pairing/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

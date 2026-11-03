@@ -1,0 +1,22 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
+const {createServer}=require('../server');
+test('3.0.49: pacote grátis exige OBS e chave de autenticação (senha do usuário logado), sem forma de pagamento',async t=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-free-'));const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
+ t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
+ const base='http://127.0.0.1:'+app.server.address().port;let cookie='';
+ const api=async(url,body)=>{const r=await fetch(base+'/api'+url,{method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const c=r.headers.get('set-cookie');if(c)cookie=c.split(';')[0];return{status:r.status,data:await r.json()}};
+ await api('/setup',{username:'dono',password:'Senha-123456'});assert.equal((await api('/login',{username:'dono',password:'Senha-123456'})).status,200);
+ require('../cash').open(app.store,{openingCents:0},'dono');
+ const m=app.store.memberSave({name:'Cliente',username:'cliente1',password:'1234'},'dono');
+ app.store.state.promotions.push({id:'free5',name:'GRATIS 5H',minutes:300,cents:0,active:true},{id:'paid',name:'Pago',minutes:60,cents:600,active:true});
+ let r=await api('/credit',{memberId:m.id,promotionId:'free5'});assert.equal(r.status,400);assert.match(r.data.error,/OBS/);
+ r=await api('/credit',{memberId:m.id,promotionId:'free5',obs:'cortesia',authPassword:'errada'});assert.equal(r.status,400);assert.match(r.data.error,/Chave de autenticação incorreta/);
+ assert.equal(app.store.member(m.id).creditSeconds,0);
+ r=await api('/credit',{memberId:m.id,promotionId:'free5',obs:'cortesia aniversário',authPassword:'Senha-123456'});assert.equal(r.status,200);
+ assert.equal(r.data.free,true);assert.equal(r.data.freeNote,'cortesia aniversário');assert.equal(r.data.authorizedBy,'dono');assert.equal(r.data.cents,0);assert.equal(r.data.authPassword,undefined);
+ assert.equal(app.store.member(m.id).creditSeconds,300*60);
+ assert(!JSON.stringify(app.store.state).includes('Senha-123456'));
+ assert(app.store.logs({type:'recarga'}).some(l=>l.detail.includes('Pacote grátis autorizado por dono')));
+ r=await api('/credit',{memberId:m.id,promotionId:'paid',paymentMethod:'pix',freeNote:'x',authorizedBy:'falso'});assert.equal(r.status,200);assert.equal(r.data.free,undefined);
+});

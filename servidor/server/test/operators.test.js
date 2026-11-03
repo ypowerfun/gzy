@@ -1,0 +1,25 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
+const {createServer}=require('../server');
+test('3.0.24: contas de acesso — somente o administrador principal ativa/desativa; conta desativada não entra',async t=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-ops-')),app=createServer({directory,noTimer:true});
+ await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
+ const client=()=>{let cookie='';return async(url,body)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api'+url,{method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return{status:r.status,data:await r.json()}}};
+ const owner=client(),second=client(),op=client();
+ assert.equal((await owner('/setup',{username:'dono',password:'Senha-dono-123'})).status,200);
+ assert.equal((await owner('/login',{username:'dono',password:'Senha-dono-123'})).status,200);
+ assert.equal((await owner('/operators',{username:'gerente',password:'Senha-ger-123',role:'admin'})).status,200);
+ assert.equal((await owner('/operators',{username:'caixa',password:'Senha-cx-1234',role:'operator'})).status,200);
+ let list=(await owner('/operators')).data;assert.equal(list.canManage,true);assert.equal(list.operators.length,3);assert(list.operators.find(o=>o.username==='dono').owner);
+ const ger=list.operators.find(o=>o.username==='gerente'),cx=list.operators.find(o=>o.username==='caixa'),dono=list.operators.find(o=>o.username==='dono');
+ assert.equal((await second('/login',{username:'gerente',password:'Senha-ger-123'})).status,200);
+ assert.equal((await second('/operators')).data.canManage,false);
+ assert.equal((await second('/operators/status',{id:cx.id,active:false})).status,400);
+ assert.equal((await owner('/operators/status',{id:dono.id,active:false})).status,400);
+ assert.equal((await op('/login',{username:'caixa',password:'Senha-cx-1234'})).status,200);assert.equal((await op('/state')).status,200);
+ assert.equal((await owner('/operators/status',{id:cx.id,active:false})).status,200);
+ assert.equal((await op('/state')).status,401);
+ assert.equal((await op('/login',{username:'caixa',password:'Senha-cx-1234'})).status,403);
+ assert.equal((await owner('/operators/status',{id:ger.id,active:false})).status,200);assert.equal((await second('/operators')).status,401);
+ assert.equal((await owner('/operators/status',{id:cx.id,active:true})).status,200);assert.equal((await op('/login',{username:'caixa',password:'Senha-cx-1234'})).status,200);
+});

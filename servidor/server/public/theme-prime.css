@@ -1,0 +1,230 @@
+/* =====================================================================
+   GameZoney 1.0.1 — tema visual baseado na logo GZ e no banner
+   Preto profundo, dourado com brilho e detalhe vermelho, titulos claros, cantos
+   chanfrados (o "A" triangular) e detalhes de HUD do wallpaper.
+   Carregado depois do style.css: somente aparencia, nenhuma regra muda.
+   ===================================================================== */
+:root{
+ --bg:#08080a;--panel:#121217;--panel2:#17171d;--line:#24242c;--line2:#2f2f39;
+ --red:#d4a017;--red2:#ffce3a;--red-dark:#7a580a;--alert:#e81e28;--muted:#7f828d;--text:#e9eaee;--green:#2fd27a;--amber:#f2a93b;
+ --glow:0 0 16px rgba(212,160,23,.45);
+ --cut:9px;
+ --mono:'Cascadia Mono',Consolas,'DejaVu Sans Mono',monospace;
+}
+body{background:
+  radial-gradient(640px 320px at 0% 100%,rgba(170,14,24,.20),transparent 70%),
+  radial-gradient(520px 260px at 100% 100%,rgba(160,112,10,.18),transparent 70%),
+  var(--bg) fixed;color:var(--text)}
+
+/* ---------- linhas diagonais (wallpaper) ---------- */
+.streaks{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden}
+.streaks i{position:absolute;height:2px;background:linear-gradient(90deg,transparent,var(--red2),transparent);transform:rotate(-22deg);transform-origin:left;filter:drop-shadow(0 0 6px var(--red));opacity:.8}
+.streaks .s1{left:250px;top:120px;width:520px}
+.streaks .s2{left:285px;top:150px;width:420px;height:1px;opacity:.45}
+.streaks .s3{left:calc(100% - 560px);bottom:-30px;width:620px}
+.streaks .s4{left:calc(100% - 470px);bottom:-30px;width:520px;height:1px;opacity:.45}
+#shell aside{z-index:2}#shell .workspace{position:relative;z-index:1}
+
+/* ---------- barra lateral ---------- */
+aside{width:250px;background:linear-gradient(180deg,#0c0c10,#09090b);border-right:1px solid var(--line);padding:24px 16px;position:fixed}
+.workspace{margin-left:250px}
+.brand{flex-direction:column;align-items:center;gap:6px;padding:4px 0 22px;margin-bottom:16px;border-bottom:1px solid var(--line);letter-spacing:0}
+.brand-mark{filter:drop-shadow(0 0 10px rgba(212,160,23,.55))}
+.wordmark{font-weight:800;letter-spacing:.42em;margin-left:.42em;font-size:20px;background:linear-gradient(180deg,#fff 0%,#d9dbe0 45%,#8e919a 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-sub{display:flex;align-items:center;gap:8px;color:var(--red);font-weight:700;letter-spacing:.38em;margin-left:.38em;font-size:11px}
+.brand-sub:before,.brand-sub:after{content:"";width:18px;height:1px;background:var(--red)}
+.brand-ver{font:10px var(--mono);letter-spacing:.2em;color:var(--muted);margin-top:4px}
+.nav-label{font:10px var(--mono);letter-spacing:.25em;color:var(--red);margin:4px 8px 10px}
+nav{gap:2px}
+nav button{gap:12px;padding:10px 12px;border-radius:0;color:#b6b8c0;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;position:relative;clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);white-space:nowrap}
+nav span{font-size:12px}
+nav .nav-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8}
+nav button:hover{background:#15151b;color:#fff}
+nav button.active{background:linear-gradient(90deg,rgba(212,160,23,.28),rgba(212,160,23,.04));color:#fff;box-shadow:none}
+nav button.active:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red2);box-shadow:var(--glow)}
+nav button.active .nav-icon{stroke:var(--red2)}
+.sidebar-bottom{border-top:1px solid var(--line);padding:14px 4px 0;color:var(--muted)}
+.live-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sidebar-bottom #operator-name{margin:8px 0 10px;color:var(--muted);font-size:12px}
+.sidebar-bottom #operator-name b{display:block;color:#fff;font-size:13px;margin-bottom:2px}
+.side-actions{display:flex;gap:8px}
+.sidebar-bottom .side-actions button{display:inline-flex}
+
+/* ---------- cabecalho e rodape ---------- */
+header{padding:24px 34px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent)}
+.eyebrow{font:10.5px var(--mono);letter-spacing:.3em;color:var(--red);margin-bottom:8px}
+h1{font-size:28px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(180deg,#fff 10%,#f0d68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-meta{font:13px var(--mono);letter-spacing:.06em;color:#d6d8de}
+.header-meta span{font:11px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em}
+#cash-status.cash-on{color:var(--green)}#cash-status.cash-off{color:var(--muted)}
+main{padding:22px 34px}
+footer{border-top:1px solid var(--line);font:10.5px var(--mono);letter-spacing:.32em;color:var(--muted);padding:14px 34px}
+footer b{color:var(--red2);font-weight:400}
+
+/* ---------- titulos de secao ---------- */
+h2{letter-spacing:.06em}
+.toolbar h2,.panel>h2,.panel h2:first-child{font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.toolbar h2:before,.panel>h2:before{content:"// ";color:var(--red)}
+.toolbar h2 .muted{font-weight:600;letter-spacing:.05em}
+
+/* ---------- cartoes HUD ---------- */
+.stat,.panel,.station,.st-report,.st-tree,.shop-card,.cash-closed{border-radius:0;background:linear-gradient(180deg,var(--panel),#0f0f13);border:1px solid var(--line);position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.stat:before,.panel:before,.st-report:before{content:"";position:absolute;left:0;top:0;width:22px;height:22px;border-left:2px solid var(--red);border-top:2px solid var(--red);pointer-events:none}
+.stat:after,.panel:after,.st-report:after{content:"";position:absolute;right:0;bottom:0;width:22px;height:22px;border-right:2px solid var(--red-dark);border-bottom:2px solid var(--red-dark);pointer-events:none}
+.stat small{font:10.5px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.stat strong{font-size:32px;font-weight:800;letter-spacing:.01em;background:linear-gradient(180deg,#fff,#a9acb5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat strong .accent,.stat strong .muted{color:var(--red2);-webkit-text-fill-color:var(--red2)}
+.stat em{font-size:12px}
+.stat-bar{height:3px;background:#1f1f26;margin-top:12px}
+.stat-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--red-dark),var(--red2));box-shadow:var(--glow)}
+
+/* ---------- botoes (cantos chanfrados) ---------- */
+button,a.button{border-radius:0;border:0;background:#1a1a21;color:#e9eaee;box-shadow:inset 0 0 0 1px var(--line2);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,var(--cut) 100%,0 calc(100% - var(--cut)));transition:box-shadow .15s,background .15s,color .15s}
+button:hover,a.button:hover{background:#1f1f27;box-shadow:inset 0 0 0 1px var(--red);color:#fff}
+button.primary,a.button.primary{background:linear-gradient(180deg,var(--red2),#c48c0e);box-shadow:none;color:#140f04;filter:drop-shadow(0 0 8px rgba(212,160,23,.4))}
+button.primary:hover{background:linear-gradient(180deg,#ffe278,#d49a12);box-shadow:none}
+button.danger{background:#2a0d11;color:#ff8a90;box-shadow:inset 0 0 0 1px #5c1820}
+button.danger:hover{box-shadow:inset 0 0 0 1px var(--red2)}
+button:disabled{opacity:.42;filter:none}
+button.ghost{background:transparent}
+button.small{padding:7px 12px;font-size:11px;--cut:7px}
+.btn-icon{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;vertical-align:-3px;margin-right:8px}
+.toolbar-actions>button,.toolbar-actions>a.button{display:inline-flex;align-items:center;white-space:nowrap}
+button.link,.dialog-head button,nav button,.icon-btn,.shop-tabs button,.st-head,.st-item,.monitor-tile,.pay-opt,.pdv-item{clip-path:none;text-transform:none;letter-spacing:normal}
+button.link{box-shadow:none;background:none;font-weight:400}
+.dialog-head button{box-shadow:none;background:none;color:var(--muted);font-weight:400}
+.dialog-head button:hover{color:#fff;box-shadow:none}
+nav button{box-shadow:none;background:transparent}
+nav button{text-transform:uppercase;letter-spacing:.05em;clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
+.icon-btn{box-shadow:none;background:transparent}
+.sort-group{border-radius:0;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:#101015;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.sort-group span{font:10px var(--mono);letter-spacing:.2em}
+.sort-group button{clip-path:none;box-shadow:none;background:transparent;letter-spacing:.08em}
+.sort-group button.active{background:var(--red);color:#fff;box-shadow:var(--glow)}
+
+/* ---------- estacoes ---------- */
+.monitor-grid{border-radius:0;border:1px solid var(--line);background:
+ linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/28px 28px,
+ linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/28px 28px,#0c0c10;
+ grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;position:relative}
+.monitor-tile{background:transparent!important;box-shadow:none!important;border:0;color:#d7d9df;font-weight:400;font-size:13px}
+.monitor-screen{border-radius:0;border:1px solid var(--line2);background:linear-gradient(180deg,#17171e,#101015);min-height:104px;gap:3px;box-shadow:none;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)}
+.monitor-kind{font:10px var(--mono);letter-spacing:.25em;color:var(--muted)}
+.monitor-screen strong{font-size:14px;font-weight:800;letter-spacing:.07em;max-width:140px}
+.monitor-state{font:11px var(--mono);letter-spacing:.14em;color:#c3c5cc}
+.monitor-screen .connection-dot{left:10px;right:auto;top:10px;width:8px;height:8px;margin:0}
+.monitor-stand{width:40%;height:6px;border:0;margin:0 auto 6px;background:linear-gradient(90deg,transparent,#2a2a33,transparent)}
+.monitor-member{min-height:16px;font-size:12px;color:#d0d2d8}
+.monitor-tile.is-free .connection-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.monitor-tile.is-free .monitor-state{color:var(--green)}
+.monitor-tile.in-use .monitor-screen{border-color:var(--red);background:linear-gradient(180deg,rgba(212,160,23,.24),rgba(212,160,23,.06));box-shadow:inset 0 0 24px rgba(212,160,23,.25)}
+.monitor-tile.in-use .connection-dot{background:var(--red2);box-shadow:0 0 10px var(--red2)}
+.monitor-tile.in-use .monitor-state{font-size:17px;font-weight:700;color:#fff;letter-spacing:.06em}
+.monitor-tile.in-use .monitor-stand{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.monitor-tile.in-admin .monitor-screen{border-color:var(--amber);background:linear-gradient(180deg,rgba(242,169,59,.12),rgba(242,169,59,.03))}
+.monitor-tile.in-admin .connection-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.monitor-tile.in-admin .monitor-state{color:var(--amber)}
+.monitor-tile.is-off .monitor-screen{background:repeating-linear-gradient(135deg,#121216 0 8px,#0e0e12 8px 16px);opacity:.78}
+.monitor-tile.is-off .connection-dot{background:#5a5d66;box-shadow:none}
+.monitor-tile.is-off .monitor-state{color:var(--muted)}
+.monitor-tile:hover .monitor-screen{border-color:var(--red2);transform:translateY(-2px)}
+
+/* ---------- formularios ---------- */
+input,select,textarea{border-radius:0;background:#0b0b0e;border:1px solid var(--line2);clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+input[type=checkbox],input[type=radio]{clip-path:none;accent-color:var(--red)}
+input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 0 14px rgba(212,160,23,.3)}
+label{font-size:12px;letter-spacing:.06em;color:#a9acb5}
+
+/* ---------- tabelas, etiquetas, avisos ---------- */
+.table-wrap{border-radius:0;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0f0f13)}
+th{font:10px var(--mono);letter-spacing:.2em;background:#111116;border-bottom:1px solid var(--red-dark)}
+td{border-top:1px solid var(--line)}
+tr.clickable:hover,tbody tr:hover td{background:rgba(212,160,23,.05)}
+.badge{border-radius:0;font-weight:700;letter-spacing:.12em;text-transform:uppercase;clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
+.badge.on{background:#0f2a1c;color:#6ff0a6}
+.badge.red{background:#3a1015;color:#ff8a90}
+#toast{border-radius:0;background:#101015;color:#e9eaee;border:0;border-left:3px solid var(--green);box-shadow:0 10px 30px #000a}
+.avatar{border-radius:0;background:#2a0d11;color:#ff8a90;clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%)}
+.empty{border-radius:0}
+.price{color:var(--red2);text-shadow:0 0 14px rgba(212,160,23,.45)}
+.balance{border-radius:0;background:#0b0b0e;border:1px dashed var(--line2)}
+.promo-options button{text-transform:none;letter-spacing:.04em;background:#17171d;box-shadow:inset 0 0 0 1px var(--line2)}
+.promo-options button.selected{background:linear-gradient(180deg,rgba(212,160,23,.2),rgba(212,160,23,.05));box-shadow:inset 0 0 0 1px var(--red)}
+.promotion{border-radius:0}
+.credit-mode{border-radius:0}
+.shop-tabs button.active{background:linear-gradient(180deg,rgba(212,160,23,.24),rgba(212,160,23,.06))}
+.summary-list div{border-radius:0}
+
+/* ---------- janelas ---------- */
+dialog{border-radius:0;background:#121217;border:1px solid var(--line2);clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.dialog-head{padding-bottom:12px;border-bottom:1px solid var(--line)}
+.dialog-head h2{font-size:16px;letter-spacing:.1em;text-transform:uppercase}
+.dialog-head h2:before{content:"▲ ";color:var(--red2);font-size:12px}
+
+/* ---------- tela de acesso ---------- */
+.auth-brand{background:radial-gradient(ellipse at 50% 40%,#2a1f06 0,#070709 65%)}
+.auth-form h1{font-size:26px}
+.auth-form .eyebrow{color:var(--red)}
+
+/* ---------- ajustes de resolucao ---------- */
+@media(max-width:1000px){aside{width:210px}.workspace{margin-left:210px}}
+@media(max-width:700px){aside{position:relative;width:auto}.workspace{margin:0}.streaks{display:none}}
+html.narrow .streaks .s1,html.narrow .streaks .s2{display:none}
+
+.pdv-finish{text-transform:none;letter-spacing:.02em;font-size:14px}
+.table-wrap button{letter-spacing:.06em}
+/* estatistica */
+.st-head,.st-item{box-shadow:none;background:transparent;font-weight:600}
+.st-head{color:#fff;letter-spacing:.06em;text-transform:uppercase;font-size:12px}
+.st-head:hover,.st-item:hover{background:#17171d;box-shadow:none}
+.st-box{border-color:var(--red-dark);color:var(--red2)}
+.st-item b{color:#d9dbe0}
+.st-item.active{background:linear-gradient(90deg,rgba(212,160,23,.2),rgba(212,160,23,.03));border:0;box-shadow:inset 3px 0 var(--red2)}
+.st-item.active b{color:#fff}
+.st-report .stat strong{font-size:21px}
+.st-report h2{text-transform:uppercase;letter-spacing:.08em}
+.st-bar{border-radius:0}.st-bar span{border-radius:0;box-shadow:var(--glow)}
+.st-columns{border-radius:0}
+.shop-card{clip-path:none}
+
+/* 3.0.37: logo oficial */
+.brand .brand-logo{width:150px;height:auto;object-fit:contain;border-radius:0;filter:drop-shadow(0 0 14px rgba(212,160,23,.25))}
+.auth-brand img.auth-logo{width:min(380px,80%);border-radius:0;mix-blend-mode:normal;filter:drop-shadow(0 0 30px rgba(212,160,23,.25))}
+@media(max-width:1000px){.brand .brand-logo{width:120px}}
+/* 3.0.38: logo menor e menu sem barra de rolagem */
+aside{padding:18px 14px 14px;overflow-x:hidden;overflow-y:auto;scrollbar-width:none}
+aside::-webkit-scrollbar{display:none}
+.brand{padding:0 0 12px;margin-bottom:10px;gap:4px}
+.brand .brand-logo{width:104px}
+.nav-label{margin:2px 8px 6px}
+nav button{padding:8px 12px}
+.sidebar-bottom{padding-top:10px}
+.sidebar-bottom #operator-name{margin:6px 0 8px}
+@media(max-height:760px){.brand .brand-logo{width:84px}nav button{padding:7px 12px}}
+@media(max-width:1000px){.brand .brand-logo{width:90px}}
+/* 3.0.46: caixa de confirmação Sim/Não */
+.confirm-box{width:min(420px,calc(100vw - 32px))}
+.confirm-box #confirm-message{margin:16px 0 20px;font-size:15px;line-height:1.5}
+.confirm-box .confirm-actions{display:flex;gap:10px;justify-content:flex-end}
+.confirm-box .confirm-actions button{min-width:96px}
+/* 3.0.64: preço de venda calculado pela margem e confirmação de venda no PDV */
+input.auto-price{color:#7ff0c6;border-color:rgba(0,230,154,.45)!important;background:rgba(0,230,154,.06)!important;cursor:default}
+.confirm-question{font-size:18px;font-weight:700;margin:4px 0 8px}
+.confirm-actions{display:flex;gap:10px;margin-top:18px}
+.confirm-actions button{flex:1;min-height:44px;justify-content:center}
+
+/* 3.0.67: olho para exibir/ocultar o valor do Caixa de hoje */
+.stat-eye{position:absolute;top:10px;right:12px;z-index:2;display:grid;place-items:center;width:32px;height:32px;min-height:0;margin:0;padding:0;border:1px solid var(--line);border-radius:50%;background:rgba(255,255,255,.03);color:var(--muted);cursor:pointer;box-shadow:none}
+.stat-eye:hover,.stat-eye:focus-visible{color:var(--text);border-color:var(--red);background:rgba(239,51,69,.12)}
+.stat-eye[aria-pressed="true"]{color:var(--red2)}
+.stat-eye svg{width:17px;height:17px}
+
+/* GameZoney 1.0.1: logo larga (GZ + nome) maior na barra lateral, linhas em dourado e vermelho como no
+   banner, e o vermelho fica para alerta/excluir/negativo. */
+.brand .brand-logo{width:200px}
+@media(max-height:760px){.brand .brand-logo{width:170px}}
+@media(max-width:1000px){.brand .brand-logo{width:170px}}
+aside{border-right:1px solid #2a230f;box-shadow:inset -1px 0 0 rgba(232,30,40,.18)}
+.icon-btn.del{color:var(--alert)}
+nav button:hover{background:#17140c}
+.avatar{background:#2a2108;color:var(--red2)}
