@@ -7,7 +7,7 @@ function text(value,label,max=120){const s=String(value??'').trim();if(!s||s.len
 function integer(v,min,max,label){const n=Number(v);if(!Number.isSafeInteger(n)||n<min||n>max)fail(label+' inválido.');return n;}
 function cpfDigits(value){return String(value??'').replace(/\D/g,'').slice(0,11);}
 function validCpf(value){const cpf=cpfDigits(value);if(!cpf)return true;if(cpf.length!==11||/^(\d)\1{10}$/.test(cpf))return false;for(let t=9;t<11;t++){let sum=0;for(let i=0;i<t;i++)sum+=Number(cpf[i])*(t+1-i);let d=(sum*10)%11;if(d===10)d=0;if(d!==Number(cpf[t]))return false;}return true;}
-function passwordHash(password,salt=crypto.randomBytes(16).toString('hex'),minimum=8){if(typeof password!=='string'||password.length<minimum||password.length>128)fail(minimum===1?'Digite uma senha de até 128 caracteres.':'A senha deve ter entre 8 e 128 caracteres.');return salt+':'+crypto.scryptSync(password,salt,64).toString('hex');}
+function passwordHash(password,salt=crypto.randomBytes(16).toString('hex'),minimum=4){/* senha do servidor (operadores): 4 a 24 caracteres */const maximum=minimum===1?128:24;if(typeof password!=='string'||password.length<minimum||password.length>maximum)fail(minimum===1?'Digite uma senha de até 128 caracteres.':'A senha deve ter entre 4 e 24 caracteres.');return salt+':'+crypto.scryptSync(password,salt,64).toString('hex');}
 // 3.0.39: senha de CLIENTE (cadastro no servidor e primeiro acesso no PC): de 4 a 20 caracteres.
 // 3.0.45: Usuário/Nick (login do cliente) aceita espaços e números. Espaços repetidos viram um só.
 const NICK_PATTERN=/^(?=.{3,32}$)[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)*$/;

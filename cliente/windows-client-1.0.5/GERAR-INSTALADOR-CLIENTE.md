@@ -2,7 +2,7 @@
 
 > Software proprietário e confidencial da GameZoney. Não divulgar.
 
-**Novidades** (detalhes em `GUIA-LIMPEZA.md`, `GUIA-REMOCAO.md`, `GUIA-PROTECAO.md`, `GUIA-LOGIN.md`, `GUIA-CLIENTE.md` e `GUIA-BARRA.md`):
+**Novidades** (detalhes em `GUIA-GAMEZONEY.md`):
 - **2.0.59 — fim do tempo com jogo de anticheat aberto:** o PC não fica mais preso em "Limpeza pendente" por causa de um processo
   protegido de fundo (ex.: `FortniteClient-Win64-Shipping_EAC_EOS`, "Acesso negado"); o cliente pede para o programa fechar, espera
   até 10 s e libera o PC. Se a janela do jogo continuar aberta, o PC segue bloqueado com o motivo claro;
@@ -51,7 +51,7 @@ Precisa de: .NET Framework 4 (já vem no Windows), **Node.js** (o mesmo usado no
    - clique nos campos de usuário e senha, digite o nick e passe para a senha com **Tab** (e volte com Shift+Tab): **a tela não
      pisca**;
    - a tela de login mostra **Disponível** (conectado). Se aparecer "Sem conexão com o servidor", a linha **Motivo:** diz a causa
-     (tabela no `GUIA-CLIENTE.md`) e fica registrada em `%LOCALAPPDATA%\GameZoneyCliente\connection.log` do usuário do PC;
+     (tabela no `GUIA-GAMEZONEY.md`) e fica registrada em `%LOCALAPPDATA%\GameZoneyCliente\connection.log` do usuário do PC;
    - se aparecer "**Este PC não conseguiu aplicar as restrições do Windows**": entre como administrador (botão Entrar) e use
      menu Iniciar > GameZoney Cliente > **Reparar restrições do Windows** (o Windows pede a senha de administrador do PC);
      em até 2 segundos o cliente aplica as restrições e volta a **Disponível**;
@@ -73,5 +73,5 @@ Associação do PC, fundo de login e regras de firewall são preservados. Para v
    cliente pedir (ele retira as restrições do Windows antes de sair).
 3. Para instalar de novo: instale o `GameZoney-Cliente-2.0.59-Setup.exe`. O cliente procura o servidor e pede autorização;
    aprove no painel (Computadores > PC aguardando autorização). Para manter o **mesmo** computador do painel (ex.: MAQUINA-7),
-   veja `GUIA-REMOCAO.md`.
+   veja `GUIA-GAMEZONEY.md`.
 

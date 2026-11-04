@@ -228,3 +228,12 @@ aside{border-right:1px solid #2a230f;box-shadow:inset -1px 0 0 rgba(232,30,40,.1
 .icon-btn.del{color:var(--alert)}
 nav button:hover{background:#17140c}
 .avatar{background:#2a2108;color:var(--red2)}
+
+/* GameZoney: Faturas — Exportar CSV e + Despesa na mesma linha do Atualizar, alinhados à direita */
+.filters .filters-end{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* GameZoney: Ações dos computadores mais compacta (botões e blocos menores) */
+.pc-actions-compact .panel{padding:12px 14px;margin:10px 0}
+.pc-actions-compact .panel h3{font-size:14px;margin:0 0 6px}
+.pc-actions-compact .hint{font-size:12px;margin:4px 0 8px}
+.pc-actions-compact .remote-actions{gap:6px}
+.pc-actions-compact .remote-actions button{padding:6px 10px;font-size:10.5px;letter-spacing:.04em;min-height:0}

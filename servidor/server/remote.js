@@ -33,7 +33,7 @@ module.exports=store=>{
   if(input.type==='unwatch'){d.watchUntil=0;d.frame=null;store.log(actor,'controle-remoto','Visualização encerrada: '+s.name);return{ok:true};}
   if(input.type==='lock'||input.type==='unlock'){d.locked=input.type==='lock';d.frame=null;d.watchUntil=0;store.log(actor,'controle-remoto',(d.locked?'Bloqueio':'Desbloqueio')+': '+s.name);return{ok:true};}
   const c={id:id(),type:input.type,expires:Date.now()+30000,sessionId:d.session};
-  if(c.type==='terminate'&&!d.canTerminate)fail('Atualize este PC para o Cliente 2.0.2 antes de finalizar tarefas.');
+  if(c.type==='terminate'&&!d.canTerminate)fail('Atualize o GameZoney Cliente deste PC antes de finalizar tarefas.');
   if(c.type==='close'||c.type==='terminate'){if(d.session!==store.activeForStation(s.id)?.id)fail('A sessão mudou. Aguarde a atualização da lista.');const p=d.processes.find(p=>p.pid===input.pid&&p.started===input.started)||fail('Programa não pertence à lista atual da sessão.');c.pid=p.pid;c.started=p.started;c.name=p.name;}
   d.commands.push(c);store.log(actor,'controle-remoto',input.type+' solicitado em '+s.name+(c.name?' — '+c.name:''));return {ok:true,id:c.id};
  }

@@ -1,0 +1,218 @@
+# GameZoney — Guia completo (Servidor e Cliente)
+
+> Software proprietário da GameZoney. Todos os direitos reservados.
+
+O GameZoney tem duas partes:
+
+- **GameZoney Servidor** — instalado no PC da recepção. Guarda clientes, saldos, caixa e histórico, controla as TVs e mostra o painel.
+- **GameZoney Cliente** — instalado em cada PC gamer. Bloqueia o PC até a recepção liberar (ou o cliente entrar com nick e senha), mostra a barra de tempo e limpa a sessão no fim.
+
+Índice: 1. Instalação · 2. Primeiro acesso · 3. Computadores / TVs · 4. TVs (VIDAA e Android) · 5. Clientes e recargas ·
+6. Visitante · 7. Caixa · 8. Produtos/Serviços (PDV) · 9. Faturas e relatórios · 10. Fidelidade e promoções ·
+11. Transferir/Remover saldo · 12. Sessão e log, Estatística · 13. Configuração · 14. Backup · 15. Cliente nos PCs ·
+16. Quedas de energia e de rede · 17. Remover, reinstalar e desinstalar · 18. Problemas comuns
+
+---
+
+## 1. Instalação
+
+**Servidor (PC da recepção)** — Windows 10/11 de 64 bits.
+1. Execute o instalador (ou o instalador único e marque **Instalar Servidor**). Ele já leva o motor (Node), o banco e as ferramentas; não baixa nada.
+2. O instalador configura o firewall do Windows (somente rede local) para as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (descoberta dos PCs). Se precisar repetir: menu Iniciar > GameZoney > **Reparar conexão de rede**.
+3. O servidor abre sozinho quando a conta entra no Windows e fica no ícone perto do relógio. Clique com o botão direito no ícone para abrir o painel, a pasta de dados, o diagnóstico ou encerrar o servidor. Fechar a janela do painel não encerra o servidor.
+4. O painel abre em janela própria do GameZoney (motor WebView2 do Windows). **O WebView2 e o Edge não podem estar bloqueados** no PC do servidor (programas que "desativam o Edge" costumam bloquear também o WebView2 e o painel fica com a tela escura). O navegador padrão pode ser o Chrome ou outro.
+5. Deixe o IP do PC do servidor **fixo** (reserva no roteador). Mantenha o PC ligado, sem suspensão, durante o atendimento.
+
+**Cliente (PCs gamers)** — Windows 10/11 de 64 bits, conta do Windows **padrão** (não administradora) para os clientes.
+1. Execute o instalador (ou o instalador único e marque **Instalar Cliente**) **com a conta do PC dos clientes conectada no Windows**. O Windows pede a autorização de administrador.
+2. Ao abrir, o cliente procura o servidor na rede e mostra um **código**. Na recepção: **Computadores / TVs > PC aguardando autorização**, confira o código e clique em **Autorizar** (como novo computador ou no lugar de um computador livre). No PC, confirme a identidade do servidor e crie a **senha de manutenção** local.
+3. Recomendado: barra de tarefas do Windows **embaixo** e **sem ocultar automaticamente** (a aba do tempo fica nela).
+
+**Atualizar:** feche o servidor pelo ícone (Encerrar servidor) e instale por cima, na mesma conta do Windows. Nos PCs, entre como administrador no cliente, use **Fechar aplicativo** e instale por cima. Dados, associações e saldos são preservados.
+
+**Dados do servidor:** `%LOCALAPPDATA%\GameZoney\data` da conta do Windows que abre o servidor (banco `gamezoney.sqlite`, pareamentos das TVs, identidade dos PCs, fundos de login e `server.log`).
+
+---
+
+## 2. Primeiro acesso
+
+1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
+2. Em **Configuração**, confira o **valor da hora** (padrão R$ 7,00), o **endereço do servidor** usado pelas TVs (ex.: `http://192.168.1.100:3000`) e o fuso horário.
+3. Cadastre as estações em **Computadores / TVs > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
+4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
+
+---
+
+## 3. Computadores / TVs
+
+- Cada estação aparece como um monitor: **verde** = em uso, **dourado** = modo administrador, sem cor = livre/desligada. O ponto ao lado dos PCs indica conexão do cliente (verde conectado, vermelho sem contato). Clique no monitor para abrir as ações.
+- **Iniciar sessão:** escolha o cliente (busca por nome, nick ou CPF) com saldo disponível. A sessão usa todo o saldo do cliente.
+- **+ Adicionar tempo:** soma tempo na sessão em andamento sem reiniciar o relógio.
+- **Encerrar:** encerra a sessão e devolve ao cliente os segundos não usados. No fim do tempo a sessão encerra sozinha.
+- **Visitante / Visitantes em grupo:** seção 6.
+- **Organizar A-Z / Z-A** muda a ordem dos monitores (fica guardado).
+- **Ações dos PCs** (administrador): liberar em modo administrador, encerrar sessões, desligar e reiniciar — todas, disponíveis ou uma específica. Afeta só computadores, nunca TVs. Ao interromper uma sessão, o saldo restante volta ao cliente.
+- **Controle do PC** (no monitor do PC, administrador, com sessão ativa): bloquear/desbloquear a tela, lista de programas da sessão (fechar ou **Finalizar tarefa**), visualizar a tela (o PC mostra "TELA VISÍVEL À RECEPÇÃO"), reiniciar e desligar.
+- **Layout do login:** envia uma imagem (JPG/PNG) de fundo para a tela de login daquele PC e a posição dos campos (esquerda, centro ou direita). "Remover imagem" volta ao fundo padrão GameZoney.
+- **Remover computador:** aparece em PC desconectado/inativo e sem sessão. A associação é revogada; histórico e saldos ficam.
+
+---
+
+## 4. TVs (VIDAA e Android)
+
+Cadastre a TV em **Computadores / TVs > + Nova estação**: nome, tipo **TV / Console**, **IP da TV**, **entrada HDMI** (1 a 4) e o **Sistema da TV**:
+
+- **VIDAA (Hisense/Toshiba):** use **Parear TV**; a TV mostra um PIN de 4 números; digite em **Informar PIN**. Pareamento antigo pode ser trazido com **Importar pareamento**.
+- **Android TV / Google TV:** na TV, ative as Opções do desenvolvedor (Configurações > Sobre > clicar 7 vezes em Build) e ligue a **Depuração ADB pela rede**. Use **Parear TV** e aceite **Permitir depuração** na TV (marque "Sempre permitir").
+
+Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a TV abre a página de **sessão finalizada** (nome, início, término, tempo usado e devolvido). A TV precisa alcançar a porta 3000 do servidor (e, no Android, ter um navegador instalado). **Testar HDMI** confere o controle. Se a troca falhar, a recarga com início imediato não é registrada — corrija a TV e tente de novo.
+
+---
+
+## 5. Clientes e recargas
+
+- **Clientes > + Novo cliente:** nome, **Usuário/Nick** (3 a 32 caracteres; letras sem acento, números, espaço, ponto, hífen ou sublinhado; não se repete), senha (4 a 20 caracteres, opcional — se ficar vazia, o cliente cria a senha no primeiro acesso ao PC), CPF (opcional, não se repete), telefone e observações. **Ativar programa fidelidade** desmarcado: o cliente não ganha pontos.
+- **Clique no nome do cliente** para **Adicionar tempo**:
+  1. escolha uma **promoção** (só recargas com promoção geram pontos) ou informe **em minutos** ou **em valor** (R$; os minutos são proporcionais ao valor da hora);
+  2. escolha a **forma de pagamento** (Dinheiro, Pix, Cartão Crédito/Débito) — aparece na fatura e no relatório;
+  3. **Iniciar após a recarga:** escolha uma estação livre para começar agora, ou **Guardar no saldo do cliente**.
+- **Pacote grátis** (R$ 0,00): em vez da forma de pagamento, exige **OBS** (motivo) e a **chave de autenticação** (senha do usuário logado no servidor).
+- **Importar planilha** (administrador principal): Excel (.xlsx) ou CSV com as colunas **Nome, Nick, Tempo, Pontos fidelidade**. Tempo aceita `01:30`, `90`, `1h30`, `45min`. Mostra uma prévia antes; clientes já cadastrados não são alterados; todos entram sem senha.
+- O registro **não processa pagamentos** e não emite nota fiscal.
+
+---
+
+## 6. Visitante (sem cadastro)
+
+- No monitor livre, **Visitante**: escolha a promoção ou o tempo (em minutos ou em valor) e a forma de pagamento. A sessão começa na hora com o nome **Visitante**. Não acumula pontos e o tempo não usado não fica guardado.
+- **Visitantes em grupo:** libera várias estações livres e conectadas de uma vez, com o mesmo tempo; cada estação vira uma venda. O resultado mostra estação por estação.
+
+---
+
+## 7. Caixa
+
+- **Abrir caixa:** informe o troco inicial. Com o caixa **fechado**, operadores e administradores adicionados não registram recargas, visitantes nem vendas do PDV (o administrador principal pode).
+- **+ Suprimento / − Sangria:** entrada ou retirada de dinheiro, com motivo.
+- **Fechar caixa:** informe o dinheiro contado; o sistema mostra a diferença e gera o **PDF** do fechamento (também há o **Parcial (PDF)**).
+- O resumo mostra total vendido, dinheiro esperado na gaveta, Pix/Cartão, cancelamentos, itens vendidos e estoque.
+- **Caixas anteriores** (administrador principal): registrar caixas de datas passadas que não foram feitos no sistema.
+- O valor **Caixa de hoje** na tela inicial pode ser escondido com o olho.
+
+---
+
+## 8. Produtos/Serviços (PDV)
+
+- **Cadastro (administrador):** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
+- **Venda (administrador e operador):** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (confirmação Sim/Não). O cupom abre em PDF (comprovante interno, sem valor fiscal).
+- Venda cancelada (administrador) sai da receita e devolve os produtos ao estoque.
+
+---
+
+## 9. Faturas e relatórios (administrador)
+
+- Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
+- Mostra receita válida, despesas, resultado (receita − despesas), ticket médio, evolução por dia e a lista de faturas e transações (recargas e vendas do PDV).
+- **Ver fatura** → imprimir ou salvar em PDF (comprovante interno, não fiscal).
+- **Cancelar** exige motivo, mantém o registro no histórico e estorna minutos e pontos. Não é permitido se o cliente já usou o tempo/pontos ou se a recarga foi feita durante uma sessão.
+- O CSV inclui todas as transações e despesas do período, inclusive as canceladas (identificadas), e abre no Excel.
+
+---
+
+## 10. Fidelidade e promoções
+
+- **Promoções** (botão na tela **Fidelidade**, ao lado de **Mensagem do prêmio**): cadastre nome, minutos e preço total; edite, desative ou remova. As promoções ativas aparecem no Adicionar tempo e no Visitante. Alterar uma promoção não muda recargas já registradas.
+- **Configurar programa:** todos os clientes ativos participam automaticamente (menos os que estiverem com "Ativar programa fidelidade" desmarcado). Os pontos só são gerados em **recargas com promoção**, pela regra de valor x pontos, que pode variar por dia da semana. Defina quantos pontos liberam o prêmio e quantos minutos ele dá (ex.: 10 pontos = 60 minutos).
+- Ao atingir os pontos, o prêmio é automático: com sessão ativa, o tempo entra na hora; sem sessão, vai para o saldo. Pontos para vários prêmios liberam todos.
+- **Mensagem do prêmio:** texto que aparece na barra do cliente (variáveis `{premio}` e `{nick}`), com "Tempo antes | Tempo após" embaixo. Se o cliente não estiver jogando, a mensagem aparece quando ele iniciar a sessão.
+- O extrato de pontos e o histórico ficam nesta tela, com busca por nick e **Exportar para Excel**.
+
+---
+
+## 11. Transferir/Remover saldo (administrador)
+
+Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, informe os minutos (ou **Todo o saldo**) e o motivo. Encerre antes as sessões dos clientes envolvidos. Fica registrado (origem, destino, tempo, motivo, data e administrador). Não altera receitas nem pontos; remover tempo não é reembolso.
+
+---
+
+## 12. Sessão e log, Estatística
+
+- **Sessão e log:** histórico completo de sessões e de pontos (páginas de 100, busca por nick, **Exportar para Excel**) e o **Sistema de log** com todas as ações (logins, recargas, cadastros, configurações, falhas de TV, quedas de PC, recuperações). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
+- **Estatística:** uso por máquina, por horário, por funcionário e por cliente, clientes grátis, duração, vendas e fluxo de caixa.
+
+---
+
+## 13. Configuração (administrador)
+
+- **Hora e configurações:** valor da hora, endereço do servidor para as TVs, fuso horário.
+- **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
+- **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
+- **Backup completo:** seção 14.
+
+---
+
+## 14. Backup
+
+- **Configuração > Backup completo do servidor:** backup diário automático (padrão às 03:00) em **Documentos\bkp gamezoney**, mais o botão **Criar backup completo agora**. Cada ZIP leva banco, usuários e senhas protegidas, saldos, histórico, faturas, despesas, fidelidade, configurações, imagens, pareamentos das TVs e a identidade dos PCs.
+- Copie os ZIPs para **outro disco ou dispositivo** (um backup no mesmo HD não protege contra falha do HD). Os arquivos têm dados pessoais: guarde com acesso restrito. Cópias antigas não são apagadas sozinhas.
+- **Restaurar:** encerre o servidor pelo ícone > menu Iniciar > GameZoney > **Restaurar backup GameZoney** > escolha o ZIP. Os dados atuais ficam guardados numa pasta `data-anterior-...`. Abra o servidor e entre com a conta do backup.
+
+---
+
+## 15. Cliente nos PCs
+
+**Login.** O PC fica bloqueado na tela de login (com o fundo enviado pela recepção ou o padrão GameZoney). O cliente entra com **Usuário/Nick e senha** e precisa ter saldo; ou a recepção inicia a sessão pelo painel. Cliente sem senha cadastrada: ao entrar, aparece **Registrar senha** (Senha e Repetir senha), obrigatório. Depois de 7 tentativas erradas o PC bloqueia por 2 minutos. Durante a sessão, o cliente pode trocar a própria senha.
+
+**Barra de tempo.**
+- Fica no topo, por cima das janelas, com o tempo restante. A seta **︿** recolhe a barra numa **aba na barra de tarefas** do Windows; clicar na aba abre de novo.
+- Em **tela cheia** (jogo em tela cheia, tela cheia em janela/sem borda, F11 ou vídeo em tela cheia no navegador) a barra e a aba somem, como a barra de tarefas do Windows, e voltam ao dar Alt+Tab ou sair do jogo. Navegadores e lançadores (Steam, Epic, Riot...) em janela mantêm a barra.
+- **Últimos 5 minutos:** o tempo fica vermelho; em tela cheia aparece a barra pequena por alguns segundos.
+- **Ctrl+Alt+T:** fora de tela cheia, reinicia a barra (se ela tiver sumido); em tela cheia, mostra a barra pequena por 5 segundos (apertar de novo esconde). A barra pequena por cima do jogo deixa o clique atravessar.
+- Jogo em tela cheia exclusiva pode esconder tudo: prefira "tela cheia em janela/sem bordas".
+
+**Fim da sessão (limpeza).** Os programas abertos **depois do login** (jogos, lançadores e seus auxiliares) são fechados; os que já estavam abertos antes do login ficam. Nada de perfis, senhas, favoritos ou arquivos é apagado. Jogos com anticheat que o Windows não deixa fechar: o cliente pede para fechar e, se ficar só o processo de fundo, libera o PC; se a janela do jogo continuar aberta, o PC fica bloqueado com o aviso até a janela fechar. O resumo da sessão aparece na tela por até 30 segundos.
+
+**Proteção.** Durante a sessão o cliente aplica as restrições da Configuração das máquinas, fecha o Cheat Engine e as telas de data/hora (se marcado). O tempo usa relógio interno, não o relógio do Windows. A pasta do programa fica protegida contra alteração por usuários comuns. O **MonitorGZ** reabre o cliente se ele for fechado à força (sem zerar o tempo nem duplicar crédito).
+
+**Modo administrador (manutenção).**
+- No PC, **Acesso administrativo (recepção)** com uma conta Administrador do servidor: a barra mostra ADMIN, as restrições ficam suspensas e não há consumo de saldo. **Sair do administrador** reaplica tudo. **Fechar aplicativo** fecha o cliente (para atualizar).
+- Sem servidor, a **senha de manutenção** local do PC dá o mesmo acesso.
+- Os PCs também podem ser liberados em modo administrador pelo painel (Ações dos PCs).
+
+**Atalhos no menu Iniciar > GameZoney Cliente:**
+- **Reconfigurar conexão com o servidor** — quando o servidor mudou de identidade ou o PC foi removido.
+- **Reparar restrições do Windows** — quando o PC avisa que não conseguiu aplicar as restrições (o Windows negou a gravação).
+- **Reparar conexão de rede** — refaz as regras do firewall.
+
+---
+
+## 16. Quedas de energia e de rede
+
+- **Só o servidor caiu:** os PCs continuam a sessão e o relógio conta normalmente; ao voltar, o tempo é reconciliado.
+- **Só o PC caiu:** depois de 10 segundos sem resposta a estação fica **vermelha** e o servidor espera **1 minuto**. Se o PC voltar, a sessão continua; se não, encerra e devolve o tempo a partir do momento em que ficou vermelha.
+- **Queda geral (servidor e PCs):** os dois guardam pontos de controle da sessão. Ao voltar, é usado o **maior saldo seguro**, para o cliente não perder o tempo em que tudo ficou desligado. O painel mostra a auditoria; se ainda houver diferença, o administrador tem o botão **Devolver saldo** (único e registrado no log).
+- Mensagens de conexão na tela do PC: "o servidor não respondeu… procurando na rede" (servidor fechado ou mudou de IP — o cliente reencontra sozinho), "a conexão 3443/TCP falhou" (firewall da recepção: use Reparar conexão de rede no servidor), "o servidor tem outra identidade" (use Reconfigurar conexão no PC). Registro em `%LOCALAPPDATA%\GameZoneyCliente\connection.log` no PC.
+
+---
+
+## 17. Remover, reinstalar e desinstalar
+
+- **Remover computador** (painel): revoga a associação; histórico e saldos ficam. Para usar o PC de novo: no PC, **Reconfigurar conexão com o servidor** (senha de manutenção), siga a descoberta e autorize na recepção como **Novo computador**.
+- **Manter o mesmo nome no painel:** remova o computador antigo e autorize o pedido como novo com o mesmo nome, ou use **Associação por arquivo (alternativa)** no cartão do PC e **Importar** no cliente.
+- **Desinstalar o Cliente** (Configurações do Windows > Aplicativos): pede um administrador do servidor, retira as restrições e não deixa nada no PC (programa, dados, logs, inicialização automática, firewall e atalhos). Ao instalar de novo, o PC pede nova autorização.
+- **Desinstalar o Servidor:** o desinstalador pergunta antes de apagar os dados.
+
+---
+
+## 18. Problemas comuns
+
+| Situação | O que fazer |
+|---|---|
+| Painel do servidor com a tela escura | Libere o Edge/WebView2 no programa que os desativou e instale o WebView2 Runtime da Microsoft; reabra o servidor |
+| PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 16); na recepção, Reparar conexão de rede |
+| PC novo não aparece para autorizar | Mesma rede do servidor (não use Wi-Fi de visitantes); firewall do servidor (Reparar conexão de rede) |
+| TV não troca de HDMI | Confira IP, entrada HDMI e pareamento (Parear TV); Testar HDMI |
+| TV não mostra o resumo | Endereço do servidor em Configuração; a TV precisa alcançar a porta 3000 |
+| Recarga recusada "Abra o caixa" | Caixa > Abrir caixa |
+| Barra do PC sumiu | Ctrl+Alt+T |
+| PC preso em "Limpeza pendente" | Feche o jogo indicado na tela; ele libera sozinho |
+| Esqueceu a senha do administrador | Restaure um backup (seção 14) ou peça suporte |

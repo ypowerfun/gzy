@@ -2,7 +2,7 @@
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
-AppVersion=1.0.1
+AppVersion=1.0.5
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyCliente
 DefaultGroupName=GameZoney Cliente
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Cliente-1.0.1-Setup
+OutputBaseFilename=GameZoney-Cliente-1.0.5-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -21,25 +21,14 @@ UninstallDisplayIcon={app}\GameZoneyCliente.exe
 AppMutex=Local\GameZoneyCliente,Local\GameZoney.Supervisor
 CloseApplications=no
 InfoBeforeFile=INSTALACAO.txt
-VersionInfoVersion=1.0.1.0
+VersionInfoVersion=1.0.5.0
 
 [Languages]
 Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl
 
 [Files]
-Source: "GUIA-FIDELIDADE.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-LIMPEZA.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-PRIMEIRO-ACESSO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-TAREFAS.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-GESTAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-MONITOR.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "GUIA-GAMEZONEY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "MonitorGZ.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-PROTECAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-MANUTENCAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-LOGIN.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-BARRA.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-LAYOUT.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-REMOCAO.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "firewall.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "firewall-rules.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "protect-install.ps1"; DestDir: "{app}"; Flags: ignoreversion
@@ -55,7 +44,6 @@ Source: "logo.jpg"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wallpaper-padrao.jpg"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logo-marca.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logo-prime.png"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-CLIENTE.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Reconfigurar conexao com o servidor"; Filename: "{app}\GameZoneyCliente.exe"; Parameters: "/reconfigure"
@@ -172,5 +160,7 @@ Type: files; Name: "{commonappdata}\GameZoney\client-install.log"
 Type: dirifempty; Name: "{commonappdata}\GameZoney"
 
 [InstallDelete]
+; 1.0.5: guias unificados em GUIA-GAMEZONEY.md
+Type: files; Name: "{app}\GUIA-*.md"
 Type: files; Name: "{app}\temp-access.dat"
 Type: files; Name: "{app}\GameZoneyMonitor.exe"

@@ -2,7 +2,7 @@
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
-AppVersion=1.0.1
+AppVersion=1.0.5
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyServidor
 DefaultGroupName=GameZoney
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.0.1-Setup
+OutputBaseFilename=GameZoney-Servidor-1.0.5-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -21,7 +21,7 @@ UninstallDisplayIcon={app}\GameZoney.exe
 AppMutex=Local\GameZoneyServer_3000
 CloseApplications=no
 InfoBeforeFile=INSTALACAO.txt
-VersionInfoVersion=1.0.1.0
+VersionInfoVersion=1.0.5.0
 
 [Languages]
 Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl
@@ -31,26 +31,22 @@ Name: desktopicon; Description: "Criar atalho na área de trabalho"; Flags: chec
 
 ; 3.0.70: app GameZoney SV retirado — arquivos dele saem de instalações anteriores
 [InstallDelete]
-Type: files; Name: "{app}\public\mobile\admin-bridge.js"
-Type: files; Name: "{app}\public\mobile\admin.css"
+; 1.0.5: guias unificados em GUIA-GAMEZONEY.md e app web antigo de celular retirado (arquivos sem uso)
+Type: files; Name: "{app}\GUIA-*.md"
+Type: filesandordirs; Name: "{app}\public\mobile"
+Type: files; Name: "{app}\public\mobile-settings-ui.js"
+Type: files; Name: "{app}\mobile.js"
+Type: files; Name: "{app}\rankings.js"
+Type: files; Name: "{app}\tournaments.js"
 
 [Files]
-Source: "mobile.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "rankings.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "tournaments.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "cash.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "stats.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-PRODUTOS.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-VISITANTE.md"; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "GUIA-IMPORTACAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-SALDO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-PRIMEIRO-ACESSO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-HISTORICOS.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "excel.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "history.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "BackupTool.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -58,21 +54,12 @@ Source: "ClearAll.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "clear-all.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "BackupTool.exe.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "backups.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-BACKUP.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-FIDELIDADE.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-TAREFAS.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "business.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "remote.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-GESTAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-DESCONEXAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-MANUTENCAO.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-LAYOUT.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wallpaper.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-REMOCAO.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "firewall.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "firewall-rules.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "discovery.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GUIA-CLIENTE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "pc.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "CertTool.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "GameZoney.exe"; DestDir: "{app}"; Flags: ignoreversion

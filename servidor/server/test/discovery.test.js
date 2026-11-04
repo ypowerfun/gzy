@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto'),https=require('node:https');
 const {execFileSync,spawn}=require('node:child_process');const {createServer}=require('../server');
-const clientRoot=process.env.PRIME_CLIENT_TEST_EXE?path.dirname(process.env.PRIME_CLIENT_TEST_EXE):['../cliente/windows-client-1.0.1','prime-arena-client','GameZoneyCliente_MOD'].map(folder=>path.resolve(__dirname,'../..',folder)).find(folder=>fs.existsSync(path.join(folder,'transport.js')));
+const clientRoot=process.env.PRIME_CLIENT_TEST_EXE?path.dirname(process.env.PRIME_CLIENT_TEST_EXE):['../cliente/windows-client-1.0.5','prime-arena-client','GameZoneyCliente_MOD'].map(folder=>path.resolve(__dirname,'../..',folder)).find(folder=>fs.existsSync(path.join(folder,'transport.js')));
 if(!clientRoot)throw Error('Fonte do cliente Windows não encontrada para testar descoberta.');
 function bridge(input){return new Promise((resolve,reject)=>{const child=spawn(process.execPath,[path.join(clientRoot,'transport.js')],{windowsHide:true});let out='',err='';child.stdout.on('data',b=>out+=b);child.stderr.on('data',b=>err+=b);child.on('error',reject);child.on('exit',code=>{try{if(code)throw Error(err);resolve(JSON.parse(out))}catch(e){reject(e)}});child.stdin.end(JSON.stringify(input))})}
 test('Descoberta UDP e cadastro HTTPS: aprovação administrativa, vínculo exclusivo, recusa e pin',async t=>{

@@ -49,7 +49,7 @@ tamanhos = [256, 128, 64, 48, 40, 32, 24, 20, 16]
 quadros = [quadrado(icone, s, 0.02 if s <= 32 else 0.04) for s in tamanhos]
 logo_full = sem_fundo_preto(banner)          # GZ + GameZoney + GESTÃO GAMER, fundo transparente
 
-S = os.path.join(raiz, 'servidor', 'server'); C = os.path.join(raiz, 'cliente', 'windows-client-1.0.1'); U = os.path.join(raiz, 'unico')
+S = os.path.join(raiz, 'servidor', 'server'); C = os.path.join(raiz, 'cliente', 'windows-client-1.0.5'); U = os.path.join(raiz, 'unico')
 for destino in [os.path.join(S, 'prime.ico'), os.path.join(C, 'prime.ico'), os.path.join(U, 'prime.ico')]:
     ico(quadros, destino)
 # Painel (servidor): logo da lateral e da tela de acesso, ícones e favicon
