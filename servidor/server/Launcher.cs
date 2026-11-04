@@ -14,7 +14,7 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyVersion("1.0.2.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -47,16 +47,16 @@ class Launcher : ApplicationContext {
         }
         return null;
     }
-    // 3.0.68: ícone do app do celular (prime.ico com vários tamanhos, embutido no GameZoney.exe).
+    // 3.0.68: ícone do app do celular (gamezoney.ico com vários tamanhos, embutido no GameZoney.exe).
     static Icon AppIcon(Size size){
-        try{using(var stream=typeof(Launcher).Assembly.GetManifestResourceStream("prime.ico")){if(stream!=null)return new Icon(stream,size);}}catch{}
+        try{using(var stream=typeof(Launcher).Assembly.GetManifestResourceStream("gamezoney.ico")){if(stream!=null)return new Icon(stream,size);}}catch{}
         try{return Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{return null;}
     }
     void ShowPanel(){if(panel!=null)panel.Show();else OpenPanel(address);}
     void Log(string line) { if(line==null)return; lock(logLock) {try{File.AppendAllText(Path.Combine(data,"server.log"),DateTime.Now.ToString("s")+" "+line+Environment.NewLine);}catch{}} }
     string Request(string path,bool stop=false) {
         HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=1000;r.ReadWriteTimeout=1000;
-        if(stop){r.Method="POST";r.Headers["X-Prime-Control"]=token;r.ContentLength=0;}
+        if(stop){r.Method="POST";r.Headers["X-GZ-Control"]=token;r.ContentLength=0;}
         using(var response=r.GetResponse())using(var reader=new StreamReader(response.GetResponseStream()))return reader.ReadToEnd();
     }
     Launcher(string directory,int port,bool silent,bool selftest) {
@@ -67,9 +67,9 @@ class Launcher : ApplicationContext {
         using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);if(result.AsyncWaitHandle.WaitOne(400)&&probe.Connected)throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");}
         var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
-        Environment.SetEnvironmentVariable("PRIME_DATA_DIR",data);Environment.SetEnvironmentVariable("PRIME_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
-        Environment.SetEnvironmentVariable("PRIME_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-        if(selftest){Environment.SetEnvironmentVariable("PRIME_NO_PC_TLS","1");Environment.SetEnvironmentVariable("PRIME_NO_BACKUP","1");}
+        Environment.SetEnvironmentVariable("GZ_DATA_DIR",data);Environment.SetEnvironmentVariable("GZ_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
+        Environment.SetEnvironmentVariable("GZ_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
         child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
         bool ready=false;for(int i=0;i<60;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
@@ -131,7 +131,7 @@ class Launcher : ApplicationContext {
         try{if(File.Exists(log)&&new FileInfo(log).Length>2000000){File.Copy(log,log+".previous",true);File.WriteAllText(log,"");}}catch{}
         var info=new ProcessStartInfo(Path.Combine(httpsDir,"Caddy.exe"),"run --config \""+Path.Combine(httpsDir,"Caddyfile")+"\" --adapter caddyfile");
         info.WorkingDirectory=httpsDir;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
-        info.EnvironmentVariables.Remove("PRIME_CONTROL_TOKEN");
+        info.EnvironmentVariables.Remove("GZ_CONTROL_TOKEN");
         var p=new Process();p.StartInfo=info;p.OutputDataReceived+=(s,e)=>HttpsLog(e.Data);p.ErrorDataReceived+=(s,e)=>HttpsLog(e.Data);
         try{p.Start();p.BeginOutputReadLine();p.BeginErrorReadLine();}
         catch(Exception e){Warn("O servidor do app não iniciou: "+e.Message);return;}
@@ -258,6 +258,9 @@ class PanelWindow : Form {
     static CoreWebView2Environment shared;static bool loaderReady;
     readonly PanelHost host;readonly bool popup;readonly WebView2 web;
     FormWindowState restoreState=FormWindowState.Maximized;bool started;
+    // GameZoney 1.0.1: aviso "Abrindo o painel…" enquanto a página não aparece, etapas no diagnóstico (server.log)
+    // e, se a janela própria não mostrar o painel em 20 s, o painel abre sozinho no navegador (nunca fica tela escura).
+    readonly Label notice;System.Windows.Forms.Timer watchdog;bool loaded;string stage="aguardando";int retries;
     public PanelWindow(PanelHost host,bool popup){
         this.host=host;this.popup=popup;
         Text="GameZoney Servidor";if(host.AppIcon!=null)Icon=host.AppIcon;BackColor=Color.FromArgb(13,13,23);
@@ -266,6 +269,8 @@ class PanelWindow : Form {
         MinimumSize=new Size(640,480);
         if(!popup)WindowState=FormWindowState.Maximized;
         web=new WebView2();web.Dock=DockStyle.Fill;web.DefaultBackgroundColor=BackColor;Controls.Add(web);
+        notice=new Label();notice.Dock=DockStyle.Fill;notice.TextAlign=ContentAlignment.MiddleCenter;notice.BackColor=BackColor;notice.ForeColor=Color.FromArgb(255,206,58);
+        notice.Font=new Font("Segoe UI",14f,FontStyle.Bold);notice.Text=popup?"Abrindo…":"GameZoney\n\nAbrindo o painel…";notice.Visible=!popup;Controls.Add(notice);notice.BringToFront();
         Resize+=(s,e)=>{if(WindowState!=FormWindowState.Minimized)restoreState=WindowState;};
         if(!popup)FormClosing+=(s,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();host.NotifyHidden();}};
     }
@@ -277,19 +282,47 @@ class PanelWindow : Form {
     }
     async void Start(){
         started=true;
+        if(!popup){watchdog=new System.Windows.Forms.Timer();watchdog.Interval=20000;watchdog.Tick+=(s,e)=>Timeout();watchdog.Start();}
         try{
             if(shared==null){
-                PrepareLoader();
+                stage="preparando o WebView2";PrepareLoader();
+                string version=null;try{version=CoreWebView2Environment.GetAvailableBrowserVersionString();}catch{}
+                host.Log("Painel: WebView2 Runtime "+(version??"não encontrado")+"; dados em "+host.UserData);
                 var options=new CoreWebView2EnvironmentOptions();options.Language="pt-BR";
                 Directory.CreateDirectory(host.UserData);
+                stage="criando o ambiente do WebView2";
                 shared=await CoreWebView2Environment.CreateAsync(null,host.UserData,options);
             }
+            stage="iniciando o WebView2 na janela";
             await web.EnsureCoreWebView2Async(shared);
             if(IsDisposed)return;
             Configure();
+            web.CoreWebView2.NavigationCompleted+=OnNavigationCompleted;
+            stage="abrindo "+host.Address;
             web.CoreWebView2.Navigate(host.Address);
             web.Focus();
-        }catch(Exception e){if(!IsDisposed)host.Failed("a janela própria não abriu ("+Describe(e)+").");}
+        }catch(Exception e){StopWatchdog();if(!IsDisposed)host.Failed("a janela própria não abriu ("+Describe(e)+").");}
+    }
+    void StopWatchdog(){if(watchdog!=null){watchdog.Stop();watchdog.Dispose();watchdog=null;}}
+    void Timeout(){
+        StopWatchdog();
+        if(loaded||IsDisposed)return;
+        notice.Text="GameZoney\n\nA janela própria não abriu o painel.\nAbrindo no navegador…";notice.Visible=true;notice.BringToFront();
+        host.Failed("a janela própria não mostrou o painel em 20 s (etapa: "+stage+").");
+    }
+    void OnNavigationCompleted(object sender,CoreWebView2NavigationCompletedEventArgs e){
+        if(e.IsSuccess){
+            if(!loaded){loaded=true;StopWatchdog();host.Log("Painel: aberto na janela própria.");}
+            notice.Visible=false;return;
+        }
+        if(loaded||popup)return;
+        // Página não carregou (servidor ainda subindo, por exemplo): tenta de novo algumas vezes antes do navegador.
+        stage="abrindo "+host.Address+" (erro "+e.WebErrorStatus+")";
+        host.Log("Painel: a página não abriu ("+e.WebErrorStatus+"); tentativa "+(retries+1)+".");
+        notice.Visible=true;notice.BringToFront();
+        if(++retries>4)return;
+        var again=new System.Windows.Forms.Timer();again.Interval=2000;
+        again.Tick+=(s,x)=>{again.Stop();again.Dispose();if(!IsDisposed&&!loaded){try{web.CoreWebView2.Navigate(host.Address);}catch{}}};again.Start();
     }
     // O WebView2Loader.dll fica em runtimes\win-x64\native (e win-x86) ao lado do GameZoney.exe, como o pacote do WebView2 organiza.
     static void PrepareLoader(){

@@ -1,6 +1,5 @@
 # GameZoney — Programa fidelidade automático
 
-Compatibilidade: **Servidor 3.0.15** e **Cliente 2.0.18**.
 
 Todos os clientes cadastrados e ativos participam automaticamente do Programa Fidelidade. Não existe mais ativação individual nem necessidade de marcar um prêmio automático por usuário.
 

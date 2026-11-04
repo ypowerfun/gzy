@@ -22,5 +22,5 @@ test('3.0.68: instalador do servidor leva o WebView2 do painel e o iniciador usa
  assert(launcher.includes('if(!silent&&!selftest&&!PanelHost.SignalRunning(port))OpenPanel('),'segunda abertura avisa o servidor aberto');
  assert(/FormClosing\+=\(s,e\)=>\{if\(e\.CloseReason==CloseReason\.UserClosing\)\{e\.Cancel=true;Hide\(\)/.test(launcher),'fechar a janela só esconde o painel (servidor continua)');
  assert(launcher.includes('settings.AreDevToolsEnabled=false'),'ferramentas de desenvolvedor desligadas');
- assert(!/PRIME_DATA_DIR[^;]*painel|Path\.Combine\(data,"painel/.test(launcher),'a janela do painel não usa a pasta de dados do servidor');
+ assert(!/GZ_DATA_DIR[^;]*painel|Path\.Combine\(data,"painel/.test(launcher),'a janela do painel não usa a pasta de dados do servidor');
 });

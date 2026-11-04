@@ -43,5 +43,5 @@ As ações ficam no log. Comandos não confirmados expiram; não são reaplicado
 
 Testes em base separada cobrem saldo, estorno, fidelidade, datas/fuso, exportação, permissões, comandos vinculados à sessão e regressões das TVs/PCs. Testes nativos usam ambiente de tela isolado e simulam ações de energia: nenhuma máquina de produção foi desligada ou reiniciada. A captura e o comportamento de cada jogo precisam ser confirmados no PC real após atualizar.
 
-## Ações dos PCs — 3.0.15
+## Ações dos PCs
 Na tela Computadores / TVs, administradores possuem o botão **Ações dos PCs**. As ações em lote afetam somente estações do tipo computador e nunca TVs. É possível liberar PCs em modo administrador, encerrar sessões em uso, desligar e reiniciar por escopo (todas, disponíveis ou uma específica, conforme a ação). Ao interromper uma sessão para liberar ADMIN ou executar energia, o saldo restante é devolvido pelas regras normais de encerramento.

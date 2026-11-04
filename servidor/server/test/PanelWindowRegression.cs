@@ -15,7 +15,7 @@ class PanelWindowRegression {
  static void Pump(Func<bool> done,int ms){var t=System.Diagnostics.Stopwatch.StartNew();while(!done()&&t.ElapsedMilliseconds<ms){Application.DoEvents();Thread.Sleep(20);}}
  [STAThread]static int Main(string[] args){try{
   string address="http://127.0.0.1:3999";var opened=new List<string>();var log=new List<string>();
-  string userData=Path.Combine(Path.GetTempPath(),"prime-panel-"+Guid.NewGuid().ToString("N"));
+  string userData=Path.Combine(Path.GetTempPath(),"gz-panel-"+Guid.NewGuid().ToString("N"));
   var host=new PanelHost(address,3999,null,line=>{lock(log)log.Add(line);},a=>opened.Add(a),userData);
   // 1) sem WebView2 neste computador: abre no navegador, uma vez, e anota o motivo
   host.Show();Pump(()=>opened.Count>0,15000);
@@ -49,8 +49,8 @@ class PanelWindowRegression {
   foreach(string bad in new[]{"javascript:alert(1)","file:///C:/Windows/System32/calc.exe","ms-msdt:/id","vbscript:x","\\\\servidor\\c$"})
    Check(!PanelWindow.OpenOutside(bad),"não pode abrir: "+bad);
   // 6) ícone do app do celular embutido (bandeja 16/20/24, janela 32, área de trabalho 48/256)
-  using(var s=typeof(PanelHost).Assembly.GetManifestResourceStream("prime.ico")){
-   Check(s!=null,"prime.ico deveria estar embutido no GameZoney.exe (/resource:prime.ico,prime.ico)");
+  using(var s=typeof(PanelHost).Assembly.GetManifestResourceStream("gamezoney.ico")){
+   Check(s!=null,"gamezoney.ico deveria estar embutido no GameZoney.exe (/resource:gamezoney.ico,gamezoney.ico)");
    var bytes=new byte[s.Length];s.Read(bytes,0,bytes.Length);int count=BitConverter.ToUInt16(bytes,4);var sizes=new HashSet<int>();
    for(int i=0;i<count;i++){int w=bytes[6+16*i];sizes.Add(w==0?256:w);}
    foreach(int size in new[]{16,20,24,32,48,256})Check(sizes.Contains(size),"ícone sem o tamanho "+size);

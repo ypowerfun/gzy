@@ -1,4 +1,4 @@
-# Produtos e Serviços / PDV — Servidor 3.0.23
+# Produtos e Serviços / PDV
 
 Menu **Produtos/Serviços** (abaixo de Transferir/Remover).
 

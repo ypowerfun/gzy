@@ -29,7 +29,7 @@ OutputBaseFilename=GameZoney-Instalador-Servidor-{#ServidorVersao}-Cliente-{#Cli
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=prime.ico
+SetupIconFile=gamezoney.ico
 
 [Languages]
 Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl

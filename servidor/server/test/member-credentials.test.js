@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {Store,verify}=require('../store');
-function fixture(t){const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-member-'));const s=new Store(directory);t.after(()=>{s.close();fs.rmSync(directory,{recursive:true,force:true})});return s}
+function fixture(t){const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-member-'));const s=new Store(directory);t.after(()=>{s.close();fs.rmSync(directory,{recursive:true,force:true})});return s}
 test('Nick único sem distinção de maiúsculas; senha protegida, persistente e ausente do painel/log',t=>{
  const s=fixture(t);const m=s.memberSave({name:'Fulano',username:'Fulano.PS4',password:'Senha-Original-123',phone:'92999999999'},'admin');
  assert(verify('Senha-Original-123',m.passwordHash));assert.equal(m.passwordScheme,'scrypt-v1');
@@ -30,7 +30,7 @@ test('CPF opcional é normalizado, validado e não pode se repetir entre cliente
  assert.throws(()=>s.memberSave({name:'CPF repetido',username:'repetido',cpf:'52998224725'},'admin'),/CPF já está cadastrado/);
 });
 test('3.0.45: Usuário/Nick com espaço e números',()=>{
- const fs=require('fs'),os=require('os'),path=require('path'),{Store}=require('../store');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-nick-'));const s=new Store(dir);
+ const fs=require('fs'),os=require('os'),path=require('path'),{Store}=require('../store');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-nick-'));const s=new Store(dir);
  try{
   const m=s.memberSave({name:'João',username:'  Joao   da Silva 123 ',password:'1234'},'admin');assert.equal(m.username,'Joao da Silva 123');
   assert.equal(s.memberSave({name:'Num',username:'12345'},'admin').username,'12345');

@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store');const cash=require('../cash');
 test('3.0.39: caixas anteriores — só administrador principal, só datas passadas, sem sobreposição, PDF e remoção',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-cash-prev-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-cash-prev-'));let store=new Store(dir);
  try{
   store.state.settings.timeZone='America/Manaus';const now=Date.parse('2026-10-07T15:00:00Z');
   const input={from:'2026-08-01',to:'2026-08-30',cents:20000,note:'antes do sistema'};
@@ -23,7 +23,7 @@ test('3.0.39: caixas anteriores — só administrador principal, só datas passa
  }finally{store.close();fs.rmSync(dir,{recursive:true,force:true})}
 });
 test('3.0.41: caixa anterior não substitui caixa registrado pelo sistema',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-cash-prev2-'));const store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-cash-prev2-'));const store=new Store(dir);
  try{
   store.state.settings.timeZone='America/Manaus';const now=Date.parse('2026-10-07T15:00:00Z');
   // caixa do sistema aberto em 10/09 e fechado em 11/09 (horário de Manaus)

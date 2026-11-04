@@ -1,11 +1,11 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto'),https=require('node:https');
 const {execFileSync,spawn}=require('node:child_process');const {createServer}=require('../server');
-const clientRoot=process.env.PRIME_CLIENT_TEST_EXE?path.dirname(process.env.PRIME_CLIENT_TEST_EXE):['../cliente/windows-client-1.0.1','prime-arena-client','GameZoneyCliente_MOD'].map(folder=>path.resolve(__dirname,'../..',folder)).find(folder=>fs.existsSync(path.join(folder,'transport.js')));
+const clientRoot=process.env.GZ_CLIENT_TEST_EXE?path.dirname(process.env.GZ_CLIENT_TEST_EXE):['../cliente/windows-client-1.0.2','GameZoneyCliente_MOD'].map(folder=>path.resolve(__dirname,'../..',folder)).find(folder=>fs.existsSync(path.join(folder,'transport.js')));
 if(!clientRoot)throw Error('Fonte do cliente Windows não encontrada para testar descoberta.');
 function bridge(input){return new Promise((resolve,reject)=>{const child=spawn(process.execPath,[path.join(clientRoot,'transport.js')],{windowsHide:true});let out='',err='';child.stdout.on('data',b=>out+=b);child.stderr.on('data',b=>err+=b);child.on('error',reject);child.on('exit',code=>{try{if(code)throw Error(err);resolve(JSON.parse(out))}catch(e){reject(e)}});child.stdin.end(JSON.stringify(input))})}
 test('Descoberta UDP e cadastro HTTPS: aprovação administrativa, vínculo exclusivo, recusa e pin',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-discovery-')),pfx=path.join(directory,'server.pfx');execFileSync(path.join(__dirname,'../CertTool.exe'),[pfx],{windowsHide:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-discovery-')),pfx=path.join(directory,'server.pfx');execFileSync(path.join(__dirname,'../CertTool.exe'),[pfx],{windowsHide:true});
  const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});const port=await app.startPC(0,pfx),udp=await app.discovery.start(0),base='http://127.0.0.1:'+app.server.address().port;
  const found=await bridge({action:'discover',settings:{},body:{target:'127.0.0.1',port:udp}});assert.equal(found.ok,true);assert.equal(found.data.servers.length,1);
  const settings={...found.data.servers[0],token:'0'.repeat(64),device:crypto.randomBytes(16).toString('hex')};assert.equal(settings.server,'https://127.0.0.1:'+port);assert.equal(settings.fingerprint,new crypto.X509Certificate(fs.readFileSync(pfx+'.cer')).fingerprint256.replaceAll(':',''));

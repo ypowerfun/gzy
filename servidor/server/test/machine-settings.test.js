@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');const {createServer}=require('../server');const {Store}=require('../store');
 test('Configuração global dos PCs: somente admin, booleanos, persistência e TVs intactas',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-policies-'));const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));let closed=false;t.after(async()=>{if(!closed)await app.close();fs.rmSync(directory,{recursive:true,force:true})});const base='http://127.0.0.1:'+app.server.address().port;let cookie='';
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-policies-'));const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));let closed=false;t.after(async()=>{if(!closed)await app.close();fs.rmSync(directory,{recursive:true,force:true})});const base='http://127.0.0.1:'+app.server.address().port;let cookie='';
  async function call(endpoint,body){const r=await fetch(base+'/api'+endpoint,{method:body===undefined?'GET':'POST',headers:{cookie,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return {status:r.status,data:await r.json()}}
  const tvs=JSON.stringify(app.store.state.stations),initial={...app.store.state.settings};assert.equal((await call('/machine-settings',{taskManager:false,controlPanel:false,securityOptions:false})).status,401);
  await call('/setup',{username:'admin',password:'Senha-123456'});await call('/login',{username:'admin',password:'Senha-123456'});

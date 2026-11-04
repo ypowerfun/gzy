@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store'),business=require('../business');
-function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-loyalty-auto-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});return store;}
+function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-loyalty-auto-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});return store;}
 function member(store,user='jogador'){return store.memberSave({name:'Jogador Teste',username:user,password:'Senha-123456'},'admin');}
 function program(store,points=10,minutes=60){return business.settings(store,{thresholdPoints:points,rewardMinutes:minutes,rate:1},'admin');}
 

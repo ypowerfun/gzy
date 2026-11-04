@@ -1,4 +1,4 @@
-# GameZoney — Servidor 3.0.6 / Cliente 2.0.4
+# GameZoney  / Cliente
 
 O cadastro de clientes aceita senhas curtas, inclusive de um caractere. Deixar a senha vazia ao criar o cliente prepara o registro para o primeiro acesso. Ao editar um cliente que já possui senha, deixar o campo vazio continua mantendo a senha existente. As senhas administrativas e de manutenção mantêm suas regras anteriores.
 
@@ -8,6 +8,6 @@ O cadastro da senha não consome minutos. O cliente continua comunicando seu est
 
 A mesma regra se aplica a registros antigos ou importados que tenham Usuário/Nick válido, estejam ativos e não tenham senha cadastrada. Este ajuste não adiciona um importador de arquivos de outros sistemas.
 
-Instale o servidor sobre a versão atual e atualize os PCs para o Cliente 2.0.4. Feche o servidor e encerre o cliente pela manutenção administrativa antes de instalar, usando o mesmo usuário do Windows. Os dados existentes são preservados. TVs continuam sendo iniciadas pela recepção, sem pedir senha na TV.
+Instale o servidor sobre a versão atual e atualize os PCs para o Cliente. Feche o servidor e encerre o cliente pela manutenção administrativa antes de instalar, usando o mesmo usuário do Windows. Os dados existentes são preservados. TVs continuam sendo iniciadas pela recepção, sem pedir senha na TV.
 
 Inclui também as melhorias solicitadas anteriormente: busca por nick para resgatar prêmios e iniciar sessões, históricos completos de pontos e sessões, exportação real para Excel (.xlsx) e backup completo diário.

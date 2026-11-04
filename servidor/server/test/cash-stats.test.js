@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {Store}=require('../store');const shop=require('../shop');const cash=require('../cash');const stats=require('../stats');
 
 test('3.0.31: caixa — abertura, vendas ligadas ao caixa, sangria/suprimento, fechamento com diferença e PDF',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-cash-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-cash-'));let store=new Store(dir);
  try{
   assert.equal(cash.current(store),null);
   assert.throws(()=>cash.move(store,{type:'sangria',cents:100,reason:'x'},'admin'),/Abra o caixa/);
@@ -43,7 +43,7 @@ test('3.0.31: caixa — abertura, vendas ligadas ao caixa, sangria/suprimento, f
 });
 
 test('3.0.31: estatística — máquina, horário, funcionário, cliente, cliente grátis, duração, vendas e fluxo de caixa',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-stats-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-stats-'));let store=new Store(dir);
  try{
   store.state.settings.timeZone='America/Manaus';
   const day='2026-09-10',base=stats.startOf(day,'America/Manaus');assert.equal(new Date(base).toISOString(),'2026-09-10T04:00:00.000Z');
@@ -82,7 +82,7 @@ test('3.0.31: estatística — máquina, horário, funcionário, cliente, client
 });
 
 test('3.0.31: uso das máquinas por funcionário é registrado pelo modo administrador do PC',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-staff-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-staff-'));let store=new Store(dir);
  try{
   const map=stats.staffTracker(store);
   map.set('1',{username:'admin',lastSeen:Date.now()});

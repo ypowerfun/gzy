@@ -1,4 +1,4 @@
-﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.1
+﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.2
 
 GameZoney — gestão de arenas gamer: PCs, TVs e consoles. Software proprietário da GameZoney. Todos os direitos reservados.
 
@@ -16,4 +16,3 @@ Computadores: instale o GameZoney Cliente em cada PC gamer e autorize o PC no pa
 
 O instalador configura as regras de firewall do GameZoney (somente a rede local). Se necessário, use "Reparar conexão de rede" no menu Iniciar.
 
-Se estiver trocando a PRIME ARENA pelo GameZoney neste PC: encerre e desinstale o servidor PRIME ARENA antes (os dois usam as mesmas portas). Para trazer os dados, faça um backup completo no painel da PRIME ARENA e restaure-o no GameZoney (menu Iniciar > Restaurar backup GameZoney).

@@ -20,7 +20,7 @@ Encerre o servidor pela bandeja e instale na mesma pasta e mesma conta Windows. 
 
 ---
 
-# GameZoney — Servidor 2.0.1
+# GameZoney
 
 ## Instalar e abrir
 
@@ -111,9 +111,9 @@ Os comandos VIDAA derivam da versão que você confirmou funcionando. A nova ver
 
 O código usa Node.js 24.21.0, Express, MQTT.js, SQLite do Node e um iniciador Windows em C#. As licenças de dependências acompanham o pacote. A autenticação VIDAA usa a referência comunitária vidaa-control e os arquivos de cliente já autorizados, conforme `LICENSE-vidaa-control.txt`.
 
-Para desenvolvimento: instale Node 24, execute `npm ci`, `npm test` e `npm start`. `PRIME_DATA_DIR` permite escolher uma pasta de testes. `PORT` permite outra porta. O executável instalado usa 3000.
+Para desenvolvimento: instale Node 24, execute `npm ci`, `npm test` e `npm start`. `GZ_DATA_DIR` permite escolher uma pasta de testes. `PORT` permite outra porta. O executável instalado usa 3000.
 
-Para recompilar o iniciador, use o compilador C# do .NET Framework com referências `System.Windows.Forms.dll`, `System.Drawing.dll`, opção `target:winexe` e `prime.ico`. Para gerar o instalador, compile `installer.iss` com Inno Setup após copiar `node.exe` para `runtime` e instalar as dependências de produção. Não inclua banco, pareamentos pessoais ou dados de teste no pacote.
+Para recompilar o iniciador, use o compilador C# do .NET Framework com referências `System.Windows.Forms.dll`, `System.Drawing.dll`, opção `target:winexe` e `gamezoney.ico`. Para gerar o instalador, compile `installer.iss` com Inno Setup após copiar `node.exe` para `runtime` e instalar as dependências de produção. Não inclua banco, pareamentos pessoais ou dados de teste no pacote.
 
 ## Atualização 2.0.1 — cadastro e ícone
 
