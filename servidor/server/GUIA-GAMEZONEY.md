@@ -43,7 +43,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configura
 ## 2. Primeiro acesso
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
-2. Em **Configuração**, confira o **valor da hora** (padrão R$ 7,00 — para mudar, clique em **Alterar valor**, digite o novo valor, **Confirmar** e informe a senha do administrador), o **endereço do servidor** usado pelas TVs e PCs (já vem com o IP e o fuso horário da máquina onde o servidor foi instalado) e o fuso horário. Se a máquina tem cabo de rede e Wi-Fi, use **Configurar IP** e escolha a rede em que estão as TVs e os PCs; para servidor em nuvem, escolha **Servidor em nuvem / outro endereço** e informe o domínio.
+2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) e o fuso horário pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **endereço do servidor** usado pelas TVs e PCs e o fuso já vêm com o IP e o fuso da máquina onde o servidor foi instalado; confira em **Configuração > Servidor IP** (seção 13).
 3. Cadastre as estações em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
@@ -150,10 +150,13 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ## 13. Configuração (administrador)
 
-- **Hora e funcionamento:** valor da hora (botão **Alterar valor** + senha do administrador), endereço do servidor para as TVs e PCs (botão **Configurar IP**: cabo, Wi-Fi ou servidor em nuvem), fuso horário.
 - **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
 - **Backup completo:** seção 14.
+- **Servidor IP** (abaixo do backup): mostra o endereço que as TVs e os PCs usam para chegar ao servidor.
+  - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma) e a porta; ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
+  - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). O servidor confere o IP em uso e ajusta o endereço, testa as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (busca dos PCs) e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). O resultado aparece em lista (✔/✖). Os PCs reencontram o servidor no novo IP sozinhos.
+- **Valor da hora e fuso horário:** ficam na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
 
 ---
 
@@ -220,7 +223,8 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 | PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 16); na recepção, Reparar conexão de rede |
 | PC novo não aparece para autorizar | Mesma rede do servidor (não use Wi-Fi de visitantes); firewall do servidor (Reparar conexão de rede) |
 | TV não troca de HDMI | Confira IP, entrada HDMI e pareamento (Parear TV); Testar HDMI |
-| TV não mostra o resumo | Endereço do servidor em Configuração; a TV precisa alcançar a porta 3000 |
+| TV não mostra o resumo | Configuração > Servidor IP > **Atualizar Automático**; a TV precisa alcançar a porta 3000 |
+| IP do servidor mudou | Configuração > Servidor IP > **Atualizar Automático** (ajusta o endereço, confere portas e firewall) |
 | Recarga recusada "Abra o caixa" | Caixa > Abrir caixa |
 | Barra do PC sumiu | Ctrl+Alt+T |
 | PC preso em "Limpeza pendente" | Feche o jogo indicado na tela; ele libera sozinho |

@@ -43,6 +43,7 @@ module.exports=function discovery(store,pc,identity){
     }catch{}
    });socket.bind(port,'0.0.0.0',()=>resolve(socket.address().port));
   })},
+  running(){return !!socket},
   close(){if(socket){try{socket.close()}catch{}socket=null}pending.clear()}
  };
 };

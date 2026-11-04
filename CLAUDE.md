@@ -24,7 +24,8 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 - Senha do servidor 4–24 caracteres; senhas em campos mascarados (`data-secret`), nunca `type=password`; WebView2 com salvar senha desligado.
 - Confirmações pela caixa própria `ask()` (nunca `confirm()`/`alert()` do navegador — mostrava o IP).
 - Menu: Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configuração | Sessão/Log, Faturas, Estatística | Caixa, Produtos/Serviços (Vendas / Gerenciamento de Produtos / Gerenciamento de Serviços).
-- Configuração › Hora e funcionamento: valor da hora só muda com **Alterar valor** + senha do administrador (`/api/settings` com `authPassword`); endereço e fuso vêm da máquina (`netinfo.js`); **Configurar IP** (cabo, Wi-Fi ou nuvem/domínio, `GET /api/network`); quadro "Dados e segurança" removido.
+- Valor da hora + fuso: engrenagem do card "Valor da hora" no Painel de controle (mudar valor pede senha do administrador, `/api/settings` com `authPassword`). Configuração › **Servidor IP** (abaixo do Backup): botão Servidor IP (cabo/Wi-Fi/nuvem, `GET /api/network`) e **Atualizar Automático** (`POST /api/network/auto`: IP atual, portas 3000/3443/3444, firewall via `firewall.ps1`). Endereço/fuso padrão da máquina (`netinfo.js`). Quadros "Hora e funcionamento" e "Dados e segurança" removidos da Configuração.
+- **Toda mudança atualiza o `GUIA-GAMEZONEY.md` junto** (servidor e cliente iguais).
 - **Queda de internet/rede não encerra sessão**: PC sem conexão fica vermelho, a sessão continua e o tempo segue contando; servidor reiniciado espera 5 min pelos PCs (`pc.js`).
 
 ## Testes

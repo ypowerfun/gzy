@@ -13,8 +13,9 @@ test('1.0.5: valor da hora exige senha do administrador; endereço aceita IP da 
  await call('/api/settings',{serverUrl:'https://gamezoney.exemplo.com.br/'});assert.equal(instance.store.state.settings.serverUrl,'https://gamezoney.exemplo.com.br');
  for(const bad of ['http://127.0.0.1:3000','http://localhost:3000','ftp://192.168.0.2','não é url'])await call('/api/settings',{serverUrl:bad},400);
  await call('/api/settings',{timeZone:'Lua/Base'},400);assert.equal(instance.store.state.settings.serverUrl,'https://gamezoney.exemplo.com.br');
+ await call('/api/settings',{serverUrl:'http://10.255.255.1:3000'});const auto=await call('/api/network/auto',{});assert.equal(auto.changed,true);assert.equal(instance.store.state.settings.serverUrl,auto.serverUrl);assert(netinfo.interfaces().some(i=>auto.serverUrl.includes(i.address)));assert(auto.checks.some(c=>c.name.startsWith('Firewall')));assert.equal((await call('/api/network/auto',{})).changed,false);
  const net=await call('/api/network');assert(Array.isArray(net.interfaces));assert.equal(typeof net.port,'number');
- await call('/api/operators',{username:'caixa',password:'caixa123',role:'operator'});await call('/api/logout',{});await call('/api/login',{username:'caixa',password:'caixa123'});await call('/api/network',undefined,400);await call('/api/settings',{hourCents:1,authPassword:'caixa123'},400);assert.equal(instance.store.state.settings.hourCents,900);
+ await call('/api/operators',{username:'caixa',password:'caixa123',role:'operator'});await call('/api/logout',{});await call('/api/login',{username:'caixa',password:'caixa123'});await call('/api/network',undefined,400);await call('/api/network/auto',{},400);await call('/api/settings',{hourCents:1,authPassword:'caixa123'},400);assert.equal(instance.store.state.settings.hourCents,900);
 });
 test('1.0.5: banco novo usa IP e fuso desta máquina; endereço de fábrica antigo é corrigido sem mexer no resto',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-netdef-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
