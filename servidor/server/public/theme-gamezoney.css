@@ -303,3 +303,6 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
 @media(min-width:701px) and (max-height:600px){
  nav button{padding:3px 12px}.nav-sep{margin:2px 14px}.brand{display:none}
 }
+/* 1.0.5: comprovante impresso sem cabeçalho/rodapé do navegador (endereço 127.0.0.1:3000, data, título, página).
+   Com margem de página zero o Chromium/WebView2 não imprime essas linhas; a margem vai para o próprio comprovante. */
+@media print{@page{size:A4;margin:0}html,body{margin:0!important;background:#fff!important}#invoice{padding:18mm 16mm!important}}

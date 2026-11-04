@@ -32,6 +32,7 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 - **Enviar Mensagem** (Ações dos PCs, `POST /api/pc/message`): aviso entregue no `state` do PC (`messages`, janela de 60 s); cliente mostra em `SystemMessage.cs` (janela em camadas, click-through, sem foco, fonte Montserrat da pasta `fonts` do cliente ou fallback). `*texto*` = dourado.
 - Menu lateral cabe em qualquer altura (Senha/Sair sempre visíveis; respeita o zoom automático `--fit-zoom` do `lockdown.js`).
 - **Desinstalar o Servidor** (`uninstall-cleanup.iss`): pergunta; Sim apaga `{app}`, `%LOCALAPPDATA%\GameZoney\painel*` e `data` menos `data\backups` (cópia `antes-desinstalar-*.sqlite` antes); mantém Documentos\bkp gamezoney e `data-anterior-*`; silenciosa mantém dados.
+- Telas não mostram porta: Servidor IP exibe só o IP/domínio (`gzHost()`), modal sem campo Porta (mantém a atual), Atualizar Automático usa nomes "Conexão das TVs/dos PCs/Busca dos PCs". Comprovante impresso sem cabeçalho/rodapé do navegador (`@page{margin:0}` no print).
 - **Toda mudança atualiza o `GUIA-GAMEZONEY.md` junto** (servidor e cliente iguais).
 - **Queda de internet/rede não encerra sessão**: PC sem conexão fica vermelho, a sessão continua e o tempo segue contando; servidor reiniciado espera 5 min pelos PCs (`pc.js`).
 

@@ -125,7 +125,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 - Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
 - Mostra receita válida, despesas, resultado (receita − despesas), ticket médio, evolução por dia e a lista de faturas e transações (recargas e vendas do PDV).
-- **Ver fatura** → imprimir ou salvar em PDF (comprovante interno, não fiscal).
+- **Ver fatura** → imprimir ou salvar em PDF (comprovante interno, não fiscal). O comprovante sai limpo, sem o endereço/IP do servidor, data de impressão ou título do navegador no topo e no rodapé.
 - **Cancelar** exige motivo, mantém o registro no histórico e estorna minutos e medalhas. Não é permitido se o cliente já usou o tempo/medalhas ou se a recarga foi feita durante uma sessão.
 - O CSV inclui todas as transações e despesas do período, inclusive as canceladas (identificadas), e abre no Excel.
 
@@ -181,10 +181,10 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
 - **Backup completo:** seção 16.
-- **Servidor IP** (abaixo do backup): mostra o endereço que as TVs e os PCs usam para chegar ao servidor.
-  - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma) e a porta; ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
+- **Servidor IP** (abaixo do backup): mostra o IP (ou o domínio, em nuvem) que as TVs e os PCs usam para chegar ao servidor — só o IP, sem a porta.
+  - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma); ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
   - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). No topo do resultado aparece se o servidor está **disponível localmente (rede local)** ou **em nuvem**.
-    - **Rede local:** confere o IP em uso e ajusta o endereço, testa as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (busca dos PCs) e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). Os PCs reencontram o servidor no novo IP sozinhos.
+    - **Rede local:** confere o IP em uso e ajusta o endereço, testa a conexão das TVs, a dos PCs e a busca dos PCs na rede e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). Os PCs reencontram o servidor no novo IP sozinhos.
     - **Nuvem** (endereço com domínio): mantém o endereço, confere se o domínio é encontrado e responde, e se o servidor também responde na rede local.
     - Também mostra a data e a hora do computador do servidor. O resultado aparece em lista (✔/✖) e vai para o Log.
 - **Valor da hora:** fica na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
