@@ -28,7 +28,7 @@ Encerre o servidor pela bandeja e instale na mesma pasta e mesma conta Windows. 
 2. Execute **GameZoney-Servidor-2.0.1-Setup.exe** no computador da recepção. Requer Windows 10/11 de 64 bits. O pacote já inclui Node.js e dependências; a instalação não baixa componentes.
 3. Escolha se deseja um atalho e se o servidor deve iniciar quando você entrar no Windows.
 4. Abra **GameZoney Servidor**. Crie o administrador com uma senha de pelo menos 8 caracteres. Não existe senha padrão.
-5. O painel abre no navegador padrão do Windows (Chrome, Firefox, Brave, Edge...). Fechar a aba não desliga nada — o servidor continua no ícone perto do relógio ("Abrir GameZoney" abre o painel de novo). Também pode ser acessado neste computador em http://127.0.0.1:3000.
+5. O painel abre como aplicativo (janela própria do GameZoney, sem abas nem barra de endereço) no navegador da arena: o navegador padrão do Windows primeiro (Chrome, Brave, Vivaldi, Opera; o Firefox abre numa janela nova) e, se ele não abrir, os outros instalados — o Edge só por último. Fechar a janela não desliga nada — o servidor continua no ícone perto do relógio ("Abrir GameZoney" abre o painel de novo). Também pode ser acessado neste computador em http://127.0.0.1:3000.
 
 O servidor permanece na bandeja do Windows, próximo ao relógio. Fechar a janela do painel ou sair da conta não encerra o servidor. Clique com o botão direito no ícone para abrir o painel, acessar dados e diagnóstico ou encerrar o servidor.
 

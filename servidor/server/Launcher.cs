@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Globalization;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.0.3.0")]
+[assembly: AssemblyVersion("1.0.4.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -25,26 +25,66 @@ class Launcher : ApplicationContext {
     static string root=AppDomain.CurrentDomain.BaseDirectory;
     static int MainCode=0;
     static void Open(string target) { Process.Start(new ProcessStartInfo(target){UseShellExecute=true}); }
-    // 1.0.3: o painel abre no navegador PADRÃO do Windows (Chrome, Firefox, Brave, Opera, Edge...). Sem janela embutida e sem
-    // depender do Edge. Se o Windows não tiver navegador padrão registrado (ou ele não abrir), tenta os navegadores instalados.
+    // 1.0.4: o painel abre como APLICATIVO do Windows (janela própria do GameZoney, sem abas nem barra de endereço) usando o
+    // navegador da arena, nunca procurando o Edge primeiro: o navegador padrão do Windows e, se ele não abrir, os instalados
+    // (Chrome, Brave, Vivaldi, Opera, Firefox; o Edge só por último). Chrome/Brave/Vivaldi/Opera/Edge: modo aplicativo (--app) com
+    // perfil próprio do painel (sem extensões nem abas do perfil pessoal). Firefox (não tem modo aplicativo): janela nova.
     static void OpenPanel(string address) {
-        try{Process.Start(new ProcessStartInfo(address){UseShellExecute=true});return;}catch{}
+        var tried=new List<string>();
+        string preferred=DefaultBrowser();
+        if(preferred!=null&&TryOpenIn(preferred,address))return;
+        if(preferred!=null)tried.Add(preferred.ToLowerInvariant());
         foreach(string browser in InstalledBrowsers()){
-            try{Process.Start(new ProcessStartInfo(browser,"\""+address+"\""){UseShellExecute=false});return;}catch{}
+            if(tried.Contains(browser.ToLowerInvariant()))continue;
+            if(TryOpenIn(browser,address))return;
         }
+        try{Process.Start(new ProcessStartInfo(address){UseShellExecute=true});return;}catch{}
         MessageBox.Show("Não foi possível abrir o navegador. Abra o endereço "+address+" no seu navegador (Chrome, Firefox, Brave...).","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+    }
+    static readonly string[] ChromiumBrowsers={"chrome.exe","brave.exe","vivaldi.exe","opera.exe","msedge.exe","chromium.exe"};
+    static bool TryOpenIn(string browser,string address){
+        try{
+            string exe=Path.GetFileName(browser).ToLowerInvariant();
+            string args;
+            if(Array.IndexOf(ChromiumBrowsers,exe)>=0){
+                Rectangle area=Screen.FromPoint(Cursor.Position).WorkingArea;
+                string profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoney","painel-app",Path.GetFileNameWithoutExtension(exe));
+                try{Directory.CreateDirectory(profile);}catch{}
+                args="--app=\""+address+"\" --user-data-dir=\""+profile+"\" --no-first-run --no-default-browser-check --disable-features=Translate --start-maximized --window-position="+area.X+","+area.Y+" --window-size="+area.Width+","+area.Height;
+            }
+            else if(exe=="firefox.exe")args="-new-window \""+address+"\"";
+            else args="\""+address+"\"";
+            Process.Start(new ProcessStartInfo(browser,args){UseShellExecute=false});
+            return true;
+        }catch{return false;}
+    }
+    // Navegador padrão do Windows para http (escolha do usuário em Configurações > Aplicativos padrão).
+    static string DefaultBrowser(){
+        try{
+            string progId=null;
+            using(var key=Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice"))progId=key==null?null:key.GetValue("ProgId") as string;
+            if(String.IsNullOrEmpty(progId))return null;
+            using(var key=Registry.ClassesRoot.OpenSubKey(progId+@"\shell\open\command"))return ExeFromCommand(key==null?null:key.GetValue("") as string);
+        }catch{return null;}
+    }
+    static string ExeFromCommand(string command){
+        if(String.IsNullOrEmpty(command))return null;
+        command=command.Trim();string exe=null;
+        if(command.StartsWith("\"")){int end=command.IndexOf('"',1);if(end>1)exe=command.Substring(1,end-1);}
+        else{int end=command.IndexOf(".exe",StringComparison.OrdinalIgnoreCase);if(end>0)exe=command.Substring(0,end+4);}
+        return exe!=null&&File.Exists(exe)?exe:null;
     }
     static void Restore(string data){using(var dialog=new OpenFileDialog{Title="Restaurar backup completo GameZoney",Filter="Backup GameZoney (*.zip)|*.zip",InitialDirectory=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"bkp gamezoney")}){if(dialog.ShowDialog()!=DialogResult.OK)return;if(MessageBox.Show("Restaurar os dados desta cópia? Os dados atuais serão guardados em uma pasta anterior. Saldos e sessões voltarão ao momento do backup.","Restaurar GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;var info=new ProcessStartInfo(Path.Combine(root,"BackupTool.exe"),"restore \""+dialog.FileName+"\" \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true};using(var process=Process.Start(info)){string output=process.StandardOutput.ReadToEnd(),error=process.StandardError.ReadToEnd();process.WaitForExit();if(process.ExitCode!=0)throw new Exception(error);MessageBox.Show(output+"\nAbra o servidor novamente.","Backup restaurado");}}}
     // Navegadores instalados (registro "App Paths" do Windows e pastas comuns), na ordem de preferência.
     static IEnumerable<string> InstalledBrowsers(){
         var found=new List<string>();
-        foreach(string exe in new string[]{"chrome.exe","firefox.exe","brave.exe","opera.exe","vivaldi.exe","msedge.exe"})
+        foreach(string exe in new string[]{"chrome.exe","brave.exe","vivaldi.exe","opera.exe","firefox.exe","msedge.exe"})
         foreach(RegistryKey hive in new RegistryKey[]{Registry.CurrentUser,Registry.LocalMachine}){
             try{using(var key=hive.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"+exe)){string path=key==null?null:key.GetValue("") as string;if(!String.IsNullOrEmpty(path)){path=path.Trim('"');if(File.Exists(path)&&!found.Contains(path))found.Add(path);}}}catch{}
         }
         string local=Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         foreach(string folder in new string[]{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),Environment.GetEnvironmentVariable("ProgramW6432"),local})
-        foreach(string rel in new string[]{@"Google\Chrome\Application\chrome.exe",@"Mozilla Firefox\firefox.exe",@"BraveSoftware\Brave-Browser\Application\brave.exe",@"Programs\Opera\opera.exe",@"Vivaldi\Application\vivaldi.exe",@"Microsoft\Edge\Application\msedge.exe"}){
+        foreach(string rel in new string[]{@"Google\Chrome\Application\chrome.exe",@"BraveSoftware\Brave-Browser\Application\brave.exe",@"Vivaldi\Application\vivaldi.exe",@"Programs\Opera\opera.exe",@"Mozilla Firefox\firefox.exe",@"Microsoft\Edge\Application\msedge.exe"}){
             if(String.IsNullOrEmpty(folder))continue;
             string path=Path.Combine(folder,rel);if(File.Exists(path)&&!found.Contains(path))found.Add(path);
         }

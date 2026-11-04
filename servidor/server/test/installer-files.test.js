@@ -8,9 +8,9 @@ test('3.0.48: instalador do servidor inclui todos os módulos .js usados',()=>{
  while(queue.length){const file=queue.shift();const src=fs.readFileSync(path.join(root,file),'utf8');for(const m of src.matchAll(/require\('\.\/([a-z0-9-]+)'\)/g)){const f=m[1]+'.js';if(!needed.has(f)&&fs.existsSync(path.join(root,f))){needed.add(f);queue.push(f);}}}
  for(const f of needed)assert(listed.has(f),'falta no installer.iss: '+f);
 });
-// 1.0.3: sem WebView2. O painel abre no navegador padrão do Windows (Chrome, Firefox, Brave, Edge...), com reserva para
-// os navegadores instalados quando o padrão não abre.
-test('1.0.3: painel no navegador padrão, sem WebView2 no iniciador nem no instalador',()=>{
+// 1.0.3/1.0.4: sem WebView2. O painel abre como aplicativo (janela própria, sem abas) no navegador da arena: o padrão do
+// Windows primeiro e depois os instalados (Chrome, Brave, Vivaldi, Opera, Firefox; o Edge por último).
+test('1.0.4: painel como aplicativo no navegador da arena (padrão primeiro, Edge por último), sem WebView2',()=>{
  const root=path.join(__dirname,'..'),iss=fs.readFileSync(path.join(root,'installer.iss'),'utf8'),launcher=fs.readFileSync(path.join(root,'Launcher.cs'),'utf8');
  assert(!/WebView2|PanelWindow|PanelHost/.test(launcher),'o iniciador não usa mais o WebView2');
  assert(!/Source: "[^"]*WebView2/i.test(iss)&&!iss.includes('webview2-installer.iss'),'o instalador não leva mais o WebView2');
@@ -18,7 +18,11 @@ test('1.0.3: painel no navegador padrão, sem WebView2 no iniciador nem no insta
  assert(iss.includes('Type: files; Name: "{app}\\Microsoft.Web.WebView2.Core.dll"')&&iss.includes('Type: filesandordirs; Name: "{app}\\runtimes"'),'a atualização apaga o WebView2 de instalações anteriores');
  assert(launcher.includes('Process.Start(new ProcessStartInfo(address){UseShellExecute=true})'),'abre no navegador padrão do Windows');
  for(const exe of ['chrome.exe','firefox.exe','brave.exe','msedge.exe'])assert(launcher.includes('"'+exe+'"'),'reserva: '+exe);
- assert(!launcher.includes('--app=')&&!launcher.includes('painel-edge'),'não força mais o Edge em modo aplicativo');
+ assert(!launcher.includes('painel-edge')&&!launcher.includes('FindEdge'),'não procura mais o Edge primeiro');
+ assert(launcher.includes('string preferred=DefaultBrowser();')&&launcher.includes('UrlAssociations\\http\\UserChoice'),'usa o navegador padrão do Windows primeiro');
+ assert(launcher.includes('args="--app=\\""+address')&&launcher.includes('"painel-app"'),'Chrome/Brave/Vivaldi/Opera: modo aplicativo com perfil próprio do painel');
+ assert(launcher.includes('if(exe=="firefox.exe")args="-new-window'),'Firefox: janela nova');
+ const order=launcher.match(/new string\[\]\{"chrome\.exe",[^}]*\}/)[0];assert(order.indexOf('msedge.exe')>order.indexOf('firefox.exe'),'Edge só por último');
  assert(/menu\.Items\.Add\("Abrir GameZoney",null,\(s,e\)=>ShowPanel\(\)\)/.test(launcher)&&launcher.includes('void ShowPanel(){OpenPanel(address);}'),'menu do ícone abre o painel no navegador');
  assert(launcher.includes('if(!silent&&!selftest)OpenPanel('),'segunda abertura (atalho) abre o painel no navegador');
 });

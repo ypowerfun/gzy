@@ -2,7 +2,7 @@
 // GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
 // Confere se TODAS as declarações de versão estão iguais antes de gerar o instalador (acerta package.json/package-lock.json).
 const fs=require('node:fs'),path=require('node:path');
-const VERSION='1.0.3';
+const VERSION='1.0.4';
 const root=path.resolve(__dirname,'..','server');
 for(const name of ['package.json','package-lock.json']){
   const file=path.join(root,name),data=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -12,7 +12,7 @@ for(const name of ['package.json','package-lock.json']){
 }
 const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
-  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'RefreshHttpsStatus();','static void OpenPanel(string address)','UseShellExecute=true','InstalledBrowsers()','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
+  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'RefreshHttpsStatus();','static void OpenPanel(string address)','UseShellExecute=true','InstalledBrowsers()','DefaultBrowser()','painel-app','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "androidtv.js"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
   'public/index.html':[`SERVER // ${VERSION}`,'theme-gamezoney.css','logo-gamezoney.png'],
