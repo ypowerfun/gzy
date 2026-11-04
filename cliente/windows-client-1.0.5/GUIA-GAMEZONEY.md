@@ -10,7 +10,7 @@ O GameZoney tem duas partes:
 Índice: 1. Instalação · 2. Primeiro acesso · 3. Painel de controle · 4. TVs (VIDAA e Android) · 5. Clientes e recargas ·
 6. Visitante · 7. Caixa · 8. Produtos/Serviços (Vendas) · 9. Faturas · 10. Fidelidade e promoções ·
 11. Transferir/Remover saldo · 12. Sessão/Log, Estatística · 13. Configuração · 14. Backup · 15. Cliente nos PCs ·
-16. Quedas de energia e de rede · 17. Remover, reinstalar e desinstalar · 18. Problemas comuns
+16. Quedas de energia, de rede e de internet · 17. Remover, reinstalar e desinstalar · 18. Problemas comuns
 
 ---
 
@@ -192,10 +192,12 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 16. Quedas de energia e de rede
+## 16. Quedas de energia, de rede e de internet
 
-- **Só o servidor caiu:** os PCs continuam a sessão e o relógio conta normalmente; ao voltar, o tempo é reconciliado.
-- **Só o PC caiu:** depois de 10 segundos sem resposta a estação fica **vermelha** e o servidor espera **1 minuto**. Se o PC voltar, a sessão continua; se não, encerra e devolve o tempo a partir do momento em que ficou vermelha.
+- **Só o servidor caiu:** os PCs continuam a sessão e o relógio conta normalmente; ao voltar, o tempo é reconciliado. Depois de reiniciar, o servidor espera até **5 minutos** os PCs reconectarem (o roteador pode estar voltando junto) antes de usar os pontos de controle.
+- **Queda da internet ou da rede (o PC ficou sem falar com o servidor):** depois de 10 segundos a estação fica **vermelha**, mas a **sessão continua ativa e o tempo segue contando** no PC e no servidor, pelo tempo que for preciso. O cliente pode continuar jogando o que não precisa de internet. Quando a conexão volta, a estação fica verde e o tempo é conferido com o do PC. Se o tempo acabar durante a queda, o PC bloqueia sozinho e o servidor encerra a sessão por tempo esgotado. O painel mostra "Sem conexão há X min. A sessão continua ativa".
+- **Novos clientes durante a queda da internet:** entram normalmente, porque o login só usa a rede local (PC → servidor). Se a própria rede local cair (roteador desligado), ninguém consegue entrar até ela voltar, mas quem já está jogando continua.
+- **PC desligado no meio da sessão:** a sessão não é mais encerrada sozinha depois de 1 minuto. Ao ligar o PC de novo, o cliente devolve o tempo a partir do momento em que ele desligou (recuperação automática). Se o PC não for ligado de novo, encerre a sessão pelo painel.
 - **Queda geral (servidor e PCs):** os dois guardam pontos de controle da sessão. Ao voltar, é usado o **maior saldo seguro**, para o cliente não perder o tempo em que tudo ficou desligado. O painel mostra a auditoria; se ainda houver diferença, o administrador tem o botão **Devolver saldo** (único e registrado no log).
 - Mensagens de conexão na tela do PC: "o servidor não respondeu… procurando na rede" (servidor fechado ou mudou de IP — o cliente reencontra sozinho), "a conexão 3443/TCP falhou" (firewall da recepção: use Reparar conexão de rede no servidor), "o servidor tem outra identidade" (use Reconfigurar conexão no PC). Registro em `%LOCALAPPDATA%\GameZoneyCliente\connection.log` no PC.
 

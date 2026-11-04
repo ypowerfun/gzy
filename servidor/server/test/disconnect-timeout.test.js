@@ -1,19 +1,32 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');const {createServer}=require('../server');
 
-test('PC sem resposta fica vermelho em 10 s, servidor aguarda 1 minuto e só então encerra devolvendo o saldo desde o momento em que ficou vermelho',async t=>{
+test('queda da rede/internet: PC sem resposta fica vermelho em 10 s, mas a sessão continua ativa e o tempo segue contando até o fim',async t=>{
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-signal-'));const app=createServer({directory,noTimer:true});t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});const store=app.store,pc=app.pc;
  store.state.stations.push({id:'offline',name:'PC offline',kind:'computer',active:true});const m=store.memberSave({name:'Pessoa',username:'pessoa',password:'Senha-123456'},'admin');store.credit(m.id,{minutes:10},'admin');const now=Date.now(),session=store.start('offline',m.id,'admin',now-120000);pc.seen.set('offline',now);
- const before=store.remaining(session,now);assert(before<=480&&before>470);assert.equal(pc.expireDisconnected('offline',now+9999),null);assert.equal(store.activeForStation('offline').id,session.id);
- assert.equal(pc.expireDisconnected('offline',now+10000),null);assert.equal(pc.connected('offline',now+10000),false);assert(pc.reconnectWatch.has('offline'));assert.equal(pc.reconnectSecondsLeft('offline',now+10000),60);assert.equal(pc.expireDisconnected('offline',now+69999),null);assert.equal(store.activeForStation('offline').id,session.id);
- const finished=pc.expireDisconnected('offline',now+70000);assert.equal(finished.id,session.id);assert.equal(finished.reason,'sem conexão por 1 minuto');assert.equal(store.activeForStation('offline'),undefined);assert.equal(m.creditSeconds,before-10);assert.equal(finished.remainingSeconds,before-10);assert.equal(pc.reconnectWatch.has('offline'),false);
+ const before=store.remaining(session,now);assert(before<=480&&before>470);assert.equal(pc.expireDisconnected('offline',now+9999),null);assert.equal(pc.offlineSeconds('offline',now+9999),null);
+ assert.equal(pc.expireDisconnected('offline',now+10000),null);assert.equal(pc.connected('offline',now+10000),false);assert(pc.reconnectWatch.has('offline'));assert.equal(pc.offlineSeconds('offline',now+10000),0);
+ // 1 minuto, 5 minutos e 7 minutos sem contato: a sessão NÃO é encerrada e o tempo continua correndo normalmente
+ for(const later of [70000,300000,420000]){assert.equal(pc.expireDisconnected('offline',now+later),null);assert.equal(store.activeForStation('offline').id,session.id);}
+ assert.equal(pc.offlineSeconds('offline',now+420000),410);assert.equal(store.remaining(session,now+420000),before-420);assert.equal(m.creditSeconds,0);
+ assert(store.logs({type:'computador'}).some(l=>l.detail.includes('A sessão continua ativa e o tempo segue contando')));
+ // a conexão volta: o PC informa o tempo que contou sozinho e a sessão segue
+ pc.markSeen('offline',now+430000);assert.equal(pc.reconnectWatch.has('offline'),false);assert.equal(pc.connected('offline',now+430000),true);assert.equal(store.activeForStation('offline').id,session.id);
+ const sync=pc.reconcileClientTime(store.station('offline'),{clientSessionId:session.id,clientRemainingSeconds:before-430,clientAllocatedSeconds:session.allocatedSeconds},now+430000);assert(sync);assert(Math.abs(store.remaining(session,now+430000)-(before-430))<=5);
 });
 
-test('PC vermelho que reconecta dentro de 1 minuto volta ao verde e mantém a sessão',async t=>{
+test('PC sem conexão até o fim do tempo: a sessão termina normalmente por tempo esgotado',async t=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-signal-end-'));const app=createServer({directory,noTimer:true});t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});const store=app.store,pc=app.pc;
+ store.state.stations.push({id:'fim',name:'PC fim',kind:'computer',active:true});const m=store.memberSave({name:'Fim',username:'fim',password:'Senha-123456'},'admin');store.credit(m.id,{minutes:2},'admin');const now=Date.now(),session=store.start('fim',m.id,'admin',now);pc.seen.set('fim',now);
+ assert.equal(pc.expireDisconnected('fim',now+60000),null);assert.equal(store.activeForStation('fim').id,session.id);
+ const finished=pc.expireDisconnected('fim',now+125000);assert(finished);assert.equal(finished.reason,'tempo esgotado');assert.equal(finished.remainingSeconds,0);assert.equal(store.activeForStation('fim'),undefined);
+});
+
+test('PC vermelho que reconecta volta ao verde e mantém a sessão',async t=>{
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-reconnect-'));const app=createServer({directory,noTimer:true});t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});const store=app.store,pc=app.pc;
  store.state.stations.push({id:'blip',name:'PC oscilando',kind:'computer',active:true});const m=store.memberSave({name:'Oscila',username:'oscila',password:'Senha-123456'},'admin');store.credit(m.id,{minutes:10},'admin');const now=Date.now(),session=store.start('blip',m.id,'admin',now-60000);pc.seen.set('blip',now);
  assert.equal(pc.expireDisconnected('blip',now+15000),null);assert(pc.reconnectWatch.has('blip'));
- pc.markSeen('blip',now+50000);assert.equal(pc.reconnectWatch.has('blip'),false);assert.equal(pc.connected('blip',now+50000),true);assert.equal(pc.reconnectSecondsLeft('blip',now+50000),null);
+ pc.markSeen('blip',now+50000);assert.equal(pc.reconnectWatch.has('blip'),false);assert.equal(pc.connected('blip',now+50000),true);assert.equal(pc.offlineSeconds('blip',now+50000),null);
  assert.equal(pc.expireDisconnected('blip',now+75000),null);assert.equal(store.activeForStation('blip').id,session.id);assert(store.logs({type:'computador'}).some(l=>l.detail.includes('Conexão restabelecida')));
  assert.equal(pc.expireDisconnected('blip',now+50000+9000),null);assert.equal(pc.reconnectWatch.has('blip'),false);
 });
@@ -39,7 +52,7 @@ test('queda simultânea sem retorno do PC usa o último checkpoint persistido ap
 });
 
 
-test('regras complementares: queda do servidor preserva sessão para reconexão; queda do cliente com servidor ativo encerra e devolve saldo',async t=>{
+test('regras complementares: queda do servidor preserva sessão para reconexão; queda da rede com servidor ativo também mantém a sessão',async t=>{
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-dual-offline-'));let app=createServer({directory,noTimer:true});let store=app.store;
  store.state.stations.push({id:'dual',name:'PC dual',kind:'computer',active:true});const m=store.memberSave({name:'Dual',username:'dual',password:'Senha-123456'},'admin');store.credit(m.id,{minutes:10},'admin');const started=Date.now()-60000;const session=store.start('dual',m.id,'admin',started);const id=session.id;app.pc.reconcileClientTime(store.station('dual'),{clientSessionId:id,clientRemainingSeconds:540,clientRunId:'d'.repeat(32),systemUptimeMs:500000},Date.now());
  await app.close();
@@ -47,6 +60,6 @@ test('regras complementares: queda do servidor preserva sessão para reconexão;
  app=createServer({directory,noTimer:true});t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});store=app.store;const restored=store.activeForStation('dual');assert(restored);assert.equal(restored.id,id);const back=Date.now();assert.equal(app.pc.expireDisconnected('dual',back+10000),null);
  // Cliente volta a falar com o servidor e a sessão permanece ativa.
  app.pc.reconcileClientTime(store.station('dual'),{clientSessionId:id,clientRemainingSeconds:520,clientRunId:'e'.repeat(32),systemUptimeMs:510000},back+11000);app.pc.seen.set('dual',back+11000);assert.equal(store.activeForStation('dual').id,id);
- // Depois, com servidor ativo, o PC deixa de responder: fica vermelho em 10 s; após mais 1 minuto sem reconectar a sessão é encerrada.
- const before=store.remaining(store.activeForStation('dual'),back+11000);assert.equal(app.pc.expireDisconnected('dual',back+21000),null);const finished=app.pc.expireDisconnected('dual',back+81000);assert(finished);assert.equal(finished.reason,'sem conexão por 1 minuto');assert.equal(store.activeForStation('dual'),undefined);assert(store.member(m.id).creditSeconds>0);assert(store.member(m.id).creditSeconds<=before);
+ // Depois, com servidor ativo, o PC deixa de responder: fica vermelho em 10 s e a sessão CONTINUA (queda de rede/internet não tira o cliente).
+ const before=store.remaining(store.activeForStation('dual'),back+11000);assert.equal(app.pc.expireDisconnected('dual',back+21000),null);assert.equal(app.pc.expireDisconnected('dual',back+81000),null);assert.equal(store.activeForStation('dual').id,id);assert.equal(store.member(m.id).creditSeconds,0);assert(store.remaining(store.activeForStation('dual'),back+81000)<=before-70);
 });
