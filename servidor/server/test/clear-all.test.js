@@ -19,11 +19,11 @@ test('3.0.34: ClearAll apaga todos os registros e mantém estações, pareamento
   assert.equal(r.before.clientes,1);assert.equal(r.before.contas,1);assert(fs.existsSync(r.backup));
   store=new Store(dir);const s=store.state;
   for(const k of ['operators','members','sessions','sales','promotions','products','services','shopSales','cashRegisters','stockMoves','expenses','bills','loyaltyLedger','freeGrants','staffUsage','balanceAdjustments'])assert.equal((s[k]||[]).length,0,k);
-  assert.equal(s.settings.hourCents,900);assert.equal(s.settings.timeZone,'America/Sao_Paulo');
+  assert.equal(s.settings.hourCents,900);assert.equal(s.settings.timeZone,require('../netinfo').timeZone()||'America/Sao_Paulo'); // 1.0.5: fuso automático (o do Windows) quando detectável
   const kept=s.stations.find(x=>x.id==='pc1');assert.equal(kept.pcTokenHash,'hash-do-token');assert.equal(kept.pcDevice,'a'.repeat(32));assert.deepEqual(kept.loginLayout,{x:1});
   assert(s.stations.some(x=>x.id==='1'));assert(!s.stations.some(x=>x.id==='old'));
   assert(fs.existsSync(path.join(dir,'pairing','tv-1.json')));assert(fs.existsSync(path.join(dir,'pc-server.pfx')));
-  const logs=store.logs();assert.equal(logs.length,1);assert.match(logs[0].detail,/ClearAll/);
+  const logs=store.logs().filter(l=>!/Fuso horário ajustado/.test(l.detail));assert.equal(logs.length,1);assert.match(logs[0].detail,/ClearAll/);
   assert.equal(s.runtime.cleanShutdown,true);assert.equal(cash.current(store),null);
   // numeracao recomeca
   const m2=store.memberSave({name:'Bia',username:'bia'},'novo');const sale=store.credit(m2.id,{minutes:30,paymentMethod:'cash'},'novo');assert.equal(sale.invoiceNumber,1);

@@ -21,7 +21,7 @@ test('1.0.5: banco novo usa IP e fuso desta máquina; endereço de fábrica anti
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-netdef-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  let s=new Store(dir);assert.equal(s.state.settings.serverUrl,netinfo.defaultUrl()||'http://192.168.1.100:3000');assert.equal(s.state.settings.timeZone,netinfo.timeZone()||'America/Manaus');
  s.state.settings.serverUrl='http://192.168.1.100:3000';s.state.settings.timeZone='America/Belem';s.state.settings.hourCents=650;s.persist();s.db.close();
- s=new Store(dir);const ip=netinfo.defaultUrl();if(ip&&!netinfo.interfaces().some(i=>i.address==='192.168.1.100'))assert.equal(s.state.settings.serverUrl,ip);assert.equal(s.state.settings.timeZone,'America/Belem');assert.equal(s.state.settings.hourCents,650);
+ s=new Store(dir);const ip=netinfo.defaultUrl();if(ip&&!netinfo.interfaces().some(i=>i.address==='192.168.1.100'))assert.equal(s.state.settings.serverUrl,ip);assert.equal(s.state.settings.timeZone,netinfo.timeZone()||'America/Belem');assert.equal(s.state.settings.hourCents,650);
  s.state.settings.serverUrl='http://10.0.0.5:3000';s.persist();s.db.close();s=new Store(dir);assert.equal(s.state.settings.serverUrl,'http://10.0.0.5:3000');s.db.close();
  assert.equal(netinfo.kindOf('Wi-Fi'),'wifi');assert.equal(netinfo.kindOf('Ethernet'),'cabo');assert.equal(netinfo.kindOf('vEthernet (WSL)'),'virtual');assert.equal(netinfo.kindOf('wlan0'),'wifi');
 });
