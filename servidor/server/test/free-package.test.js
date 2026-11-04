@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {createServer}=require('../server');
 test('3.0.49: pacote grátis exige OBS e chave de autenticação (senha do usuário logado), sem forma de pagamento',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-free-'));const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-free-'));const app=createServer({directory,noTimer:true});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  const base='http://127.0.0.1:'+app.server.address().port;let cookie='';
  const api=async(url,body)=>{const r=await fetch(base+'/api'+url,{method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const c=r.headers.get('set-cookie');if(c)cookie=c.split(';')[0];return{status:r.status,data:await r.json()}};

@@ -19,12 +19,8 @@ class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
     readonly object logLock=new object();
-    // 3.0.53: HTTPS dos apps (Caddy, pasta C:\GameZoneyHTTPS) abre escondido junto com o servidor e fecha junto com ele.
-    Process https; string httpsDir; int httpsRestarts=0; DateTime httpsStartedAt; bool httpsWarned=false, httpsExternal=false;
-    string httpsWarning; ToolStripMenuItem httpsStatus;
     // 3.0.68: painel em janela própria (PanelHost/PanelWindow, no fim deste arquivo).
     PanelHost panel; bool panelHintShown;
-    readonly object httpsLock=new object();
     static string root=AppDomain.CurrentDomain.BaseDirectory;
     static int MainCode=0;
     static void Open(string target) { Process.Start(new ProcessStartInfo(target){UseShellExecute=true}); }
@@ -47,16 +43,16 @@ class Launcher : ApplicationContext {
         }
         return null;
     }
-    // 3.0.68: ícone do app do celular (prime.ico com vários tamanhos, embutido no GameZoney.exe).
+    // 3.0.68: ícone do GameZoney (gamezoney.ico com vários tamanhos, embutido no GameZoney.exe).
     static Icon AppIcon(Size size){
-        try{using(var stream=typeof(Launcher).Assembly.GetManifestResourceStream("prime.ico")){if(stream!=null)return new Icon(stream,size);}}catch{}
+        try{using(var stream=typeof(Launcher).Assembly.GetManifestResourceStream("gamezoney.ico")){if(stream!=null)return new Icon(stream,size);}}catch{}
         try{return Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{return null;}
     }
     void ShowPanel(){if(panel!=null)panel.Show();else OpenPanel(address);}
     void Log(string line) { if(line==null)return; lock(logLock) {try{File.AppendAllText(Path.Combine(data,"server.log"),DateTime.Now.ToString("s")+" "+line+Environment.NewLine);}catch{}} }
     string Request(string path,bool stop=false) {
         HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=1000;r.ReadWriteTimeout=1000;
-        if(stop){r.Method="POST";r.Headers["X-Prime-Control"]=token;r.ContentLength=0;}
+        if(stop){r.Method="POST";r.Headers["X-GZ-Control"]=token;r.ContentLength=0;}
         using(var response=r.GetResponse())using(var reader=new StreamReader(response.GetResponseStream()))return reader.ReadToEnd();
     }
     Launcher(string directory,int port,bool silent,bool selftest) {
@@ -67,103 +63,26 @@ class Launcher : ApplicationContext {
         using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);if(result.AsyncWaitHandle.WaitOne(400)&&probe.Connected)throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");}
         var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
-        Environment.SetEnvironmentVariable("PRIME_DATA_DIR",data);Environment.SetEnvironmentVariable("PRIME_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
-        Environment.SetEnvironmentVariable("PRIME_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-        if(selftest){Environment.SetEnvironmentVariable("PRIME_NO_PC_TLS","1");Environment.SetEnvironmentVariable("PRIME_NO_BACKUP","1");}
+        Environment.SetEnvironmentVariable("GZ_DATA_DIR",data);Environment.SetEnvironmentVariable("GZ_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
+        Environment.SetEnvironmentVariable("GZ_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
         child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
         bool ready=false;for(int i=0;i<60;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
         var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());menu.Items.Add("Abrir no navegador",null,(s,e)=>OpenPanel(address));menu.Items.Add("Abrir pasta de dados",null,(s,e)=>Open(data));menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
-        // GameZoney 1.0.1: sem apps de celular, sem o servidor HTTPS dos apps (Caddy) no menu nem ao abrir.
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Encerrar servidor",null,(s,e)=>{if(MessageBox.Show("Encerrar o servidor? As TVs não serão controladas enquanto ele estiver fechado. O prazo das sessões continua correndo.","GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes)ExitThread();});
         tray=new NotifyIcon();tray.Text="GameZoney • Servidor ativo";tray.Icon=AppIcon(SystemInformation.SmallIconSize);tray.ContextMenuStrip=menu;tray.Visible=true;tray.DoubleClick+=(s,e)=>ShowPanel();
         panel=new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel);panel.Listen();
         panel.Hidden=()=>{if(panelHintShown||tray==null)return;panelHintShown=true;tray.ShowBalloonTip(6000,"GameZoney","O servidor continua ativo. Para abrir o painel de novo, use o ícone perto do relógio.",ToolTipIcon.Info);};
         SystemEvents.SessionEnding+=OnSessionEnding;
-        RefreshHttpsStatus();
-        monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Tick+=(s,e)=>{WatchHttps();RefreshHttpsStatus();};monitor.Start();
+        monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Start();
         if(!silent)ShowPanel();
     }
-    static string FindHttps(){
-        foreach(string dir in new string[]{Path.Combine(root,"https"),@"C:\GameZoneyHTTPS"}){
-            if(File.Exists(Path.Combine(dir,"Caddy.exe"))&&File.Exists(Path.Combine(dir,"Caddyfile")))return dir;
-        }
-        return null;
-    }
-    static bool PortBusy(int port){
-        using(var probe=new TcpClient()){try{var result=probe.BeginConnect("127.0.0.1",port,null,null);return result.AsyncWaitHandle.WaitOne(400)&&probe.Connected;}catch{return false;}}
-    }
-    // Qualquer resposta da porta de administração do Caddy (localhost:2019) significa que um Caddy já está aberto.
-    static bool CaddyAlive(){
-        try{var r=(HttpWebRequest)WebRequest.Create("http://localhost:2019/config/");r.Proxy=null;r.Timeout=800;r.ReadWriteTimeout=800;using(r.GetResponse()){}return true;}
-        catch(WebException e){return e.Response!=null;}
-        catch{return false;}
-    }
-    static void CaddyStopRequest(){
-        try{var r=(HttpWebRequest)WebRequest.Create("http://localhost:2019/stop");r.Proxy=null;r.Method="POST";r.ContentLength=0;r.Timeout=3000;r.ReadWriteTimeout=3000;using(r.GetResponse()){}}catch{}
-    }
-    void HttpsLog(string line){if(line==null)return;lock(logLock){try{File.AppendAllText(Path.Combine(data,"https.log"),DateTime.Now.ToString("s")+" "+line+Environment.NewLine);}catch{}}}
-    // O aviso é mostrado pelo relógio da interface (RefreshHttpsStatus), nunca direto de outra thread.
-    void Warn(string message){Log(message);if(!httpsWarned){httpsWarned=true;httpsWarning=message;}}
-    void UpdateTray(){}
-    void RefreshHttpsStatus(){
-        bool running=https!=null&&!https.HasExited;
-        string state=running?"iniciado":httpsExternal?"iniciado (aberto à mão)":httpsDir==null?"não encontrado":"parado";
-        if(httpsStatus!=null)httpsStatus.Text="● Servidor do app: "+state;
-        if(tray!=null){try{tray.Text="GameZoney • Servidor ativo"+(running||httpsExternal?" • App ativo":"");}catch{}}
-        string warning=httpsWarning;httpsWarning=null;
-        if(warning!=null&&tray!=null){try{tray.ShowBalloonTip(8000,"GameZoney",warning,ToolTipIcon.Warning);}catch{}}
-    }
-    void StartHttps(){
-        lock(httpsLock){
-            httpsDir=FindHttps();httpsExternal=false;
-            if(httpsDir==null){Log("HTTPS dos apps: Caddy.exe e Caddyfile não encontrados em C:\\GameZoneyHTTPS (opcional).");return;}
-            if(CaddyAlive()){httpsExternal=true;Log("HTTPS dos apps: um Caddy já estava aberto; mantido como está (use Reiniciar servidor do app para o servidor assumir).");return;}
-            if(PortBusy(443)){Warn("O servidor do app não iniciou: a porta 443 está ocupada por outro programa.");return;}
-            LaunchCaddy();
-        }
-    }
-    void LaunchCaddy(){
-        string log=Path.Combine(data,"https.log");
-        try{if(File.Exists(log)&&new FileInfo(log).Length>2000000){File.Copy(log,log+".previous",true);File.WriteAllText(log,"");}}catch{}
-        var info=new ProcessStartInfo(Path.Combine(httpsDir,"Caddy.exe"),"run --config \""+Path.Combine(httpsDir,"Caddyfile")+"\" --adapter caddyfile");
-        info.WorkingDirectory=httpsDir;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
-        info.EnvironmentVariables.Remove("PRIME_CONTROL_TOKEN");
-        var p=new Process();p.StartInfo=info;p.OutputDataReceived+=(s,e)=>HttpsLog(e.Data);p.ErrorDataReceived+=(s,e)=>HttpsLog(e.Data);
-        try{p.Start();p.BeginOutputReadLine();p.BeginErrorReadLine();}
-        catch(Exception e){Warn("O servidor do app não iniciou: "+e.Message);return;}
-        https=p;httpsStartedAt=DateTime.Now;Log("HTTPS dos apps: Caddy iniciado ("+httpsDir+").");UpdateTray();
-    }
-    void WatchHttps(){
-        lock(httpsLock){
-            if(https==null||stopping||!https.HasExited)return;
-            int code=https.ExitCode;https.Dispose();https=null;UpdateTray();
-            if((DateTime.Now-httpsStartedAt).TotalSeconds>120)httpsRestarts=0;
-            if(httpsRestarts<3&&!PortBusy(443)){httpsRestarts++;Log("HTTPS dos apps: Caddy fechou (código "+code+"); reabrindo ("+httpsRestarts+"/3).");LaunchCaddy();}
-            else Warn("O servidor do app parou (código "+code+"). Veja o diagnóstico do servidor do app e use Reiniciar servidor do app.");
-        }
-    }
-    void StopHttps(){
-        Process p;lock(httpsLock){p=https;https=null;}
-        if(p==null)return;
-        try{if(!p.HasExited){CaddyStopRequest();if(!p.WaitForExit(12000)){p.Kill();p.WaitForExit(3000);}}}catch(Exception e){Log("HTTPS dos apps: "+e.Message);}
-        Log("HTTPS dos apps: Caddy encerrado.");UpdateTray();
-    }
-    // Menu do ícone: fecha o Caddy (também um aberto à mão) e abre de novo, por exemplo depois de renovar o certificado.
-    void RestartHttps(){
-        new Thread(()=>{
-            StopHttps();
-            if(CaddyAlive()){CaddyStopRequest();for(int i=0;i<60&&CaddyAlive();i++)Thread.Sleep(250);}
-            httpsExternal=false;
-            httpsRestarts=0;httpsWarned=false;StartHttps();
-            Log(https!=null?"HTTPS dos apps reiniciado pelo menu.":"HTTPS dos apps: reinício pelo menu não abriu o Caddy (veja as linhas acima).");
-        }){IsBackground=true}.Start();
-    }
     void OnSessionEnding(object sender,SessionEndingEventArgs e){Stop();}
-    void Stop(){if(stopping)return;stopping=true;try{if(panel!=null)panel.Dispose();StopHttps();if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}if(!child.WaitForExit(15000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");child.Kill();child.WaitForExit(3000);}}}finally{if(tray!=null){tray.Visible=false;tray.Dispose();}}}
+    void Stop(){if(stopping)return;stopping=true;try{if(panel!=null)panel.Dispose();if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}if(!child.WaitForExit(15000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");child.Kill();child.WaitForExit(3000);}}}finally{if(tray!=null){tray.Visible=false;tray.Dispose();}}}
     protected override void ExitThreadCore(){SystemEvents.SessionEnding-=OnSessionEnding;if(monitor!=null)monitor.Stop();Stop();base.ExitThreadCore();}
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
     [STAThread] static int Main(string[] args){

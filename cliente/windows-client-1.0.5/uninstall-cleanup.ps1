@@ -22,7 +22,7 @@ foreach ($pass in 1, 2) {
     Start-Sleep -Milliseconds 600
 }
 
-function Remove-PrimeTree([string]$Path) {
+function Remove-GzTree([string]$Path) {
     if (!(Test-Path -LiteralPath $Path)) { return }
     # tira oculto/sistema/somente leitura (a pasta do programa fica oculta e protegida)
     Get-ChildItem -LiteralPath $Path -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { try { $_.Attributes = 'Normal' } catch {} }
@@ -48,7 +48,7 @@ foreach ($account in $profiles) {
         $dir = Join-Path $account.Path $relative
         if (!(Test-Path -LiteralPath $dir)) { continue }
         try { if ($current -and ([IO.Path]::GetFullPath($dir).TrimEnd('\') -ieq $current)) { continue } } catch {}
-        try { Remove-PrimeTree $dir } catch { $failures.Add($dir + ': ' + $_.Exception.Message) }
+        try { Remove-GzTree $dir } catch { $failures.Add($dir + ': ' + $_.Exception.Message) }
     }
     # Registro da conta (so se ela estiver conectada ao Windows; contas desconectadas nao tem o registro carregado)
     $hive = $null

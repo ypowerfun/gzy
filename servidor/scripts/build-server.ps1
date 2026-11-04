@@ -22,10 +22,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falha no CertTool.' }
     & $csc /nologo /target:exe /out:BackupTool.exe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll /reference:System.Web.Extensions.dll BackupTool.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no BackupTool.' }
-    & $csc /nologo /target:winexe /out:ClearAll.exe /win32icon:prime.ico /reference:System.Windows.Forms.dll ClearAll.cs
+    & $csc /nologo /target:winexe /out:ClearAll.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll ClearAll.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no ClearAll.' }
     # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
-    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:prime.ico /resource:prime.ico,prime.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs
+    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador.' }
     if (!$SkipTests) {
         & $node (Join-Path $PSScriptRoot 'testServer.cjs')
@@ -35,7 +35,7 @@ try {
     Copy-Item -LiteralPath $node -Destination (Join-Path $serverRoot 'runtime\node.exe') -Force
     # A short temporary path avoids the compiler's legacy path limits.
     $stageParent = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')
-    $stage = [IO.Path]::GetFullPath((Join-Path $stageParent ('PA-MOBILE-' + [Guid]::NewGuid().ToString('N').Substring(0,8))))
+    $stage = [IO.Path]::GetFullPath((Join-Path $stageParent ('GZ-BUILD-' + [Guid]::NewGuid().ToString('N').Substring(0,8))))
     if (!$stage.StartsWith($stageParent + '\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Área temporária inválida.' }
     New-Item -ItemType Directory -Path $stage | Out-Null
     try {
@@ -47,7 +47,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar instalador do servidor.' }
     } finally {
         $resolvedStage = [IO.Path]::GetFullPath($stage)
-        if ($resolvedStage.StartsWith($stageParent + '\PA-MOBILE-',[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolvedStage)) {
+        if ($resolvedStage.StartsWith($stageParent + '\GZ-BUILD-',[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolvedStage)) {
             Remove-Item -LiteralPath $resolvedStage -Recurse -Force
         }
     }

@@ -35,9 +35,9 @@ if ($guardCode -match 'new EventWaitHandle\(true,EventResetMode\.ManualReset,"Lo
 if ($guardCode -notmatch 'GameZoney\.Pulse\.') { throw 'Falha de seguranca do build: watchdog sem pulso da interface.' }
 if ($guardCode -match '\.Responding') { throw 'Falha de seguranca do build: watchdog nao deve depender da propriedade Responding.' }
 $csharp=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-& $csharp /nologo /target:winexe "/out:$rootPath\GameZoneyCliente.exe" "/win32icon:$rootPath\prime.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll (Join-Path $rootPath 'Client.cs') (Join-Path $rootPath 'ClientTheme.cs') (Join-Path $rootPath 'RemoteControl.cs') (Join-Path $rootPath 'PasswordRegistration.cs') (Join-Path $rootPath 'SessionCleanup.cs') (Join-Path $rootPath 'SessionSecurity.cs')
+& $csharp /nologo /target:winexe "/out:$rootPath\GameZoneyCliente.exe" "/win32icon:$rootPath\gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll (Join-Path $rootPath 'Client.cs') (Join-Path $rootPath 'ClientTheme.cs') (Join-Path $rootPath 'RemoteControl.cs') (Join-Path $rootPath 'PasswordRegistration.cs') (Join-Path $rootPath 'SessionCleanup.cs') (Join-Path $rootPath 'SessionSecurity.cs')
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o cliente.'}
-function Invoke-PrimeClientTest([string]$Mode,[string]$ResultPath,[string]$Description) {
+function Invoke-GzClientTest([string]$Mode,[string]$ResultPath,[string]$Description) {
     Remove-Item -LiteralPath $ResultPath -Force -ErrorAction SilentlyContinue
     $exe = Join-Path $rootPath 'GameZoneyCliente.exe'
     $psi = New-Object System.Diagnostics.ProcessStartInfo
@@ -65,10 +65,10 @@ function Invoke-PrimeClientTest([string]$Mode,[string]$ResultPath,[string]$Descr
     Write-Host ($Description + ': ' + $result)
     Remove-Item -LiteralPath $ResultPath -Force -ErrorAction SilentlyContinue
 }
-$policyResult=Join-Path $env:TEMP ('prime-client-policy-'+[guid]::NewGuid().ToString('N')+'.txt')
-Invoke-PrimeClientTest '/policy-test' $policyResult 'Autoteste de protecao do cliente'
-$selfResult=Join-Path $env:TEMP ('prime-client-self-'+[guid]::NewGuid().ToString('N')+'.txt')
-Invoke-PrimeClientTest '/selftest' $selfResult 'Autoteste do cliente'
+$policyResult=Join-Path $env:TEMP ('gz-client-policy-'+[guid]::NewGuid().ToString('N')+'.txt')
+Invoke-GzClientTest '/policy-test' $policyResult 'Autoteste de protecao do cliente'
+$selfResult=Join-Path $env:TEMP ('gz-client-self-'+[guid]::NewGuid().ToString('N')+'.txt')
+Invoke-GzClientTest '/selftest' $selfResult 'Autoteste do cliente'
 & $csharp /nologo /target:winexe "/out:$rootPath\MonitorGZ.exe" (Join-Path $rootPath 'ClientGuard.cs')
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o monitor do cliente.'}
 New-Item -ItemType Directory -Force (Join-Path $rootPath 'runtime') | Out-Null

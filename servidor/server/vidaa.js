@@ -133,7 +133,7 @@ class Vidaa {
     const certPath = process.env.TV_TLS_CERT || path.join(__dirname, 'certs', 'vidaa_client.pem');
     const keyPath = process.env.TV_TLS_KEY || path.join(__dirname, 'certs', 'vidaa_client.key');
     if (!fs.existsSync(certPath) || !fs.existsSync(keyPath)) {
-      throw new Error('Certificado de cliente ausente. Consulte LEIA-ME.txt.');
+      throw new Error('Certificado de cliente ausente. Reinstale o GameZoney Servidor.');
     }
     const credentials = { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
     if (process.env.TV_TLS_PASSPHRASE) credentials.passphrase = process.env.TV_TLS_PASSPHRASE;

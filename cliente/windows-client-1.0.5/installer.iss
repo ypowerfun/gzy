@@ -1,4 +1,4 @@
-﻿#define PrimeRole "client"
+﻿#define GzRole "client"
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
@@ -16,7 +16,7 @@ OutputBaseFilename=GameZoney-Cliente-1.0.5-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=prime.ico
+SetupIconFile=gamezoney.ico
 UninstallDisplayIcon={app}\GameZoneyCliente.exe
 AppMutex=Local\GameZoneyCliente,Local\GameZoney.Supervisor
 CloseApplications=no
@@ -40,10 +40,9 @@ Source: "transport.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "runtime\node.exe"; DestDir: "{app}\runtime"; Flags: ignoreversion
 Source: "LICENSE-node.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "GameZoneyCliente.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "logo.jpg"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wallpaper-padrao.jpg"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logo-marca.png"; DestDir: "{app}"; Flags: ignoreversion
-Source: "logo-prime.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "logo-gamezoney.png"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Reconfigurar conexao com o servidor"; Filename: "{app}\GameZoneyCliente.exe"; Parameters: "/reconfigure"
@@ -94,7 +93,7 @@ begin
 end;
 
 { 2.0.29: inicializacao rapida com o Windows (tarefa agendada no logon). }
-function RegisterPrimeAutostart(Action: String): Boolean;
+function RegisterGzAutostart(Action: String): Boolean;
 var
   ExitCode: Integer;
 begin
@@ -114,7 +113,7 @@ end;
 { 2.0.57: o cliente roda com a conta do PC e grava as restricoes do Windows em HKCU\...\Policies\System e \Explorer.
   Se essas chaves ficam sem permissao de escrita para essa conta, o PC ficava bloqueado ("Sem conexao com o servidor").
   O instalador (como administrador) devolve a conta conectada ao Windows a permissao nessas duas chaves. }
-function RepairPrimePolicyAccess(): Boolean;
+function RepairGzPolicyAccess(): Boolean;
 var
   ExitCode: Integer;
 begin
@@ -128,7 +127,7 @@ end;
 { 2.0.58: desinstalacao completa. Apaga de todas as contas do Windows a pasta de dados do cliente (associacao com o
   servidor, sessao local, logs, fundo do login), copias antigas da pasta do programa, a marca de inicializacao desativada e o
   log de instalacao. Assim, ao instalar de novo, o PC pede uma nova autorizacao ao servidor. }
-function RunPrimeUninstallCleanup(): Boolean;
+function RunGzUninstallCleanup(): Boolean;
 var
   ExitCode: Integer;
 begin
@@ -143,7 +142,7 @@ function InitializeUninstall(): Boolean;
 var ExitCode: Integer;
 begin
   { 2.0.58: antes de retirar as restricoes, devolve a permissao das chaves delas (2.0.57); sem isso o Windows podia negar. }
-  RepairPrimePolicyAccess();
+  RepairGzPolicyAccess();
   Result := Exec(ExpandConstant('{app}\GameZoneyCliente.exe'), '/recover', '', SW_SHOWNORMAL, ewWaitUntilTerminated, ExitCode);
   if Result then Result := ExitCode = 0;
   if not Result then MsgBox('A desinstalação foi cancelada: o administrador não foi autorizado ou as restrições do Windows não puderam ser retiradas (veja a mensagem anterior).', mbError, MB_OK);
@@ -164,3 +163,6 @@ Type: dirifempty; Name: "{commonappdata}\GameZoney"
 Type: files; Name: "{app}\GUIA-*.md"
 Type: files; Name: "{app}\temp-access.dat"
 Type: files; Name: "{app}\GameZoneyMonitor.exe"
+; 1.0.5: logo renomeada (nomes internos GameZoney) e logo.jpg sem uso no cliente
+Type: files; Name: "{app}\logo-prime.png"
+Type: files; Name: "{app}\logo.jpg"

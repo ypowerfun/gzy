@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 // 2.0.37: toda ação que o cliente envia ao servidor precisa estar liberada no transport.js do cliente
 // (antes "remote-admin" faltava e a liberação do modo administrador pela recepção falhava com "Configuração inválida.").
 test('2.0.37: transport.js do cliente libera todas as ações usadas pelo cliente e existentes no servidor',t=>{
- const dir=['prime-arena-client','GameZoneyCliente_MOD','../cliente/windows-client-1.0.5'].map(d=>path.resolve(__dirname,'..','..',d)).find(d=>fs.existsSync(path.join(d,'transport.js'))&&fs.existsSync(path.join(d,'Client.cs')));
+ const dir=['GameZoneyCliente_MOD','../cliente/windows-client-1.0.5'].map(d=>path.resolve(__dirname,'..','..',d)).find(d=>fs.existsSync(path.join(d,'transport.js'))&&fs.existsSync(path.join(d,'Client.cs')));
  if(!dir){t.skip('pasta do cliente não encontrada');return;}
  const transport=fs.readFileSync(path.join(dir,'transport.js'),'utf8'),list=JSON.parse(transport.match(/\[('state'[^\]]*)\]/)[0].replace(/'/g,'"'));
  const cs=fs.readdirSync(dir).filter(f=>f.endsWith('.cs')).map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');

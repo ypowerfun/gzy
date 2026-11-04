@@ -1,4 +1,4 @@
-﻿#define PrimeRole "server"
+﻿#define GzRole "server"
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
@@ -16,7 +16,7 @@ OutputBaseFilename=GameZoney-Servidor-1.0.5-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=prime.ico
+SetupIconFile=gamezoney.ico
 UninstallDisplayIcon={app}\GameZoney.exe
 AppMutex=Local\GameZoneyServer_3000
 CloseApplications=no
@@ -38,6 +38,12 @@ Type: files; Name: "{app}\public\mobile-settings-ui.js"
 Type: files; Name: "{app}\mobile.js"
 Type: files; Name: "{app}\rankings.js"
 Type: files; Name: "{app}\tournaments.js"
+; 1.0.5: nomes internos GameZoney (logo e tema renomeados) e arquivos sem uso do painel
+Type: files; Name: "{app}\public\logo-prime.png"
+Type: files; Name: "{app}\public\theme-prime.css"
+Type: files; Name: "{app}\public\manifest.webmanifest"
+Type: files; Name: "{app}\public\icon-192.png"
+Type: files; Name: "{app}\public\icon-512.png"
 
 [Files]
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion

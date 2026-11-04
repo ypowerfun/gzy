@@ -37,7 +37,7 @@ if (!$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-public static class PrimePolicyPrivilege {
+public static class GzPolicyPrivilege {
  [DllImport("advapi32.dll", SetLastError = true)] static extern bool OpenProcessToken(IntPtr process, int access, out IntPtr token);
  [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool LookupPrivilegeValue(string system, string name, out long luid);
  [StructLayout(LayoutKind.Sequential, Pack = 1)] struct TokenPrivilege { public int Count; public long Luid; public int Attributes; }
@@ -83,8 +83,8 @@ function Open-ForPermissions([string]$Path) {
     try { return [Microsoft.Win32.Registry]::Users.OpenSubKey($Path, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree, $want) }
     catch [System.UnauthorizedAccessException], [System.Security.SecurityException] {
         # Nem o administrador pode mudar a permissao: assume a posse da chave (Administradores) e tenta de novo.
-        [void][PrimePolicyPrivilege]::Enable('SeTakeOwnershipPrivilege')
-        [void][PrimePolicyPrivilege]::Enable('SeRestorePrivilege')
+        [void][GzPolicyPrivilege]::Enable('SeTakeOwnershipPrivilege')
+        [void][GzPolicyPrivilege]::Enable('SeRestorePrivilege')
         $key = [Microsoft.Win32.Registry]::Users.OpenSubKey($Path, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree, $rights::TakeOwnership)
         try {
             $owner = New-Object System.Security.AccessControl.RegistrySecurity

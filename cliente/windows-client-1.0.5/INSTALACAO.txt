@@ -14,4 +14,4 @@ O Cliente aplica as restrições do Windows configuradas no Servidor. Um adminis
 
 O instalador configura as regras de firewall do GameZoney (somente a rede local). Se necessário, use "Reparar conexão de rede" no menu Iniciar.
 
-Se este PC tem o PRIME ARENA Cliente: desinstale-o antes de instalar o GameZoney Cliente (os dois bloqueariam o PC ao mesmo tempo).
+Se este PC tem o cliente de outro sistema de gestão de arena: desinstale-o antes de instalar o GameZoney Cliente (os dois bloqueariam o PC ao mesmo tempo).

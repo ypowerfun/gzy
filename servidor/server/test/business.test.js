@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store'),b=require('../business');
-function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-business-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});return store;}
+function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-business-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});return store;}
 function member(s){return s.memberSave({name:'Ana',username:'ana',password:'Senha-123456'},'admin');}
 function promo(s,minutes){const p={id:'promo-'+minutes+'-'+s.state.promotions.length,name:minutes+' min',minutes,cents:Math.round(minutes*s.state.settings.hourCents/60),active:true};s.state.promotions.push(p);return p.id;}
 test('Cancelamento atômico devolve receita, retira saldo e pontos, conserva fatura e impede repetição',t=>{const s=fixture(t),m=member(s),sale=s.credit(m.id,{promotionId:promo(s,60)},'admin');assert.equal(m.pointsMilli,7000);assert.equal(sale.invoiceNumber,1);b.cancel(s,{id:sale.id,reason:'Compra incorreta'},'admin');assert.equal(m.creditSeconds,0);assert.equal(m.pointsMilli,0);assert.equal(sale.status,'canceled');assert.throws(()=>b.cancel(s,{id:sale.id,reason:'repetição'},'admin'));const r=b.report(s);assert.equal(r.revenue,0);assert.equal(r.transactions,0);assert.equal(r.canceled,1);});

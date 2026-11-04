@@ -13,13 +13,13 @@ for(const name of ['package.json','package-lock.json']){
 }
 const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
-  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'RefreshHttpsStatus();','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("prime.ico")'],
+  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
   'public/index.html':[`SERVER // ${VERSION}`],
   'shop.js':['marginPrice','Margem de lucro'],
   'public/shop-ui.js':['askFinishSale','marginPriceCents','Deseja realmente finalizar a venda?'],
-  'public/app.js':['toggle-cash','pa-caixa-oculto','Ativar programa fidelidade','loyaltyEnabled'],
+  'public/app.js':['toggle-cash','gz-caixa-oculto','Ativar programa fidelidade','loyaltyEnabled'],
   'store.js':['loyaltyEnabled'],
   'business.js':['member.loyaltyEnabled===false','member?.loyaltyEnabled!==false'],
   'pc.js':['m.loyaltyEnabled===false?null']

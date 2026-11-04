@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {createServer}=require('../server'),{passwordHash}=require('../store');
 
 test('3.0.21: Visitante libera estação livre só com tempo e pagamento, sem pontos e sem guardar saldo',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-guest-')),app=createServer({directory,noTimer:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-guest-')),app=createServer({directory,noTimer:true});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  app.store.state.operators.push({id:'admin',username:'gestor',hash:passwordHash('Admin-123456'),role:'admin'});
@@ -22,7 +22,7 @@ test('3.0.21: Visitante libera estação livre só com tempo e pagamento, sem po
 });
 
 test('3.0.22: Visitantes em grupo liberam 20 estações livres de uma vez e informam as que não puderam',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-guest-batch-')),app=createServer({directory,noTimer:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-guest-batch-')),app=createServer({directory,noTimer:true});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  app.store.state.operators.push({id:'op',username:'recepcao',hash:passwordHash('Recepcao-123456'),role:'operator'});

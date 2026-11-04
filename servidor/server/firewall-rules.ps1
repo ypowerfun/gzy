@@ -1,18 +1,18 @@
 # Only declares functions. Used by the repair shortcut, by the installer fallback and by isolated tests.
 # O instalador usa netsh (firewall-core.iss) com os MESMOS nomes de regra gerados aqui.
 
-function Get-PrimeFirewallKey {
+function Get-GzFirewallKey {
     param([string]$ProgramPath, [switch]$Legacy)
     $encoding = if ($Legacy) { [Text.Encoding]::UTF8 } else { [Text.Encoding]::Unicode }
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash($encoding.GetBytes($ProgramPath.ToLowerInvariant())))).Replace('-','').Substring(0,16) } finally { $sha.Dispose() }
 }
 
-function Get-PrimeFirewallPlan {
+function Get-GzFirewallPlan {
     param([ValidateSet('server','client')][string]$Role, [string]$InstallDirectory)
     $programPath = [IO.Path]::GetFullPath((Join-Path $InstallDirectory 'runtime\node.exe'))
-    $key = Get-PrimeFirewallKey $programPath
-    $legacyKey = Get-PrimeFirewallKey $programPath -Legacy
+    $key = Get-GzFirewallKey $programPath
+    $legacyKey = Get-GzFirewallKey $programPath -Legacy
     $prefix = "GameZoney-$Role-$key"
     $common = @{ Program=$programPath; Profile='Any'; RemoteAddress=@('LocalSubnet'); Action='Allow'; Enabled='True'; PolicyStore='PersistentStore' }
     if ($Role -eq 'server') {
@@ -43,7 +43,7 @@ function Get-PrimeFirewallPlan {
     }
 }
 
-function Sync-PrimeFirewallRules {
+function Sync-GzFirewallRules {
     param([object[]]$Plan, [ValidateSet('Install','Remove')][string]$Action)
     $warnings = New-Object System.Collections.Generic.List[string]
     foreach ($entry in $Plan) {
@@ -71,7 +71,7 @@ function Sync-PrimeFirewallRules {
 }
 
 # Remove regras GameZoney desta funcao que apontam para o mesmo programa (inclui nomes antigos).
-function Remove-PrimeFirewallRulesForProgram {
+function Remove-GzFirewallRulesForProgram {
     param([ValidateSet('server','client')][string]$Role, [string]$ProgramPath)
     $target = [IO.Path]::GetFullPath($ProgramPath)
     foreach ($rule in @(Get-NetFirewallRule -PolicyStore PersistentStore -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "GameZoney-$Role-*" })) {

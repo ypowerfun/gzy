@@ -21,9 +21,9 @@ function guarded(store,req){let passed=false;const res=fakeRes();networkGuard(st
 test('guarda de rede por origem (servidor, proxy, PCs, TVs, Wi-Fi)',()=>{
  const store={state:{settings:{},stations:[{id:'1',kind:'tv',ip:'192.168.1.111',active:true}]}};
  // próprio servidor: tudo
- for(const p of ['/','/index.html','/api/state','/health','/theme-prime.css'])assert.equal(guarded(store,fakeReq(p,{address:'127.0.0.1'})),'next',p);
+ for(const p of ['/','/index.html','/api/state','/health','/theme-gamezoney.css'])assert.equal(guarded(store,fakeReq(p,{address:'127.0.0.1'})),'next',p);
  // celular/PC na rede local (HTTP 3000): nada (painel, API, arquivos internos e o antigo app web escondidos)
- for(const p of ['/','/index.html','/app.js','/lockdown.js','/api/state','/api/login','/health','/mobile','/mobile/client','/mobile/api/auth','/logo-prime.png','/favicon.ico','/pc/heartbeat','/pc-setup/request','/internal/stop','/cliente.html','/tv/session/x'])assert.equal(guarded(store,fakeReq(p)),404,p);
+ for(const p of ['/','/index.html','/app.js','/lockdown.js','/api/state','/api/login','/health','/mobile','/mobile/client','/mobile/api/auth','/logo-gamezoney.png','/favicon.ico','/pc/heartbeat','/pc-setup/request','/internal/stop','/cliente.html','/tv/session/x'])assert.equal(guarded(store,fakeReq(p)),404,p);
  // TV: somente do IP da TV cadastrada
  assert.equal(guarded(store,fakeReq('/cliente.html',{address:'192.168.1.111'})),'next');
  assert.equal(guarded(store,fakeReq('/logo.jpg',{address:'192.168.1.111'})),'next');
