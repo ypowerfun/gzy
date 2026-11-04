@@ -82,7 +82,7 @@ Source: "Microsoft.Web.WebView2.WinForms.dll"; DestDir: "{app}"; Flags: ignoreve
 Source: "runtimes\win-x64\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x64\native"; Flags: ignoreversion
 Source: "runtimes\win-x86\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x86\native"; Flags: ignoreversion
 ; 1.0.2: instalador oficial do WebView2 Runtime (baixado pelo gerador, assinatura da Microsoft conferida); usado só se faltar no PC
-Source: "webview2\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: GzPrecisaWebView2
+Source: "webview2\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: GzPrecisaWebView2; AfterInstall: GzInstalarWebView2
 Source: "server.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "panel-sessions.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "store.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -105,7 +105,6 @@ Name: "{autodesktop}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Worki
 Name: "{userstartup}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Parameters: "/silent"; WorkingDir: "{app}"
 
 [Run]
-Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Instalando/atualizando o WebView2 da Microsoft (janela do painel)..."; Flags: waituntilterminated; Check: GzPrecisaWebView2; AfterInstall: GzConferirWebView2
 Filename: "{app}\GameZoney.exe"; Description: "Abrir GameZoney Servidor"; Flags: nowait postinstall skipifsilent
 
 [Code]

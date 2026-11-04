@@ -12,8 +12,8 @@ for(const name of ['package.json','package-lock.json']){
 }
 const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
-  'Launcher.cs':['Abrindo o painel','OnNavigationCompleted',`AssemblyVersion("${VERSION}.0")`,'RefreshHttpsStatus();','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
-  'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "androidtv.js"','webview2-installer.iss','GzPrecisaWebView2','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
+  'Launcher.cs':['Abrindo o painel','OnNavigationCompleted','janela-propria-falhou.txt',`AssemblyVersion("${VERSION}.0")`,'RefreshHttpsStatus();','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
+  'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "androidtv.js"','webview2-installer.iss','GzInstalarWebView2','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
   'public/index.html':[`SERVER // ${VERSION}`,'theme-gamezoney.css','logo-gamezoney.png'],
   'shop.js':['marginPrice','Margem de lucro'],

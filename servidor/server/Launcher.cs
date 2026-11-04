@@ -42,8 +42,10 @@ class Launcher : ApplicationContext {
             if(String.IsNullOrEmpty(folder))continue;
             string edge=Path.Combine(folder,"Microsoft","Edge","Application","msedge.exe");if(File.Exists(edge))return edge;
         }
+        // 1.0.2: sem Edge, outro navegador Chromium também abre o painel em janela de aplicativo (--app).
+        foreach(string exe in new string[]{"msedge.exe","chrome.exe","brave.exe"})
         foreach(RegistryKey hive in new RegistryKey[]{Registry.LocalMachine,Registry.CurrentUser}){
-            try{using(var key=hive.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe")){string edge=key==null?null:key.GetValue("") as string;if(!String.IsNullOrEmpty(edge)&&File.Exists(edge))return edge;}}catch{}
+            try{using(var key=hive.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"+exe)){string edge=key==null?null:key.GetValue("") as string;if(!String.IsNullOrEmpty(edge)){edge=edge.Trim('"');if(File.Exists(edge))return edge;}}}catch{}
         }
         return null;
     }
@@ -81,6 +83,9 @@ class Launcher : ApplicationContext {
         menu.Items.Add("Encerrar servidor",null,(s,e)=>{if(MessageBox.Show("Encerrar o servidor? As TVs não serão controladas enquanto ele estiver fechado. O prazo das sessões continua correndo.","GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes)ExitThread();});
         tray=new NotifyIcon();tray.Text="GameZoney • Servidor ativo";tray.Icon=AppIcon(SystemInformation.SmallIconSize);tray.ContextMenuStrip=menu;tray.Visible=true;tray.DoubleClick+=(s,e)=>ShowPanel();
         panel=new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel);panel.Listen();
+        // 1.0.2: quando o WebView2 deste PC não abre o painel, ele abre na janela do Edge (modo aplicativo) e o ícone avisa.
+        panel.Notice=message=>{if(tray!=null){try{tray.ShowBalloonTip(9000,"GameZoney",message,ToolTipIcon.Info);}catch{}}};
+        menu.Items.Insert(2,new ToolStripMenuItem("Tentar a janela própria (WebView2) de novo",null,(s,e)=>panel.Retry()));
         panel.Hidden=()=>{if(panelHintShown||tray==null)return;panelHintShown=true;tray.ShowBalloonTip(6000,"GameZoney","O servidor continua ativo. Para abrir o painel de novo, use o ícone perto do relógio.",ToolTipIcon.Info);};
         SystemEvents.SessionEnding+=OnSessionEnding;
         RefreshHttpsStatus();
@@ -190,7 +195,7 @@ class Launcher : ApplicationContext {
 class PanelHost : IDisposable {
     [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int processId);
     public readonly string Address, UserData; public readonly Icon AppIcon; public readonly Action<string> Log;
-    public Action Hidden;
+    public Action Hidden;public Action<string> Notice;
     readonly Action<string> fallback; readonly Control ui; readonly string signalName;
     EventWaitHandle signal; volatile bool disposed; Form window; bool unavailable; int crashes;
     public PanelHost(string address,int port,Icon icon,Action<string> log,Action<string> fallback,string userData=null){
@@ -223,7 +228,29 @@ class PanelHost : IDisposable {
         try{ShowWindow();}
         catch(Exception e){Failed("a janela própria não abriu ("+PanelWindow.Describe(e)+").");}
     }
+    // 1.0.2: o WebView2 que já falhou neste PC (mesma versão) não é tentado de novo a cada abertura: o painel vai direto
+    // para a janela do Edge. Quando o WebView2 é reparado/atualizado (versão muda), a janela própria volta sozinha.
+    string FlagFile{get{return Path.Combine(UserData,"janela-propria-falhou.txt");}}
+    [MethodImpl(MethodImplOptions.NoInlining)] static string RuntimeVersion(){return PanelWindow.RuntimeVersion();}
+    string SafeRuntimeVersion(){try{return RuntimeVersion();}catch{return "";}}
+    public void Retry(){
+        if(ui.InvokeRequired){try{ui.BeginInvoke(new Action(Retry));}catch{}return;}
+        try{if(File.Exists(FlagFile))File.Delete(FlagFile);}catch{}
+        unavailable=false;crashes=0;skipChecked=true;Log("Painel: nova tentativa da janela própria (WebView2) pelo menu.");Show();
+    }
+    bool skipChecked;
     [MethodImpl(MethodImplOptions.NoInlining)] void ShowWindow(){
+        if(!skipChecked){
+            skipChecked=true;
+            try{
+                if(File.Exists(FlagFile)){
+                    string failed=File.ReadAllText(FlagFile).Split('\n')[0].Trim(),now=SafeRuntimeVersion();
+                    if(failed==now){unavailable=true;Log("Painel: o WebView2 "+(now==""?"(não encontrado)":now)+" já falhou neste PC; painel na janela do Edge. Use \"Tentar a janela própria (WebView2) de novo\" no ícone depois de reparar o WebView2.");OpenFallback();return;}
+                    Log("Painel: o WebView2 mudou ("+(failed==""?"nenhum":failed)+" → "+(now==""?"nenhum":now)+"); tentando a janela própria de novo.");
+                    File.Delete(FlagFile);
+                }
+            }catch{}
+        }
         var w=window as PanelWindow;
         if(w==null||w.IsDisposed){w=new PanelWindow(this,false);window=w;}
         w.Front();
@@ -231,8 +258,10 @@ class PanelHost : IDisposable {
     public void Failed(string reason){
         if(ui.InvokeRequired){try{ui.BeginInvoke(new Action<string>(Failed),reason);}catch{}return;}
         if(disposed||unavailable)return;
-        Log("Painel: "+reason+" O painel abre no Edge/navegador, como antes da 3.0.68.");
-        unavailable=true;var w=window;window=null;
+        Log("Painel: "+reason+" O painel abre na janela do Edge (ou no navegador).");
+        unavailable=true;skipChecked=true;var w=window;window=null;
+        try{Directory.CreateDirectory(UserData);File.WriteAllText(FlagFile,SafeRuntimeVersion()+"\n"+DateTime.Now.ToString("s")+" "+reason);}catch{}
+        if(Notice!=null){try{Notice("O painel abriu na janela do Microsoft Edge: o WebView2 deste PC não respondeu. Tudo funciona igual. Detalhes em Abrir diagnóstico.");}catch{}}
         if(w!=null&&!w.IsDisposed){try{w.Dispose();}catch{}}
         OpenFallback();
     }
@@ -259,7 +288,7 @@ class PanelWindow : Form {
     readonly PanelHost host;readonly bool popup;readonly WebView2 web;
     FormWindowState restoreState=FormWindowState.Maximized;bool started;
     // GameZoney 1.0.1: aviso "Abrindo o painel…" enquanto a página não aparece, etapas no diagnóstico (server.log)
-    // e, se a janela própria não mostrar o painel em 20 s, o painel abre sozinho no navegador (nunca fica tela escura).
+    // e, se a janela própria não mostrar o painel em 12 s, o painel abre sozinho na janela do Edge (nunca fica tela escura).
     readonly Label notice;System.Windows.Forms.Timer watchdog;bool loaded;string stage="aguardando";int retries;
     public PanelWindow(PanelHost host,bool popup){
         this.host=host;this.popup=popup;
@@ -282,7 +311,7 @@ class PanelWindow : Form {
     }
     async void Start(){
         started=true;
-        if(!popup){watchdog=new System.Windows.Forms.Timer();watchdog.Interval=20000;watchdog.Tick+=(s,e)=>Timeout();watchdog.Start();}
+        if(!popup){watchdog=new System.Windows.Forms.Timer();watchdog.Interval=12000;watchdog.Tick+=(s,e)=>Timeout();watchdog.Start();}
         try{
             if(shared==null){
                 stage="preparando o WebView2";PrepareLoader();
@@ -307,8 +336,8 @@ class PanelWindow : Form {
     void Timeout(){
         StopWatchdog();
         if(loaded||IsDisposed)return;
-        notice.Text="GameZoney\n\nA janela própria não abriu o painel.\nAbrindo no navegador…";notice.Visible=true;notice.BringToFront();
-        host.Failed("a janela própria não mostrou o painel em 20 s (etapa: "+stage+").");
+        notice.Text="GameZoney\n\nA janela própria não abriu o painel.\nAbrindo na janela do Edge…";notice.Visible=true;notice.BringToFront();
+        host.Failed("a janela própria não mostrou o painel em 12 s (etapa: "+stage+").");
     }
     void OnNavigationCompleted(object sender,CoreWebView2NavigationCompletedEventArgs e){
         if(e.IsSuccess){
@@ -332,6 +361,7 @@ class PanelWindow : Form {
             if(File.Exists(Path.Combine(folder,"WebView2Loader.dll")))CoreWebView2Environment.SetLoaderDllFolderPath(folder);
         }catch{}
     }
+    public static string RuntimeVersion(){PrepareLoader();try{return CoreWebView2Environment.GetAvailableBrowserVersionString()??"";}catch{return "";}}
     public static string Describe(Exception e){
         if(e is WebView2RuntimeNotFoundException)return "o WebView2 Runtime da Microsoft não está instalado neste Windows";
         if(e is DllNotFoundException)return "faltou o arquivo WebView2Loader.dll na pasta do servidor";
