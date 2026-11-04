@@ -24,35 +24,14 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falha no BackupTool.' }
     & $csc /nologo /target:winexe /out:ClearAll.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll ClearAll.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no ClearAll.' }
-    # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
-    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs
+    # Iniciador (ícone na bandeja; o painel abre no navegador padrão) com o ícone do app embutido.
+    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll Launcher.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador.' }
     if (!$SkipTests) {
         & $node (Join-Path $PSScriptRoot 'testServer.cjs')
         if ($LASTEXITCODE -ne 0) { throw 'Os testes falharam.' }
     }
     New-Item -ItemType Directory -Force -Path (Join-Path $serverRoot 'runtime'),$outputRoot | Out-Null
-    # 1.0.2: instalador oficial do WebView2 Runtime (Evergreen, redistribuível) vai junto: o instalador do servidor
-    # instala/atualiza o WebView2 no PC quando faltar. Baixado uma vez da Microsoft; a assinatura digital é conferida.
-    $wv2Dir = Join-Path $serverRoot 'webview2'
-    $wv2 = Join-Path $wv2Dir 'MicrosoftEdgeWebview2Setup.exe'
-    New-Item -ItemType Directory -Force -Path $wv2Dir | Out-Null
-    function Test-Wv2([string]$file) {
-        if (!(Test-Path -LiteralPath $file)) { return $false }
-        $sig = Get-AuthenticodeSignature -LiteralPath $file
-        return ($sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -match 'O=Microsoft Corporation')
-    }
-    if (!(Test-Wv2 $wv2)) {
-        Write-Host 'Baixando o instalador oficial do WebView2 da Microsoft...'
-        if (Test-Path -LiteralPath $wv2) { Remove-Item -LiteralPath $wv2 -Force }
-        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        Invoke-WebRequest -UseBasicParsing -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $wv2
-        if (!(Test-Wv2 $wv2)) {
-            Remove-Item -LiteralPath $wv2 -Force -ErrorAction SilentlyContinue
-            throw 'O instalador do WebView2 baixado não tem a assinatura válida da Microsoft. Confira a internet e gere de novo.'
-        }
-    }
-    Write-Host 'OK  WebView2 (instalador oficial da Microsoft, assinatura conferida)'
     Copy-Item -LiteralPath $node -Destination (Join-Path $serverRoot 'runtime\node.exe') -Force
     # A short temporary path avoids the compiler's legacy path limits.
     $stageParent = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')
@@ -61,7 +40,7 @@ try {
     New-Item -ItemType Directory -Path $stage | Out-Null
     try {
         Get-ChildItem -LiteralPath $serverRoot -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $stage }
-        foreach ($folder in @('runtime','runtimes','public','certs','node_modules','webview2')) {
+        foreach ($folder in @('runtime','public','certs','node_modules')) {
             Copy-Item -LiteralPath (Join-Path $serverRoot $folder) -Destination $stage -Recurse
         }
         & $InnoCompiler "/O$outputRoot" (Join-Path $stage 'installer.iss')

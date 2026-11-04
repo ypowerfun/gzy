@@ -2,7 +2,7 @@
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
-AppVersion=1.0.2
+AppVersion=1.0.3
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyServidor
 DefaultGroupName=GameZoney
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.0.2-Setup
+OutputBaseFilename=GameZoney-Servidor-1.0.3-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -21,7 +21,7 @@ UninstallDisplayIcon={app}\GameZoney.exe
 AppMutex=Local\GameZoneyServer_3000
 CloseApplications=no
 InfoBeforeFile=INSTALACAO.txt
-VersionInfoVersion=1.0.2.0
+VersionInfoVersion=1.0.3.0
 
 [Languages]
 Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl
@@ -30,15 +30,20 @@ Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.
 Name: desktopicon; Description: "Criar atalho na área de trabalho"; Flags: checkedonce
 
 [InstallDelete]
-; GameZoney 1.0.2: app web antigo de celular retirado (arquivos e arte de versões anteriores)
+; GameZoney 1.0.3: app web antigo de celular retirado (arquivos e arte de versões anteriores)
 Type: filesandordirs; Name: "{app}\public\mobile"
 Type: files; Name: "{app}\public\mobile-settings-ui.js"
 Type: files; Name: "{app}\mobile.js"
 Type: files; Name: "{app}\rankings.js"
 Type: files; Name: "{app}\tournaments.js"
-; 1.0.2: logo e tema da 1.0.1 com o nome antigo (agora logo-gamezoney.png e theme-gamezoney.css)
+; 1.0.3: logo e tema da 1.0.1 com o nome antigo (agora logo-gamezoney.png e theme-gamezoney.css)
 Type: files; Name: "{app}\public\logo-prime.png"
 Type: files; Name: "{app}\public\theme-prime.css"
+; 1.0.3: sem WebView2 (o painel abre no navegador padrão): arquivos dele saem de instalações anteriores
+Type: files; Name: "{app}\Microsoft.Web.WebView2.Core.dll"
+Type: files; Name: "{app}\Microsoft.Web.WebView2.WinForms.dll"
+Type: filesandordirs; Name: "{app}\runtimes"
+Type: files; Name: "{app}\LICENSE-webview2.txt"
 
 [Files]
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -79,13 +84,6 @@ Source: "GUIA-CLIENTE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "pc.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "CertTool.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "GameZoney.exe"; DestDir: "{app}"; Flags: ignoreversion
-; 3.0.68: painel em janela própria (WebView2 da Microsoft; licença em LICENSE-webview2.txt)
-Source: "Microsoft.Web.WebView2.Core.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Microsoft.Web.WebView2.WinForms.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "runtimes\win-x64\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x64\native"; Flags: ignoreversion
-Source: "runtimes\win-x86\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x86\native"; Flags: ignoreversion
-; 1.0.2: instalador oficial do WebView2 Runtime (baixado pelo gerador, assinatura da Microsoft conferida); usado só se faltar no PC
-Source: "webview2\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: GzPrecisaWebView2; AfterInstall: GzInstalarWebView2
 Source: "server.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "panel-sessions.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "store.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -113,4 +111,3 @@ Filename: "{app}\GameZoney.exe"; Description: "Abrir GameZoney Servidor"; Flags:
 [Code]
 
 #include "firewall-installer.iss"
-#include "webview2-installer.iss"

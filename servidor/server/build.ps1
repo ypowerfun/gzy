@@ -32,8 +32,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Os testes falharam.' }
     New-Item -ItemType Directory -Path runtime -Force | Out-Null
     Copy-Item -LiteralPath $nodeRuntime -Destination (Join-Path $buildRoot 'runtime\node.exe')
-    # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
-    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\GameZoney.exe" "/win32icon:$buildRoot\gamezoney.ico" "/resource:$buildRoot\gamezoney.ico,gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/reference:$buildRoot\Microsoft.Web.WebView2.Core.dll" "/reference:$buildRoot\Microsoft.Web.WebView2.WinForms.dll" (Join-Path $buildRoot 'Launcher.cs')
+    # Iniciador (ícone na bandeja; o painel abre no navegador padrão) com o ícone do app embutido.
+    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\GameZoney.exe" "/win32icon:$buildRoot\gamezoney.ico" "/resource:$buildRoot\gamezoney.ico,gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll (Join-Path $buildRoot 'Launcher.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar o iniciador.' }
 
     # O Inno Setup 6 ainda pode falhar ao ler arquivos muito profundos de node_modules
@@ -54,7 +54,7 @@ try {
         Get-ChildItem -LiteralPath $buildRoot -File | ForEach-Object {
             Copy-Item -LiteralPath $_.FullName -Destination $packageStage -Force
         }
-        foreach ($folderName in @('runtime', 'runtimes', 'public', 'certs', 'node_modules')) {
+        foreach ($folderName in @('runtime', 'public', 'certs', 'node_modules')) {
             $sourceFolder = Join-Path $buildRoot $folderName
             if (Test-Path -LiteralPath $sourceFolder) {
                 Copy-Item -LiteralPath $sourceFolder -Destination $packageStage -Recurse -Force

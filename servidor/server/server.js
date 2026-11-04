@@ -24,7 +24,7 @@ function createServer(options={}){
  app.disable('x-powered-by');app.use(express.json({limit:'3mb'}));
  app.use((req,res,next)=>{res.set('X-Content-Type-Options','nosniff');if(req.path.startsWith('/api'))res.set('Cache-Control','no-store');next()});
  app.use('/pc',pc.router);
- app.get('/health',(_,res)=>res.json({app:'gamezoney-server',version:'1.0.2'}));
+ app.get('/health',(_,res)=>res.json({app:'gamezoney-server',version:'1.0.3'}));
  app.post('/internal/stop',(req,res)=>{if(!local(req)||!process.env.GZ_CONTROL_TOKEN||req.headers['x-gz-control']!==process.env.GZ_CONTROL_TOKEN)return res.sendStatus(403);res.json({ok:true});setImmediate(()=>process.emit('SIGTERM'))});
  app.use('/api',(req,res,next)=>{
   if((!local(req)||req.headers['x-forwarded-for']||req.headers['x-forwarded-proto']||req.headers['x-forwarded-host']))return res.status(403).json({error:'O painel do GameZoney abre somente no próprio servidor.'});
@@ -144,5 +144,5 @@ route('post','/api/business/cancel',req=>{admin(req);return business.cancel(stor
  let backupTimer;if(!options.noTimer&&!process.env.GZ_NO_BACKUP){backups.tick();backupTimer=setInterval(()=>backups.tick(),60000)}
  return{app,server,store,tick,pc,backups,startPC,discovery,close:async()=>{discovery.close();clearInterval(timer);clearInterval(heartbeat);clearInterval(backupTimer);for(const c of clients.values())c.disconnect();await queue;await backups.wait().catch(()=>{});if(pcServer?.listening)await new Promise(resolve=>pcServer.close(resolve));await new Promise(resolve=>server.close(resolve));store.state.runtime.lastAliveAt=Date.now();store.state.runtime.cleanShutdown=true;store.persist();store.log('sistema','servidor','Servidor encerrado');store.close()}};
 }
-if(require.main===module){const app=createServer();const port=Number(process.env.PORT||3000);if(!process.env.GZ_NO_PC_TLS)app.startPC(Number(process.env.GZ_PC_PORT||3443)).then(()=>app.discovery.start()).catch(e=>console.error('Canal de computadores indisponível: '+e.message));app.server.on('error',e=>{console.error(e.code==='EADDRINUSE'?'Porta 3000 ocupada. Feche a versão anterior.':e.message);process.exit(1)});app.server.listen(port,'0.0.0.0',()=>console.log(`GameZoney SERVER 1.0.2 • http://localhost:${port}`));let stopping=false;for(const event of ['SIGINT','SIGTERM'])process.on(event,async()=>{if(stopping)return;stopping=true;await app.close();process.exit(0)})}
+if(require.main===module){const app=createServer();const port=Number(process.env.PORT||3000);if(!process.env.GZ_NO_PC_TLS)app.startPC(Number(process.env.GZ_PC_PORT||3443)).then(()=>app.discovery.start()).catch(e=>console.error('Canal de computadores indisponível: '+e.message));app.server.on('error',e=>{console.error(e.code==='EADDRINUSE'?'Porta 3000 ocupada. Feche a versão anterior.':e.message);process.exit(1)});app.server.listen(port,'0.0.0.0',()=>console.log(`GameZoney SERVER 1.0.3 • http://localhost:${port}`));let stopping=false;for(const event of ['SIGINT','SIGTERM'])process.on(event,async()=>{if(stopping)return;stopping=true;await app.close();process.exit(0)})}
 module.exports={createServer};

@@ -1,10 +1,10 @@
-﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.2
+﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.3
 
 GameZoney — gestão de arenas gamer: PCs, TVs e consoles. Software proprietário da GameZoney. Todos os direitos reservados.
 
-Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, ferramentas e o painel em janela própria). Instale no PC da recepção, na conta do Windows que vai usar o sistema. Os dados ficam em %LOCALAPPDATA%\GameZoney\data.
+Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, ferramentas e o painel). Instale no PC da recepção, na conta do Windows que vai usar o sistema. Os dados ficam em %LOCALAPPDATA%\GameZoney\data.
 
-O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre numa janela própria do GameZoney; fechar a janela só esconde o painel.
+O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre no navegador padrão do Windows (Chrome, Firefox, Brave, Edge...); fechar a aba não desliga o servidor. Para abrir de novo: ícone do GameZoney perto do relógio > Abrir GameZoney (ou o atalho na área de trabalho).
 
 No primeiro acesso, crie o usuário administrador e a senha. Em Configurações, confira o endereço deste PC na rede (usado pelas TVs).
 
