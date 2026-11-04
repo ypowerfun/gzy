@@ -1,6 +1,7 @@
 'use strict';
 const {DatabaseSync,backup}=require('node:sqlite');
 const fs=require('fs'),path=require('path'),crypto=require('crypto');
+const netinfo=require('./netinfo');
 const id=()=>crypto.randomUUID();
 const fail=(message)=>{throw new Error(message)};
 function text(value,label,max=120){const s=String(value??'').trim();if(!s||s.length>max)fail(label+' inválido.');return s;}
@@ -19,10 +20,11 @@ class Store{
  constructor(directory){this.directory=directory;fs.mkdirSync(directory,{recursive:true});this.db=new DatabaseSync(path.join(directory,'gamezoney.sqlite'));this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, type TEXT NOT NULL, detail TEXT NOT NULL);');
  if(!this.db.prepare('PRAGMA table_info(logs)').all().some(c=>c.name==='memberId'))this.db.exec('ALTER TABLE logs ADD COLUMN memberId TEXT');
  const row=this.db.prepare('SELECT data FROM state WHERE id=1').get();
- this.state=row?JSON.parse(row.data):{schema:1,settings:{hourCents:700,serverUrl:'http://192.168.1.100:3000',timeZone:'America/Manaus'},operators:[],members:[],promotions:[],stations:[{id:'1',name:'TV 1 • PS4',kind:'tv',ip:'192.168.1.111',brand:'tos',hdmi:1,active:true},{id:'2',name:'TV 2 • PS4',kind:'tv',ip:'192.168.1.112',brand:'',hdmi:1,active:true}],sessions:[],sales:[]};
+ this.state=row?JSON.parse(row.data):{schema:1,settings:{hourCents:700,serverUrl:netinfo.defaultUrl()||'http://192.168.1.100:3000',timeZone:netinfo.timeZone()||'America/Manaus'},operators:[],members:[],promotions:[],stations:[{id:'1',name:'TV 1 • PS4',kind:'tv',ip:'192.168.1.111',brand:'tos',hdmi:1,active:true},{id:'2',name:'TV 2 • PS4',kind:'tv',ip:'192.168.1.112',brand:'',hdmi:1,active:true}],sessions:[],sales:[]};
+ /* 1.0.5: endereço de fábrica nunca configurado e que não é deste PC passa a ser o IP atual da máquina */if(row&&this.state.settings.serverUrl==='http://192.168.1.100:3000'&&!netinfo.interfaces().some(i=>i.address==='192.168.1.100')){const url=netinfo.defaultUrl();if(url){this.state.settings.serverUrl=url;this.pendingLog='Endereço do servidor ajustado para o IP desta máquina: '+url}}
  this.state.settings.machinePolicy??={taskManager:true,controlPanel:true,securityOptions:true,dateTime:true,revision:1};
  this.state.runtime??={};this.state.recoveryReviews??=[];
- require('./business').init(this);require('./shop').init(this);require('./cash').init(this);require('./stats').init(this);this.persist();}
+ require('./business').init(this);require('./shop').init(this);require('./cash').init(this);require('./stats').init(this);this.persist();if(this.pendingLog){this.log('sistema','config',this.pendingLog);delete this.pendingLog}}
  persist(){this.db.prepare('INSERT INTO state(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(JSON.stringify(this.state));}
  change(actor,type,detail,fn){const old=JSON.stringify(this.state);this.db.exec('BEGIN IMMEDIATE');try{const result=fn();this.persist();this.db.prepare('INSERT INTO logs(at,actor,type,detail) VALUES(?,?,?,?)').run(new Date().toISOString(),actor,type,detail);const memberId=result?.memberId||(type==='membro'?result?.id:null);if(memberId)this.db.prepare('UPDATE logs SET memberId=? WHERE id=last_insert_rowid()').run(memberId);this.db.exec('COMMIT');return result}catch(e){this.db.exec('ROLLBACK');this.state=JSON.parse(old);throw e}}
  log(actor,type,detail,memberId=null){this.db.prepare('INSERT INTO logs(at,actor,type,detail) VALUES(?,?,?,?)').run(new Date().toISOString(),String(actor),String(type),String(detail).slice(0,2000));if(memberId)this.db.prepare('UPDATE logs SET memberId=? WHERE id=last_insert_rowid()').run(String(memberId));}

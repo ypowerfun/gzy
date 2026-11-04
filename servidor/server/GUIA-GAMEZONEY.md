@@ -43,7 +43,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configura
 ## 2. Primeiro acesso
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
-2. Em **Configuração**, confira o **valor da hora** (padrão R$ 7,00), o **endereço do servidor** usado pelas TVs (ex.: `http://192.168.1.100:3000`) e o fuso horário.
+2. Em **Configuração**, confira o **valor da hora** (padrão R$ 7,00 — para mudar, clique em **Alterar valor**, digite o novo valor, **Confirmar** e informe a senha do administrador), o **endereço do servidor** usado pelas TVs e PCs (já vem com o IP e o fuso horário da máquina onde o servidor foi instalado) e o fuso horário. Se a máquina tem cabo de rede e Wi-Fi, use **Configurar IP** e escolha a rede em que estão as TVs e os PCs; para servidor em nuvem, escolha **Servidor em nuvem / outro endereço** e informe o domínio.
 3. Cadastre as estações em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
@@ -150,7 +150,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ## 13. Configuração (administrador)
 
-- **Hora e configurações:** valor da hora, endereço do servidor para as TVs, fuso horário.
+- **Hora e funcionamento:** valor da hora (botão **Alterar valor** + senha do administrador), endereço do servidor para as TVs e PCs (botão **Configurar IP**: cabo, Wi-Fi ou servidor em nuvem), fuso horário.
 - **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
 - **Backup completo:** seção 14.
