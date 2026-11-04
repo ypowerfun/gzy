@@ -43,8 +43,8 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configura
 ## 2. Primeiro acesso
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
-2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) e o fuso horário pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **endereço do servidor** usado pelas TVs e PCs e o fuso já vêm com o IP e o fuso da máquina onde o servidor foi instalado; confira em **Configuração > Servidor IP** (seção 13).
-3. Cadastre as estações em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
+2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **fuso horário é automático**: é sempre o do Windows onde o servidor está instalado (para mudar, ajuste o fuso do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 13).
+3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
 ---
@@ -70,6 +70,8 @@ Cadastre a TV em **Painel de controle > + Nova estação**: nome, tipo **Console
 
 - **VIDAA (Hisense/Toshiba):** use **Parear TV**; a TV mostra um PIN de 4 números; digite em **Informar PIN**. Pareamento antigo pode ser trazido com **Importar pareamento**.
 - **Android TV / Google TV:** na TV, ative as Opções do desenvolvedor (Configurações > Sobre > clicar 7 vezes em Build) e ligue a **Depuração ADB pela rede**. Use **Parear TV** e aceite **Permitir depuração** na TV (marque "Sempre permitir").
+
+**Remover console** (em vermelho, ao clicar na estação; só administrador e sem sessão em andamento): tira o console da lista; o histórico de sessões e faturas fica. Para usar de novo, cadastre em **+ Nova estação**.
 
 Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a TV abre a página de **sessão finalizada** (nome, início, término, tempo usado e devolvido). A TV precisa alcançar a porta 3000 do servidor (e, no Android, ter um navegador instalado). **Testar HDMI** confere o controle. Se a troca falhar, a recarga com início imediato não é registrada — corrija a TV e tente de novo.
 
@@ -155,8 +157,12 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Backup completo:** seção 14.
 - **Servidor IP** (abaixo do backup): mostra o endereço que as TVs e os PCs usam para chegar ao servidor.
   - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma) e a porta; ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
-  - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). O servidor confere o IP em uso e ajusta o endereço, testa as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (busca dos PCs) e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). O resultado aparece em lista (✔/✖). Os PCs reencontram o servidor no novo IP sozinhos.
-- **Valor da hora e fuso horário:** ficam na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
+  - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). No topo do resultado aparece se o servidor está **disponível localmente (rede local)** ou **em nuvem**.
+    - **Rede local:** confere o IP em uso e ajusta o endereço, testa as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (busca dos PCs) e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). Os PCs reencontram o servidor no novo IP sozinhos.
+    - **Nuvem** (endereço com domínio): mantém o endereço, confere se o domínio é encontrado e responde, e se o servidor também responde na rede local.
+    - Também confere o fuso horário (automático). O resultado aparece em lista (✔/✖) e vai para o Log.
+- **Valor da hora:** fica na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
+- **Fuso horário:** automático, o mesmo do Windows do servidor (conferido a cada início do servidor e no Atualizar Automático).
 
 ---
 

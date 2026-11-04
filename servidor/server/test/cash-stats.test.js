@@ -58,7 +58,7 @@ test('3.0.31: estatística — máquina, horário, funcionário, cliente, client
   stats.freeGrant(store,ana,60,'Prêmio automático do programa fidelidade',base+15*H);
   store.state.staffUsage.push({id:'u1',stationId:'1',stationName:'TV 1 • PS4',username:'admin',kind:'Administrador',startedAt:base+9*H,endedAt:base+9.5*H});
   const q={from:day,to:day};
-  const m=stats.report(store,{...q,kind:'machines'}).data;assert.equal(m.most.name,'TV 1 • PS4');assert.equal(m.most.usedSeconds,7200);assert.equal(m.most.sessions,1);assert.equal(m.most.staffSeconds,1800);assert.equal(m.least.usedSeconds,1800);
+  const m=stats.report(store,{...q,kind:'machines'}).data;assert.equal(m.most.name,'Exemplo Console');assert.equal(m.most.usedSeconds,7200);assert.equal(m.most.sessions,1);assert.equal(m.most.staffSeconds,1800);assert.equal(m.least.usedSeconds,1800);
   const h=stats.report(store,{...q,kind:'hours'}).data;assert.equal(h.byHour[14].seconds,5400);assert.equal(h.byHour[15].seconds,3600);assert.equal(h.byHour[14].sessions,2);assert.equal(h.peak.hour,14);assert.equal(h.byHour[14].avgMachines,1.5);assert.equal(h.byWeekday[4].seconds,9000);
   const f=stats.report(store,{...q,kind:'staff'}).data;assert.equal(f.rows[0].username,'admin');assert.equal(f.rows[0].seconds,1800);
   const c=stats.report(store,{...q,kind:'clients'}).data;assert.equal(c.rows[0].name,'ana');assert.equal(c.rows[0].spentCents,1400);assert.equal(c.rows[1].spentCents,350);assert.equal(c.rows[0].usedSeconds,7200);

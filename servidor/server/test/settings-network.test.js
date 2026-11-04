@@ -25,3 +25,14 @@ test('1.0.5: banco novo usa IP e fuso desta máquina; endereço de fábrica anti
  s.state.settings.serverUrl='http://10.0.0.5:3000';s.persist();s.db.close();s=new Store(dir);assert.equal(s.state.settings.serverUrl,'http://10.0.0.5:3000');s.db.close();
  assert.equal(netinfo.kindOf('Wi-Fi'),'wifi');assert.equal(netinfo.kindOf('Ethernet'),'cabo');assert.equal(netinfo.kindOf('vEthernet (WSL)'),'virtual');assert.equal(netinfo.kindOf('wlan0'),'wifi');
 });
+test('1.0.5: estações de exemplo e Remover console',async t=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ex-'));const instance=createServer({directory,noTimer:true});await new Promise(r=>instance.server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+instance.server.address().port;let cookie='';
+ t.after(async()=>{await instance.close();fs.rmSync(directory,{recursive:true,force:true})});
+ async function call(url,body,status=200){const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body)});const text=await r.text();assert.equal(r.status,status,text);if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return text?JSON.parse(text):null}
+ assert.deepEqual(instance.store.state.stations.map(s=>[s.name,s.kind]),[['Exemplo Console','tv'],['Exemplo PC','computer']]);
+ await call('/api/setup',{username:'admin',password:'password123'});await call('/api/login',{username:'admin',password:'password123'});
+ await call('/api/station/remove',{stationId:'2'},400);await call('/api/station/remove',{stationId:'1'});await call('/api/station/remove',{stationId:'1'},400);await call('/api/pc/remove',{stationId:'2'});
+ const st=await call('/api/state');assert.equal(st.stations.length,0);assert.equal(instance.store.state.stations.length,2);
+ const auto=await call('/api/network/auto',{});assert.equal(auto.mode,'local');assert.equal(typeof auto.available,'boolean');
+ await call('/api/settings',{serverUrl:'https://gamezoney.invalid'});const cloud=await call('/api/network/auto',{});assert.equal(cloud.mode,'cloud');assert.equal(cloud.available,false);assert.equal(instance.store.state.settings.serverUrl,'https://gamezoney.invalid');
+});
