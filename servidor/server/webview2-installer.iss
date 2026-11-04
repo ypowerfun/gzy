@@ -17,11 +17,14 @@ var
 
 function GzHex(C: Integer): String;
 var
-  V: Int64;
+  I: Integer;
+  S: String;
 begin
-  V := C;
-  if V < 0 then V := V + 4294967296;
-  Result := IntToHex(V, 8) + ' (' + IntToStr(C) + ')';
+  { Código em hexadecimal (como a Microsoft documenta), sem depender de funções que o Inno não tem. }
+  S := '';
+  for I := 0 to 7 do
+    S := Copy('0123456789ABCDEF', ((C shr (I * 4)) and 15) + 1, 1) + S;
+  Result := '0x' + S + ' (' + IntToStr(C) + ')';
 end;
 
 function GzWv2Principal(Versao: String): Integer;
