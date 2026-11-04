@@ -1,0 +1,9 @@
+GameZoney Cliente - fonte do "Enviar Mensagem" (aviso na tela do PC)
+
+O aviso usa a fonte Montserrat (mesma do exemplo). Coloque aqui um destes arquivos
+antes de gerar o instalador do cliente:
+  Montserrat-ExtraBold.ttf  (preferido)
+  Montserrat-Bold.ttf
+  Montserrat-Black.ttf
+A Montserrat é gratuita (licença SIL Open Font License). Sem o arquivo, o cliente usa
+a Montserrat instalada no Windows; se não houver, usa Segoe UI Black / Arial Black.

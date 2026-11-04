@@ -56,3 +56,28 @@ test('1.0.5: Corujão/Viradão — criar, participantes, pagamento no caixa, ini
  const e2=ev.create(s,{kind:'viradao',name:'Grátis',date:'2026-12-31',priceCents:0},'admin');ev.addParticipant(s,{eventId:e2.id,memberId:c.id},'op');ev.pay(s,{eventId:e2.id,memberId:c.id},'op');ev.remove(s,{eventId:ev.create(s,{name:'X',date:'2026-12-01',priceCents:0},'admin').id},'admin');assert.throws(()=>ev.remove(s,{eventId:e2.id},'admin'),/pagamentos/);
  s.db.close();
 });
+test('1.0.5: pagamento combinado (2 a 3 formas) em recarga e PDV; caixa soma cada forma',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-pay-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const s=new Store(dir),shop=require('../shop'),cash=require('../cash'),P=require('../payments');
+ const m={id:'m1',name:'Ana',username:'ana',active:true,creditSeconds:0,pointsMilli:0};s.state.members.push(m);s.state.settings.hourCents=600;
+ cash.open(s,{openingCents:0},'admin');
+ const sale=s.credit('m1',{minutes:300,payments:[{method:'pix',cents:1000},{method:'credit',cents:1000},{method:'cash',cents:1000}]},'admin');
+ assert.equal(sale.cents,3000);assert.equal(sale.paymentMethod,'mixed');assert.equal(sale.payments.length,3);assert.match(P.label(sale),/Pix R\$ 10,00 \+ Cartão \(Crédito\) R\$ 10,00 \+ Dinheiro R\$ 10,00/);
+ assert.throws(()=>s.credit('m1',{minutes:300,payments:[{method:'pix',cents:1000},{method:'cash',cents:1000}]},'admin'),/soma/);
+ assert.throws(()=>s.credit('m1',{minutes:300,payments:[{method:'pix',cents:3000}]},'admin'),/2 a 3/);
+ assert.throws(()=>s.credit('m1',{minutes:300,payments:[{method:'pix',cents:1000},{method:'pix',cents:2000}]},'admin'),/repita/);
+ assert.throws(()=>s.credit('m1',{minutes:300,payments:[{method:'pix',cents:1000},{method:'cash',cents:1000},{method:'debit',cents:500},{method:'credit',cents:500}]},'admin'),/2 a 3/);
+ const p={id:'p1',name:'Coca',category:'Bebidas',priceCents:1000,costCents:500,stock:5,active:true};s.state.products.push(p);
+ const ps=shop.sell(s,{items:[{kind:'product',id:'p1',qty:2}],payments:[{method:'pix',cents:1500},{method:'card',cents:500}]},'admin');assert.equal(ps.paymentMethod,'mixed');assert.equal(p.stock,3);
+ assert.throws(()=>shop.sell(s,{items:[{kind:'product',id:'p1',qty:1}],payments:[{method:'pix',cents:500},{method:'credit',cents:500}]},'admin'),/inválida/);assert.equal(p.stock,3);
+ const sum=cash.summary(s,cash.current(s));assert.equal(sum.methods.pix,2500);assert.equal(sum.methods.card,1500);assert.equal(sum.methods.cash,1000);assert.equal(sum.totalCents,5000);
+ assert.match(shop.receiptLines(s,ps).join('\n'),/Pagamento combinado/);
+ const single=s.credit('m1',{minutes:60,paymentMethod:'pix'},'admin');assert.equal(single.paymentMethod,'pix');assert.equal(single.payments,undefined);
+ s.db.close();
+});
+test('1.0.5: Enviar Mensagem — PC conectado recebe no próximo contato; validações',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-msg-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const s=new Store(dir),pc=require('../pc')(s);const st=s.state.stations.find(x=>x.kind==='computer');
+ pc.sendMessage(st.id,'Servidor encerra em *20 minutos!*',15);const out=pc.stationState(st);assert.equal(out.messages.length,1);assert.equal(out.messages[0].seconds,15);assert.match(out.messages[0].text,/20 minutos/);
+ s.db.close();
+});

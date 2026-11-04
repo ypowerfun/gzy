@@ -1,6 +1,6 @@
 'use strict';
 // 3.0.23: Produtos/Servicos + PDV (venda no balcao) + cupom em PDF.
-let shopData = null, shopTab = 'sales', cart = [], shopPay = '', shopQuery = '';
+let shopData = null, shopTab = 'sales', cart = [], shopPay = '', shopQuery = '', pdvMix = null;
 const centsOf = v => Math.round(Number(String(v ?? '').replace(',', '.')) * 100);
 // 3.0.64: preço de venda = custo + margem de lucro, sempre arredondado PARA CIMA no real inteiro (mesma conta do servidor)
 const marginPriceCents = (costCents, percent) => Math.ceil(costCents * (10000 + Math.round(percent * 100)) / 1000000) * 100;
@@ -34,7 +34,7 @@ function renderCart() {
   const el = $('#pdv-cart'); if (!el) return;
   el.innerHTML = cart.length ? cart.map((l, i) => `<div class="pdv-line"><div class="pdv-line-name">${esc(l.name)}<small>${money(l.priceCents)}</small></div><input class="pdv-qty" data-i="${i}" type="number" min="1" max="${l.stock ?? 9999}" value="${l.qty}" aria-label="Quantidade"><strong class="pdv-sub">${money(l.priceCents * l.qty)}</strong><button class="icon-btn del" data-pdv-remove="${i}" title="Remover">${ICON.del}</button></div>`).join('')
     : '<p class="pdv-empty">Carrinho vazio.<br>Busque pelo nome ou leia o código de barras.</p>';
-  $('#pdv-total').textContent = money(cartTotal());
+  $('#pdv-total').textContent = money(cartTotal()); if (pdvMix) pdvMix.paint();
   $('#pdv-confirm').disabled = !cart.length || !(shopData?.cash || shopData?.canSellClosed);
   document.querySelectorAll('.pdv-qty').forEach(inp => inp.onchange = () => { const l = cart[+inp.dataset.i]; let q = Math.floor(Number(inp.value) || 1); if (q < 1) q = 1; if (l.stock !== null && q > l.stock) { q = l.stock; toast('Estoque disponível: ' + l.stock); } l.qty = q; inp.value = q; inp.closest('.pdv-line').querySelector('.pdv-sub').textContent = money(l.priceCents * q); $('#pdv-total').textContent = money(cartTotal()); });
   document.querySelectorAll('[data-pdv-remove]').forEach(b => b.onclick = () => { cart.splice(+b.dataset.pdvRemove, 1); renderCart(); });
@@ -64,6 +64,7 @@ async function renderShop() {
       <div class="pdv-cartbox"><div class="pdv-head"><span>Carrinho</span><span>Qtd</span><span style="text-align:right">Subtotal</span><span></span></div><div id="pdv-cart"></div></div>
       <div class="pdv-pay">
        ${Object.entries(shopData.payments).map(([k, v]) => `<label class="pay-opt"><input type="radio" name="pdv-pay" value="${k}" ${shopPay === k ? 'checked' : ''}>${ICON[k] || ''}<span>${v}</span></label>`).join('')}
+       <div id="pdv-paymix">${payMixHtml(PAY_SHOP)}</div>
        <div class="pdv-total"><span>Total</span><strong id="pdv-total">R$ 0,00</strong></div>
        <button class="primary pdv-finish" id="pdv-confirm" disabled>${ICON.check} Finalizar Venda</button>
       </div>
@@ -81,6 +82,7 @@ async function renderShop() {
   // leitor de codigo de barras digita o codigo e envia Enter
   search.onkeydown = e => { if (e.key !== 'Enter') return; e.preventDefault(); const t = search.value.trim(); const found = shopFind(t); const exact = found.find(i => i.barcode && i.barcode === t) || (found.length === 1 ? found[0] : null); if (exact) { if (exact.kind === 'product' && exact.stock <= 0) toast('Produto sem estoque.'); else addToCart(exact); } };
   document.querySelectorAll('input[name="pdv-pay"]').forEach(r => r.onchange = () => shopPay = r.value);
+  pdvMix = payMix($('#pdv-paymix'), cartTotal, on => document.querySelectorAll('.pdv-pay .pay-opt').forEach(o => { o.classList.toggle('hidden', on); o.querySelector('input').disabled = on; }));
   $('#pdv-confirm').onclick = askFinishSale;
   if (shopQuery) showResults();
   renderCart(); search.focus({preventScroll: true});
@@ -88,20 +90,22 @@ async function renderShop() {
 
 // 3.0.64: "Deseja realmente finalizar a venda?" — Cancelar volta ao PDV com o carrinho intacto
 function askFinishSale() {
-  const pay = document.querySelector('input[name="pdv-pay"]:checked')?.value; if (!pay) { toast('Selecione a forma de pagamento.'); return; }
+  let mix = null; try { mix = pdvMix && pdvMix.payments(); } catch (e) { toast(e.message); return; }
+  const pay = mix ? 'mixed' : document.querySelector('input[name="pdv-pay"]:checked')?.value; if (!pay) { toast('Selecione a forma de pagamento.'); return; }
   if (!cart.length) return;
   const items = cart.reduce((a, l) => a + l.qty, 0);
-  modal('Finalizar venda', `<p class="confirm-question">Deseja realmente finalizar a venda?</p><p class="hint">${items} ${items === 1 ? 'item' : 'itens'} · ${esc(shopData.payments[pay] || pay)} · Total <strong>${money(cartTotal())}</strong></p><div class="toolbar-actions confirm-actions"><button type="button" class="primary" id="pdv-yes">${ICON.check} Confirmar</button><button type="button" class="ghost" id="pdv-no">Cancelar</button></div>`);
+  modal('Finalizar venda', `<p class="confirm-question">Deseja realmente finalizar a venda?</p><p class="hint">${items} ${items === 1 ? 'item' : 'itens'} · ${esc(mix ? payMixLabel(mix, shopData.payments) : (shopData.payments[pay] || pay))} · Total <strong>${money(cartTotal())}</strong></p><div class="toolbar-actions confirm-actions"><button type="button" class="primary" id="pdv-yes">${ICON.check} Confirmar</button><button type="button" class="ghost" id="pdv-no">Cancelar</button></div>`);
   $('#pdv-yes').onclick = () => { $('#pdv-yes').disabled = true; $('#modal').close(); confirmSale(); };
   $('#pdv-no').onclick = () => { $('#modal').close(); $('#pdv-search')?.focus({preventScroll: true}); };
   $('#pdv-yes').focus();
 }
 async function confirmSale() {
-  const pay = document.querySelector('input[name="pdv-pay"]:checked')?.value; if (!pay) { toast('Selecione a forma de pagamento.'); return; }
+  let mix = null; try { mix = pdvMix && pdvMix.payments(); } catch (e) { toast(e.message); return; }
+  const pay = document.querySelector('input[name="pdv-pay"]:checked')?.value; if (!pay && !mix) { toast('Selecione a forma de pagamento.'); return; }
   if (!cart.length) return;
   const button = $('#pdv-confirm'); button.disabled = true;
   try {
-    const sale = await api('/shop/sale', {items: cart.map(l => ({kind: l.kind, id: l.id, qty: l.qty})), paymentMethod: pay});
+    const sale = await api('/shop/sale', {items: cart.map(l => ({kind: l.kind, id: l.id, qty: l.qty})), ...(mix ? {payments: mix} : {paymentMethod: pay})});
     cart = []; shopPay = ''; showReceipt(sale); await renderShop();
   } catch (e) { toast(e.message); button.disabled = false; }
 }
@@ -110,7 +114,7 @@ function receiptPreview(sale) {
   const W = 42, pad = (l, r) => l + ' '.repeat(Math.max(1, W - l.length - r.length)) + r, line = '-'.repeat(W), brl = c => 'R$ ' + (c / 100).toFixed(2).replace('.', ',');
   const rows = ['GameZoney', 'CUPOM DE VENDA - NAO FISCAL', line, pad('Cupom No ' + String(sale.number).padStart(6, '0'), new Date(sale.at).toLocaleString('pt-BR', {timeZone: state?.settings.timeZone || 'America/Manaus'}).replace(',', '')), 'Operador: ' + sale.actor, line];
   for (const i of sale.items) { rows.push(i.name.slice(0, W)); rows.push(pad('  ' + i.qty + ' x ' + brl(i.unitCents), brl(i.totalCents))); }
-  rows.push(line, pad('TOTAL', brl(sale.totalCents)), pad('Pagamento', ({cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'})[sale.paymentMethod] || ''));
+  rows.push(line, pad('TOTAL', brl(sale.totalCents)), ...(sale.paymentMethod === 'mixed' && sale.payments ? ['Pagamento combinado:', ...sale.payments.map(p => pad('  ' + (PAY_SHOP[p.method] || p.method), brl(p.cents)))] : [pad('Pagamento', ({cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'})[sale.paymentMethod] || '')]));
   if (sale.status === 'canceled') rows.push(line, '*** VENDA CANCELADA ***');
   rows.push(line, 'Documento sem valor fiscal');
   return `<pre style="background:#fff;color:#111;padding:14px 16px;border-radius:10px;font:12px/1.45 Consolas,'Courier New',monospace;max-height:380px;overflow:auto;width:max-content;max-width:100%;margin:0 auto">${esc(rows.join('\n'))}</pre>`;
@@ -158,5 +162,5 @@ document.addEventListener('click', async e => {
 // Faturas e relatorios: tabela de vendas de produtos/servicos com cancelamento.
 function shopFinanceSection(r) {
   const list = [...(r.shopSales || [])].reverse();
-  return `<h2 style="margin-top:28px">Vendas de produtos e serviços</h2><p class="hint">Receita de produtos/serviços no período: ${money(r.shopRevenue || 0)} · custo dos produtos vendidos: ${money(r.shopCost || 0)}. Vendas canceladas não geram receita e devolvem os produtos ao estoque.</p><div class="table-wrap"><table><thead><tr><th>Cupom</th><th>Data / operador</th><th>Itens</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(s => `<tr><td>C${String(s.number).padStart(6, '0')}</td><td>${datetime(s.at)}<small class="subtext">${esc(s.actor)}</small></td><td>${s.items.map(i => esc(i.qty + 'x ' + i.name)).join('<br>')}</td><td>${money(s.totalCents)}</td><td>${esc(({cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'})[s.paymentMethod] || '')}</td><td>${s.status === 'canceled' ? 'Cancelada' : 'Registrada'}<small class="subtext">${esc(s.cancelReason || '')}</small></td><td><button data-shop-receipt="${s.id}" data-number="${s.number}">Cupom</button> <button data-shop-cancel="${s.id}" ${s.status === 'canceled' ? 'disabled' : ''}>Cancelar</button></td></tr>`).join('') || '<tr><td colspan="7">Nenhuma venda de produtos/serviços no período.</td></tr>'}</tbody></table></div>`;
+  return `<h2 style="margin-top:28px">Vendas de produtos e serviços</h2><p class="hint">Receita de produtos/serviços no período: ${money(r.shopRevenue || 0)} · custo dos produtos vendidos: ${money(r.shopCost || 0)}. Vendas canceladas não geram receita e devolvem os produtos ao estoque.</p><div class="table-wrap"><table><thead><tr><th>Cupom</th><th>Data / operador</th><th>Itens</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody>${list.map(s => `<tr><td>C${String(s.number).padStart(6, '0')}</td><td>${datetime(s.at)}<small class="subtext">${esc(s.actor)}</small></td><td>${s.items.map(i => esc(i.qty + 'x ' + i.name)).join('<br>')}</td><td>${money(s.totalCents)}</td><td>${esc(s.paymentMethod === 'mixed' && s.payments ? payMixLabel(s.payments, PAY_SHOP) : ({cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'})[s.paymentMethod] || '')}</td><td>${s.status === 'canceled' ? 'Cancelada' : 'Registrada'}<small class="subtext">${esc(s.cancelReason || '')}</small></td><td><button data-shop-receipt="${s.id}" data-number="${s.number}">Cupom</button> <button data-shop-cancel="${s.id}" ${s.status === 'canceled' ? 'disabled' : ''}>Cancelar</button></td></tr>`).join('') || '<tr><td colspan="7">Nenhuma venda de produtos/serviços no período.</td></tr>'}</tbody></table></div>`;
 }

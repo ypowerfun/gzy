@@ -77,7 +77,8 @@ function catalog(store, isAdmin) {
 }
 
 function sell(store, input, actor) {
-  const paymentMethod = Object.hasOwn(PAYMENTS, input.paymentMethod) ? input.paymentMethod : fail('Selecione a forma de pagamento (Dinheiro, Pix ou Cartão).');
+  const P = require('./payments'), mixed = P.wants(input); // 1.0.5: pagamento combinado (2 a 3 formas)
+  const paymentMethod = mixed ? 'mixed' : Object.hasOwn(PAYMENTS, input.paymentMethod) ? input.paymentMethod : fail('Selecione a forma de pagamento (Dinheiro, Pix ou Cartão).');
   const lines = Array.isArray(input.items) ? input.items : [];
   if (!lines.length) fail('Adicione pelo menos um item.');
   if (lines.length > 100) fail('Itens demais em uma venda.');
@@ -94,13 +95,14 @@ function sell(store, input, actor) {
   });
   const totalCents = items.reduce((a, i) => a + i.totalCents, 0);
   const summary = items.map(i => `${i.qty}x ${i.name}`).join(', ');
-  return store.change(actor, 'venda', `Venda de produtos/serviços: ${summary} • R$ ${(totalCents / 100).toFixed(2)} • ${PAYMENTS[paymentMethod]}`, () => {
+  const payments = mixed ? P.combined(input.payments, totalCents, P.SHOP) : null;
+  return store.change(actor, 'venda', `Venda de produtos/serviços: ${summary} • R$ ${(totalCents / 100).toFixed(2)} • ${P.label({paymentMethod, payments})}`, () => {
     for (const i of items) if (i.kind === 'product') {
       const p = store.state.products.find(p => p.id === i.itemId);
       if (p.stock < i.qty) fail(`Estoque insuficiente para ${p.name}.`);
       p.stock -= i.qty;
     }
-    const sale = {id: id(), number: ++store.state.shopSequence, at: Date.now(), actor, items, totalCents, paymentMethod, status: 'paid', cashId: require('./cash').openId(store)};
+    const sale = {id: id(), number: ++store.state.shopSequence, at: Date.now(), actor, items, totalCents, paymentMethod, ...(payments ? {payments} : {}), status: 'paid', cashId: require('./cash').openId(store)};
     store.state.shopSales.push(sale);
     return sale;
   });
@@ -136,7 +138,7 @@ function receiptLines(store, sale) {
   const when = new Intl.DateTimeFormat('pt-BR', {timeZone: tz, dateStyle: 'short', timeStyle: 'medium'}).format(sale.at);
   const L = [center('GameZoney'), center('CUPOM DE VENDA - NAO FISCAL'), '-'.repeat(WIDTH), pad('Cupom No ' + String(sale.number).padStart(6, '0'), when.replace(',', '')), 'Operador: ' + sale.actor, '-'.repeat(WIDTH), pad('ITEM', 'TOTAL')];
   for (const i of sale.items) { for (const w of wrap(i.name)) L.push(w); L.push(pad(`  ${i.qty} x ${brl(i.unitCents)}`, brl(i.totalCents))); }
-  L.push('-'.repeat(WIDTH), pad('TOTAL', brl(sale.totalCents)), pad('Pagamento', PAYMENTS[sale.paymentMethod] || ''));
+  L.push('-'.repeat(WIDTH), pad('TOTAL', brl(sale.totalCents)), ...(sale.paymentMethod === 'mixed' ? ['Pagamento combinado:', ...require('./payments').parts(sale, sale.totalCents).map(p => pad('  ' + require('./payments').LABEL[p.method], brl(p.cents)))] : [pad('Pagamento', PAYMENTS[sale.paymentMethod] || '')]));
   if (sale.status === 'canceled') L.push('-'.repeat(WIDTH), center('*** VENDA CANCELADA ***'), ...wrap('Motivo: ' + (sale.cancelReason || '')));
   L.push('-'.repeat(WIDTH), center('Documento sem valor fiscal'), center('Obrigado e bom jogo!'));
   return L;

@@ -600,7 +600,11 @@ public class ClientForm : Form {
   }
   Apply(result);
   await HandleLoyaltyNotice(result);
+  HandleSystemMessages(result);
  }
+ // 1.0.5: Ações dos PCs > Enviar Mensagem. Mostra o aviso (sem receber clique/teclado) pelo tempo definido; cada mensagem uma vez.
+ HashSet<string> messagesSeen=new HashSet<string>();SystemMessage systemMessage;
+ void HandleSystemMessages(Dictionary<string,object> result){try{var list=result.ContainsKey("messages")?result["messages"] as System.Collections.IEnumerable:null;if(list==null)return;foreach(var item in list){var m=item as Dictionary<string,object>;if(m==null)continue;string id=Value(m,"id"),text=Value(m,"text");if(String.IsNullOrEmpty(id)||String.IsNullOrEmpty(text)||!messagesSeen.Add(id))continue;int seconds=10;try{seconds=Convert.ToInt32(m["seconds"]);}catch{}if(systemMessage!=null&&!systemMessage.IsDisposed){try{systemMessage.Close();}catch{}}systemMessage=new SystemMessage(text,seconds);systemMessage.Show();}}catch(Exception e){try{Files.LogFullscreen("AVISO: falha ao mostrar mensagem do servidor: "+e.Message);}catch{}}}
  // 2.0.36: alterar a senha do cliente em sessao (o servidor confere a senha atual).
  void ChangePassword(){if(passwordDialog!=null&&!passwordDialog.IsDisposed){passwordDialog.Activate();return;}string session=budget.sessionId;if(session==null||adminSession||offlineAdminSession)return;string nick=((SessionBar)timerWindow).MemberLabel.Text;passwordDialog=new ChangePasswordForm(nick,async(currentPassword,newPassword,repeatPassword)=>{if(budget.sessionId!=session)throw new Exception("A sessão mudou. Feche esta janela.");var r=await Task.Run(()=>transport.Post("change-password",new {clientRunId=clientRunId,sessionId=session,currentPassword=currentPassword,newPassword=newPassword,repeatPassword=repeatPassword}));if(!r.ContainsKey("ok")||!Convert.ToBoolean(r["ok"]))throw new Exception("Não foi possível alterar a senha.");});passwordDialog.FormClosed+=(a,e)=>{passwordDialog=null;};passwordDialog.Show(timerWindow);}
  async void CleanupExpired(){try{await CleanSession();}catch{}finally{if(!closing)RefreshClock();}}

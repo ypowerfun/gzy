@@ -49,6 +49,7 @@ Type: files; Name: "{app}\public\icon-512.png"
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "netinfo.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "events.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "payments.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -102,4 +103,5 @@ Filename: "{app}\GameZoney.exe"; Description: "Abrir GameZoney Servidor"; Flags:
 
 [Code]
 
+#include "uninstall-cleanup.iss"
 #include "firewall-installer.iss"

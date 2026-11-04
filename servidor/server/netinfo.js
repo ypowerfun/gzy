@@ -8,5 +8,6 @@ function kindOf(name){if(VIRTUAL.test(name))return 'virtual';if(WIFI.test(name))
 function interfaces(){const out=[];for(const [name,list] of Object.entries(os.networkInterfaces()))for(const a of list||[])if((a.family==='IPv4'||a.family===4)&&!a.internal&&!a.address.startsWith('169.254.'))out.push({name,address:a.address,kind:kindOf(name)});return out.sort((a,b)=>RANK[a.kind]-RANK[b.kind])}
 function port(){const p=Number(process.env.PORT||3000);return Number.isInteger(p)&&p>0&&p<65536?p:3000}
 function defaultUrl(){const ip=interfaces()[0]?.address;return ip?`http://${ip}:${port()}`:''}
-function timeZone(){try{const z=Intl.DateTimeFormat().resolvedOptions().timeZone;if(!z||/^(UTC|Etc\/)/i.test(z))return '';new Intl.DateTimeFormat('pt-BR',{timeZone:z}).format();return z}catch{return ''}}
+/* 1.0.5: data e hora = as do computador onde o servidor está instalado (inclusive UTC); o fuso só é usado internamente para isso. */
+function timeZone(){try{const z=Intl.DateTimeFormat().resolvedOptions().timeZone;if(!z)return '';new Intl.DateTimeFormat('pt-BR',{timeZone:z}).format();return z}catch{return ''}}
 module.exports={interfaces,port,defaultUrl,timeZone,kindOf};

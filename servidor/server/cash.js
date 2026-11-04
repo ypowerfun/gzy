@@ -21,8 +21,8 @@ function summary(store, reg, now = Date.now()) {
   const moves = reg.moves || [];
   const methods = {cash: 0, pix: 0, card: 0, unspecified: 0};
   let timeCents = 0, shopCents = 0, canceledCents = 0, canceledCount = 0;
-  for (const s of sales) { if (s.status === 'canceled') { canceledCents += s.cents; canceledCount++; continue; } timeCents += s.cents; methods[GROUP[s.paymentMethod] || 'unspecified'] += s.cents; }
-  for (const s of shop) { if (s.status === 'canceled') { canceledCents += s.totalCents; canceledCount++; continue; } shopCents += s.totalCents; methods[GROUP[s.paymentMethod] || 'unspecified'] += s.totalCents; }
+  for (const s of sales) { if (s.status === 'canceled') { canceledCents += s.cents; canceledCount++; continue; } timeCents += s.cents; for (const p of require('./payments').parts(s, s.cents)) methods[GROUP[p.method] || 'unspecified'] += p.cents; }
+  for (const s of shop) { if (s.status === 'canceled') { canceledCents += s.totalCents; canceledCount++; continue; } shopCents += s.totalCents; for (const p of require('./payments').parts(s, s.totalCents)) methods[GROUP[p.method] || 'unspecified'] += p.cents; }
   const supply = moves.filter(m => m.type === 'suprimento').reduce((a, m) => a + m.cents, 0);
   const withdraw = moves.filter(m => m.type === 'sangria').reduce((a, m) => a + m.cents, 0);
   const products = new Map();
@@ -153,8 +153,8 @@ function removePrevious(store, input, actor, isOwner) {
 
 function salesOf(store, regId) {
   const reg = store.state.cashRegisters.find(c => c.id === regId) || fail('Caixa não encontrado.');
-  const time = store.state.sales.filter(s => s.cashId === reg.id).map(s => ({kind: 'recarga', id: s.id, at: s.at, actor: s.actor, label: (s.invoiceNumber ? 'Fatura ' + s.invoiceNumber + ' • ' : '') + (s.memberUsername || s.memberName) + ' • ' + s.label, cents: s.cents, paymentMethod: s.paymentMethod, status: s.status}));
-  const shop = (store.state.shopSales || []).filter(s => s.cashId === reg.id).map(s => ({kind: 'pdv', id: s.id, number: s.number, at: s.at, actor: s.actor, label: 'Cupom ' + String(s.number).padStart(6, '0') + ' • ' + s.items.map(i => i.qty + 'x ' + i.name).join(', '), cents: s.totalCents, paymentMethod: s.paymentMethod, status: s.status}));
+  const time = store.state.sales.filter(s => s.cashId === reg.id).map(s => ({kind: 'recarga', id: s.id, at: s.at, actor: s.actor, label: (s.invoiceNumber ? 'Fatura ' + s.invoiceNumber + ' • ' : '') + (s.memberUsername || s.memberName) + ' • ' + s.label, cents: s.cents, paymentMethod: s.paymentMethod, paymentLabel: require('./payments').label(s), status: s.status}));
+  const shop = (store.state.shopSales || []).filter(s => s.cashId === reg.id).map(s => ({kind: 'pdv', id: s.id, number: s.number, at: s.at, actor: s.actor, label: 'Cupom ' + String(s.number).padStart(6, '0') + ' • ' + s.items.map(i => i.qty + 'x ' + i.name).join(', '), cents: s.totalCents, paymentMethod: s.paymentMethod, paymentLabel: require('./payments').label(s), status: s.status}));
   return [...time, ...shop].sort((a, b) => b.at - a.at);
 }
 

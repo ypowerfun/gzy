@@ -275,3 +275,31 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
 .rank-3 .rank-pos{background:linear-gradient(180deg,#e2a46b,#9a5a26);color:#111;border-color:#e2a46b}
 .rank-nick{flex:1;font-weight:600;overflow-wrap:anywhere}
 .rank-value{text-align:right;color:var(--red2);font-size:13px}
+/* 1.0.5: pagamento combinado */
+.pay-mix{margin:0 0 14px}
+.pay-mix-toggle{display:flex;align-items:center;gap:8px;margin:0 0 8px;cursor:pointer;font-size:13px}
+.pay-mix-toggle input{width:auto;margin:0}
+.pm-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;margin-bottom:8px}
+.pm-row select,.pm-row input{margin:0}
+.pm-rest{margin:4px 0 0}
+/* 1.0.5: menu lateral cabe em qualquer altura de tela — Senha e Sair sempre visíveis, sem rolar a página.
+   O menu se compacta conforme a altura; só a lista de itens rola se a janela for muito baixa. */
+@media(min-width:701px){
+ aside{display:flex;flex-direction:column;height:calc(100vh / var(--fit-zoom,1));height:calc(100dvh / var(--fit-zoom,1));overflow:hidden}
+ aside nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+ aside .brand,aside .nav-label,aside .sidebar-bottom{flex:none}
+ .sidebar-bottom{margin-top:6px}
+}
+@media(min-width:701px) and (max-height:820px){
+ nav button{padding:7px 12px}.nav-sep{margin:6px 14px}
+ .brand{padding:0 0 8px;margin-bottom:6px}.brand .brand-logo{width:104px}.nav-label{margin:2px 8px 6px}
+ .sidebar-bottom{padding-top:8px}.sidebar-bottom #operator-name{margin:4px 0 6px}
+}
+@media(min-width:701px) and (max-height:700px){
+ nav button{padding:5px 12px}nav .nav-icon{width:15px;height:15px}.nav-sep{margin:4px 14px}
+ .brand .brand-logo{width:88px}.brand-ver,.nav-label{display:none}
+ .sidebar-bottom #operator-name small,.sidebar-bottom #operator-name{font-size:11px}
+}
+@media(min-width:701px) and (max-height:600px){
+ nav button{padding:3px 12px}.nav-sep{margin:2px 14px}.brand{display:none}
+}

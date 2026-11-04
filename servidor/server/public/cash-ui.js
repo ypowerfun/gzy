@@ -76,7 +76,7 @@ async function renderCash() {
 
 async function cashSalesModal(id) {
   const list = await api('/cash/sales?id=' + encodeURIComponent(id)), L = cashData.labels;
-  modal('Vendas do caixa', `<div class="table-wrap" style="max-height:60vh"><table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${list.map(v => `<tr><td>${datetime(v.at)}<small class="subtext">${esc(v.actor)}</small></td><td>${v.kind === 'pdv' ? 'PDV' : 'Recarga'}</td><td>${esc(v.label)}</td><td>${money(v.cents)}</td><td>${esc(L[v.paymentMethod] || v.paymentMethod || '')}</td><td>${v.status === 'canceled' ? '<span class="badge red">CANCELADA</span>' : 'OK'}</td></tr>`).join('') || '<tr><td colspan="6">Nenhuma venda neste caixa.</td></tr>'}</tbody></table></div>`);
+  modal('Vendas do caixa', `<div class="table-wrap" style="max-height:60vh"><table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${list.map(v => `<tr><td>${datetime(v.at)}<small class="subtext">${esc(v.actor)}</small></td><td>${v.kind === 'pdv' ? 'PDV' : 'Recarga'}</td><td>${esc(v.label)}</td><td>${money(v.cents)}</td><td>${esc(v.paymentLabel || L[v.paymentMethod] || v.paymentMethod || '')}</td><td>${v.status === 'canceled' ? '<span class="badge red">CANCELADA</span>' : 'OK'}</td></tr>`).join('') || '<tr><td colspan="6">Nenhuma venda neste caixa.</td></tr>'}</tbody></table></div>`);
 }
 
 document.addEventListener('click', async e => {

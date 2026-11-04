@@ -17,7 +17,7 @@ O GameZoney tem duas partes:
 
 ## Menu do painel
 
-Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir/Remover** — **Sessão, Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** — **Ranking** — **Configuração** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas.
+Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir/Remover** — **Sessão, Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** — **Ranking** — **Configuração** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas. O painel se ajusta a qualquer resolução: **Senha** e **Sair** ficam sempre visíveis no fim do menu, sem rolar a página (em telas muito baixas o menu fica mais compacto).
 
 ---
 
@@ -44,7 +44,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 ## 2. Primeiro acesso
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
-2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **fuso horário é automático**: é sempre o do Windows onde o servidor está instalado (para mudar, ajuste o fuso do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
+2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. **Data e hora** são sempre as do computador onde o servidor está instalado (as mesmas do relógio do Windows; para mudar, ajuste o relógio do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
 3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
@@ -59,6 +59,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 - **Visitante / Visitantes em grupo:** seção 6.
 - **Organizar A-Z / Z-A** muda a ordem dos monitores (fica guardado).
 - **Ações dos PCs** (administrador): liberar em modo administrador, encerrar sessões, desligar e reiniciar — todas, disponíveis ou uma específica. Afeta só computadores, nunca TVs. Ao interromper uma sessão, o saldo restante volta ao cliente.
+- **Ações dos PCs > Enviar Mensagem** (administrador): escolha um PC específico ou **Enviar para todos**, escreva a mensagem (até 200 caracteres; trecho entre `*asteriscos*` sai em dourado; Enter quebra a linha) e o **tempo na tela** em segundos. No PC aparece no canto superior esquerdo, com o título **AVISO DO SISTEMA**, só o texto (sem fundo), e some sozinha depois do tempo escolhido. O aviso **não recebe clique nem teclado e não tira o foco do jogo**. PC sem conexão não recebe (o resultado mostra quem recebeu). Em jogo de tela cheia exclusiva o Windows não deixa nada aparecer por cima; em tela cheia sem borda/janela aparece normalmente.
 - **Controle do PC** (no monitor do PC, administrador, com sessão ativa): bloquear/desbloquear a tela, lista de programas da sessão (fechar ou **Finalizar tarefa**), visualizar a tela (o PC mostra "TELA VISÍVEL À RECEPÇÃO"), reiniciar e desligar.
 - **Layout do login:** envia uma imagem (JPG/PNG) de fundo para a tela de login daquele PC e a posição dos campos (esquerda, centro ou direita). "Remover imagem" volta ao fundo padrão GameZoney.
 - **Remover computador:** aparece em PC desconectado/inativo e sem sessão. A associação é revogada; histórico e saldos ficam.
@@ -83,7 +84,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - **Clientes > + Novo cliente:** nome, **Usuário/Nick** (3 a 32 caracteres; letras sem acento, números, espaço, ponto, hífen ou sublinhado; não se repete), senha (4 a 20 caracteres, opcional — se ficar vazia, o cliente cria a senha no primeiro acesso ao PC), CPF (opcional, não se repete), telefone e observações. **Ativar programa fidelidade** desmarcado: o cliente não ganha pontos.
 - **Clique no nome do cliente** para **Adicionar tempo**:
   1. escolha uma **promoção** (só recargas com promoção geram medalhas) ou informe **em minutos** ou **em valor** (R$; os minutos são proporcionais ao valor da hora);
-  2. escolha a **forma de pagamento** (Dinheiro, Pix, Cartão Crédito/Débito) — aparece na fatura e no relatório;
+  2. escolha a **forma de pagamento** (Dinheiro, Pix, Cartão Crédito/Débito) — aparece na fatura e no relatório. Para dividir, marque **Pagamento combinado (até 3 formas)** e informe o valor de cada uma (ex.: R$ 10 no Pix + R$ 10 no Cartão + R$ 10 em Dinheiro = R$ 30). A soma precisa ser igual ao total; o painel mostra quanto falta ou passou;
   3. **Iniciar após a recarga:** escolha uma estação livre para começar agora, ou **Guardar no saldo do cliente**.
 - **Pacote grátis** (R$ 0,00): em vez da forma de pagamento, exige **OBS** (motivo) e a **chave de autenticação** (senha do usuário logado no servidor).
 - **Importar planilha** (administrador principal): Excel (.xlsx) ou CSV com as colunas **Nome, Nick, Tempo, Medalhas de fidelidade** (a coluna antiga "Pontos fidelidade" também é aceita). Tempo aceita `01:30`, `90`, `1h30`, `45min`. Mostra uma prévia antes; clientes já cadastrados não são alterados; todos entram sem senha.
@@ -93,7 +94,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 ## 6. Visitante (sem cadastro)
 
-- No monitor livre, **Visitante**: escolha a promoção ou o tempo (em minutos ou em valor) e a forma de pagamento. A sessão começa na hora com o nome **Visitante**. Não acumula medalhas e o tempo não usado não fica guardado.
+- No monitor livre, **Visitante**: escolha a promoção ou o tempo (em minutos ou em valor) e a forma de pagamento (ou **Pagamento combinado**, até 3 formas). A sessão começa na hora com o nome **Visitante**. Em **Visitantes em grupo** a forma de pagamento é única. Não acumula medalhas e o tempo não usado não fica guardado.
 - **Visitantes em grupo:** libera várias estações livres e conectadas de uma vez, com o mesmo tempo; cada estação vira uma venda. O resultado mostra estação por estação.
 
 ---
@@ -115,7 +116,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - **Produtos/Serviços** tem três abas: **Estoque** (primeira opção: estoque atual e **+ Entrada** de mercadoria), **Gerenciamento de Produtos** e **Gerenciamento de Serviços**.
 - A aba **Vendas** (o PDV) fica em **Caixa** (Caixa atual / Vendas / Caixas fechados).
 - **Cadastro (administrador), nas áreas de gerenciamento:** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
-- **Venda (administrador e operador), em Caixa > Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
+- **Venda (administrador e operador), em Caixa > Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento (ou **Pagamento combinado**, até 3 formas: Dinheiro, Pix e Cartão, com o valor de cada uma) e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
 - Venda cancelada (administrador) sai da receita e devolve os produtos ao estoque.
 
 ---
@@ -185,9 +186,9 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
   - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). No topo do resultado aparece se o servidor está **disponível localmente (rede local)** ou **em nuvem**.
     - **Rede local:** confere o IP em uso e ajusta o endereço, testa as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (busca dos PCs) e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). Os PCs reencontram o servidor no novo IP sozinhos.
     - **Nuvem** (endereço com domínio): mantém o endereço, confere se o domínio é encontrado e responde, e se o servidor também responde na rede local.
-    - Também confere o fuso horário (automático). O resultado aparece em lista (✔/✖) e vai para o Log.
+    - Também mostra a data e a hora do computador do servidor. O resultado aparece em lista (✔/✖) e vai para o Log.
 - **Valor da hora:** fica na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
-- **Fuso horário:** automático, o mesmo do Windows do servidor (conferido a cada início do servidor e no Atualizar Automático).
+- **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar.
 
 ---
 
@@ -242,7 +243,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Remover computador** (painel): revoga a associação; histórico e saldos ficam. Para usar o PC de novo: no PC, **Reconfigurar conexão com o servidor** (senha de manutenção), siga a descoberta e autorize na recepção como **Novo computador**.
 - **Manter o mesmo nome no painel:** remova o computador antigo e autorize o pedido como novo com o mesmo nome, ou use **Associação por arquivo (alternativa)** no cartão do PC e **Importar** no cliente.
 - **Desinstalar o Cliente** (Configurações do Windows > Aplicativos): pede um administrador do servidor, retira as restrições e não deixa nada no PC (programa, dados, logs, inicialização automática, firewall e atalhos). Ao instalar de novo, o PC pede nova autorização.
-- **Desinstalar o Servidor:** o desinstalador pergunta antes de apagar os dados.
+- **Desinstalar o Servidor:** remove o programa e tudo o que o servidor criou no computador (pasta do programa, dados da janela do painel, banco de dados, pareamentos, certificados e registros), **menos os backups**. Antes de apagar, ele pergunta: **Sim** = remover tudo (menos os backups) · **Não** = manter os dados. Ao escolher Sim, uma cópia do banco é guardada antes em `%LOCALAPPDATA%\GameZoney\data\backups` (`antes-desinstalar-…sqlite`). Ficam: **Documentos\bkp gamezoney**, a pasta `data\backups` e as cópias `data-anterior-*` da restauração. Desinstalação silenciosa mantém os dados.
 
 ---
 

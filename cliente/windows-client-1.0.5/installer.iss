@@ -43,6 +43,7 @@ Source: "GameZoneyCliente.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wallpaper-padrao.jpg"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logo-marca.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logo-gamezoney.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "fonts\*"; DestDir: "{app}\fonts"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\Reconfigurar conexao com o servidor"; Filename: "{app}\GameZoneyCliente.exe"; Parameters: "/reconfigure"
