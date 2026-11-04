@@ -8,21 +8,19 @@ test('3.0.48: instalador do servidor inclui todos os módulos .js usados',()=>{
  while(queue.length){const file=queue.shift();const src=fs.readFileSync(path.join(root,file),'utf8');for(const m of src.matchAll(/require\('\.\/([a-z0-9-]+)'\)/g)){const f=m[1]+'.js';if(!needed.has(f)&&fs.existsSync(path.join(root,f))){needed.add(f);queue.push(f);}}}
  for(const f of needed)assert(listed.has(f),'falta no installer.iss: '+f);
 });
-// 1.0.3/1.0.4: sem WebView2. O painel abre como aplicativo (janela própria, sem abas) no navegador da arena: o padrão do
-// Windows primeiro e depois os instalados (Chrome, Brave, Vivaldi, Opera, Firefox; o Edge por último).
-test('1.0.4: painel como aplicativo no navegador da arena (padrão primeiro, Edge por último), sem WebView2',()=>{
+// 3.0.68: painel em janela própria. Sem os arquivos do WebView2 no instalador o painel voltaria a abrir no navegador.
+test('3.0.68: instalador do servidor leva o WebView2 do painel e o iniciador usa a janela própria com reserva',()=>{
  const root=path.join(__dirname,'..'),iss=fs.readFileSync(path.join(root,'installer.iss'),'utf8'),launcher=fs.readFileSync(path.join(root,'Launcher.cs'),'utf8');
- assert(!/WebView2|PanelWindow|PanelHost/.test(launcher),'o iniciador não usa mais o WebView2');
- assert(!/Source: "[^"]*WebView2/i.test(iss)&&!iss.includes('webview2-installer.iss'),'o instalador não leva mais o WebView2');
- for(const file of ['Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','runtimes'])assert(!fs.existsSync(path.join(root,file)),'arquivo do WebView2 ainda na pasta: '+file);
- assert(iss.includes('Type: files; Name: "{app}\\Microsoft.Web.WebView2.Core.dll"')&&iss.includes('Type: filesandordirs; Name: "{app}\\runtimes"'),'a atualização apaga o WebView2 de instalações anteriores');
- assert(launcher.includes('Process.Start(new ProcessStartInfo(address){UseShellExecute=true})'),'abre no navegador padrão do Windows');
- for(const exe of ['chrome.exe','firefox.exe','brave.exe','msedge.exe'])assert(launcher.includes('"'+exe+'"'),'reserva: '+exe);
- assert(!launcher.includes('painel-edge')&&!launcher.includes('FindEdge'),'não procura mais o Edge primeiro');
- assert(launcher.includes('string preferred=DefaultBrowser();')&&launcher.includes('UrlAssociations\\http\\UserChoice'),'usa o navegador padrão do Windows primeiro');
- assert(launcher.includes('args="--app=\\""+address')&&launcher.includes('"painel-app"'),'Chrome/Brave/Vivaldi/Opera: modo aplicativo com perfil próprio do painel');
- assert(launcher.includes('if(exe=="firefox.exe")args="-new-window'),'Firefox: janela nova');
- const order=launcher.match(/new string\[\]\{"chrome\.exe",[^}]*\}/)[0];assert(order.indexOf('msedge.exe')>order.indexOf('firefox.exe'),'Edge só por último');
- assert(/menu\.Items\.Add\("Abrir GameZoney",null,\(s,e\)=>ShowPanel\(\)\)/.test(launcher)&&launcher.includes('void ShowPanel(){OpenPanel(address);}'),'menu do ícone abre o painel no navegador');
- assert(launcher.includes('if(!silent&&!selftest)OpenPanel('),'segunda abertura (atalho) abre o painel no navegador');
+ for(const file of ['Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','runtimes\\win-x64\\native\\WebView2Loader.dll','runtimes\\win-x86\\native\\WebView2Loader.dll']){
+  assert(iss.includes('Source: "'+file+'"'),'falta no installer.iss: '+file);
+  assert(fs.existsSync(path.join(root,...file.split('\\'))),'arquivo faltando na pasta do servidor: '+file);
+ }
+ assert(iss.includes('Source: "LICENSE-*.txt"')&&fs.existsSync(path.join(root,'LICENSE-webview2.txt')),'licença do WebView2 deve ir junto');
+ assert(/menu\.Items\.Add\("Abrir GameZoney",null,\(s,e\)=>ShowPanel\(\)\)/.test(launcher),'menu do ícone abre a janela própria');
+ assert(launcher.includes('menu.Items.Add("Abrir no navegador",null,(s,e)=>OpenPanel(address))'),'opção de abrir no navegador (como antes)');
+ assert(launcher.includes('new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel)'),'reserva: sem WebView2 o painel abre no Edge/navegador');
+ assert(launcher.includes('if(!silent&&!selftest&&!PanelHost.SignalRunning(port))OpenPanel('),'segunda abertura avisa o servidor aberto');
+ assert(/FormClosing\+=\(s,e\)=>\{if\(e\.CloseReason==CloseReason\.UserClosing\)\{e\.Cancel=true;Hide\(\)/.test(launcher),'fechar a janela só esconde o painel (servidor continua)');
+ assert(launcher.includes('settings.AreDevToolsEnabled=false'),'ferramentas de desenvolvedor desligadas');
+ assert(!/PRIME_DATA_DIR[^;]*painel|Path\.Combine\(data,"painel/.test(launcher),'a janela do painel não usa a pasta de dados do servidor');
 });

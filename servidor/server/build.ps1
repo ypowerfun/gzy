@@ -25,21 +25,21 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar ferramenta de backup.' }
     if (-not (Test-Path -LiteralPath (Join-Path $buildRoot 'BackupTool.exe'))) { throw 'BackupTool.exe nao foi gerado antes dos testes.' }
     # 3.0.34: ClearAll.exe (limpa todos os registros, mantendo estacoes/pareamentos e configuracoes)
-    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\ClearAll.exe" "/win32icon:$buildRoot\gamezoney.ico" /reference:System.Windows.Forms.dll (Join-Path $buildRoot 'ClearAll.cs')
+    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\ClearAll.exe" "/win32icon:$buildRoot\prime.ico" /reference:System.Windows.Forms.dll (Join-Path $buildRoot 'ClearAll.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar ClearAll.exe.' }
 
     & $nodeRuntime --test test/*.test.js
     if ($LASTEXITCODE -ne 0) { throw 'Os testes falharam.' }
     New-Item -ItemType Directory -Path runtime -Force | Out-Null
     Copy-Item -LiteralPath $nodeRuntime -Destination (Join-Path $buildRoot 'runtime\node.exe')
-    # Iniciador (ícone na bandeja; o painel abre no navegador padrão) com o ícone do app embutido.
-    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\GameZoney.exe" "/win32icon:$buildRoot\gamezoney.ico" "/resource:$buildRoot\gamezoney.ico,gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll (Join-Path $buildRoot 'Launcher.cs')
+    # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
+    & $csharpCompiler /nologo /target:winexe "/out:$buildRoot\GameZoney.exe" "/win32icon:$buildRoot\prime.ico" "/resource:$buildRoot\prime.ico,prime.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/reference:$buildRoot\Microsoft.Web.WebView2.Core.dll" "/reference:$buildRoot\Microsoft.Web.WebView2.WinForms.dll" (Join-Path $buildRoot 'Launcher.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar o iniciador.' }
 
     # O Inno Setup 6 ainda pode falhar ao ler arquivos muito profundos de node_modules
     # quando o pacote foi aberto por uma visualizacao de ZIP/pasta temporaria. Para evitar
     # o limite de caminho do Windows, o empacotamento e feito a partir de uma pasta curta.
-    $packageStage = Join-Path $env:TEMP ("GZ-SRV-PKG-" + $PID)
+    $packageStage = Join-Path $env:TEMP ("PA-SRV-PKG-" + $PID)
     $outputDir = Join-Path (Split-Path -Parent $buildRoot) 'outputs'
     try {
         if (Test-Path -LiteralPath $packageStage) {
@@ -54,7 +54,7 @@ try {
         Get-ChildItem -LiteralPath $buildRoot -File | ForEach-Object {
             Copy-Item -LiteralPath $_.FullName -Destination $packageStage -Force
         }
-        foreach ($folderName in @('runtime', 'public', 'certs', 'node_modules')) {
+        foreach ($folderName in @('runtime', 'runtimes', 'public', 'certs', 'node_modules')) {
             $sourceFolder = Join-Path $buildRoot $folderName
             if (Test-Path -LiteralPath $sourceFolder) {
                 Copy-Item -LiteralPath $sourceFolder -Destination $packageStage -Recurse -Force

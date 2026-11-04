@@ -1,10 +1,10 @@
-﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.4
+﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.0.1
 
 GameZoney — gestão de arenas gamer: PCs, TVs e consoles. Software proprietário da GameZoney. Todos os direitos reservados.
 
-Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, ferramentas e o painel). Instale no PC da recepção, na conta do Windows que vai usar o sistema. Os dados ficam em %LOCALAPPDATA%\GameZoney\data.
+Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, ferramentas e o painel em janela própria). Instale no PC da recepção, na conta do Windows que vai usar o sistema. Os dados ficam em %LOCALAPPDATA%\GameZoney\data.
 
-O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre como aplicativo (janela própria do GameZoney, sem abas nem barra de endereço) no navegador da arena: o navegador padrão do Windows primeiro (Chrome, Brave, Vivaldi, Opera; o Firefox abre numa janela nova) e, se ele não abrir, os outros instalados — o Edge só por último. Fechar a janela do painel não desliga o servidor. Para abrir de novo: ícone do GameZoney perto do relógio > Abrir GameZoney (ou o atalho na área de trabalho).
+O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre numa janela própria do GameZoney; fechar a janela só esconde o painel.
 
 No primeiro acesso, crie o usuário administrador e a senha. Em Configurações, confira o endereço deste PC na rede (usado pelas TVs).
 
@@ -16,3 +16,4 @@ Computadores: instale o GameZoney Cliente em cada PC gamer e autorize o PC no pa
 
 O instalador configura as regras de firewall do GameZoney (somente a rede local). Se necessário, use "Reparar conexão de rede" no menu Iniciar.
 
+Se estiver trocando a PRIME ARENA pelo GameZoney neste PC: encerre e desinstale o servidor PRIME ARENA antes (os dois usam as mesmas portas). Para trazer os dados, faça um backup completo no painel da PRIME ARENA e restaure-o no GameZoney (menu Iniciar > Restaurar backup GameZoney).

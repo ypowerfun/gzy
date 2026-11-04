@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {createServer}=require('../server');
 test('3.0.24: contas de acesso — somente o administrador principal ativa/desativa; conta desativada não entra',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ops-')),app=createServer({directory,noTimer:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-ops-')),app=createServer({directory,noTimer:true});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  const client=()=>{let cookie='';return async(url,body)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api'+url,{method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return{status:r.status,data:await r.json()}}};
  const owner=client(),second=client(),op=client();

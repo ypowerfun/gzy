@@ -65,7 +65,7 @@ async function clearAll(directory, now = Date.now()) {
 module.exports = {clearState, clearAll};
 
 if (require.main === module) {
-  const dir = process.argv[2] || process.env.GZ_DATA_DIR || path.join(process.env.LOCALAPPDATA || require('os').homedir(), 'GameZoney', 'data');
+  const dir = process.argv[2] || process.env.PRIME_DATA_DIR || path.join(process.env.LOCALAPPDATA || require('os').homedir(), 'GameZoney', 'data');
   clearAll(dir).then(r => {
     const b = r.before;
     console.log(`Limpeza concluída.\n\nApagados: ${b.clientes} cliente(s), ${b.contas} conta(s) de administrador/operador, ${b.recargas} recarga(s), ${b.sessoes} sessão(ões), ${b.produtos} produto(s)/serviço(s), ${b.vendas} venda(s) do PDV, ${b.caixas} caixa(s) e ${b.logs} registro(s) de log.\n\nMantidos: ${r.stations} estação(ões) com o pareamento das TVs e computadores e as configurações.\n\nCópia de segurança dos dados anteriores:\n${r.backup}`);

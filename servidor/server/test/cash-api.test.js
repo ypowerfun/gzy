@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {createServer}=require('../server');
 test('3.0.32: caixa fechado bloqueia recarga, visitante e PDV para operadores e admins adicionados; administrador principal pode',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-cash-api-')),app=createServer({directory,noTimer:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-cash-api-')),app=createServer({directory,noTimer:true});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  const base=()=>'http://127.0.0.1:'+app.server.address().port+'/api';
  const session=()=>{let cookie='';const api=async(url,body)=>{const r=await fetch(base()+url,{method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const ct=r.headers.get('content-type')||'';return{status:r.status,type:ct,data:ct.includes('json')?await r.json():null}};return api};

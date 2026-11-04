@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store'),business=require('../business'),cash=require('../cash');
-function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-session-credit-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});store.state.stations.push({id:'pc1',name:'PC 01',kind:'computer',active:true});return store;}
+function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-session-credit-')),store=new Store(dir);t.after(()=>{store.close();fs.rmSync(dir,{recursive:true,force:true})});store.state.stations.push({id:'pc1',name:'PC 01',kind:'computer',active:true});return store;}
 test('3.0.43: tempo adicionado com sessão ativa não é desfeito pelo relato atrasado do PC',t=>{
  const store=fixture(t),pc=require('../pc')(store);const m=store.memberSave({name:'Jogador',username:'jogador',password:'1234'},'admin');store.credit(m.id,{minutes:10},'admin');
  const now=Date.now(),session=store.start('pc1',m.id,'admin',now);

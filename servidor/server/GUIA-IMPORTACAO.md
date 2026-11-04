@@ -1,4 +1,4 @@
-# Importar clientes por planilha
+# Importar clientes por planilha — Servidor 3.0.33
 
 Em **Clientes > Importar planilha** (somente o **administrador principal**, a primeira conta criada) envie um arquivo do Excel (.xlsx) ou CSV com as colunas:
 

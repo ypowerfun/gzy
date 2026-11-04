@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store');const shop=require('../shop');const business=require('../business');
 test('3.0.23: produtos/serviços, venda com baixa de estoque, cupom PDF e cancelamento sem receita',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-shop-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-shop-'));let store=new Store(dir);
  try{
   const c=shop.catalog(store,true);assert.deepEqual(c.products.map(p=>p.name),['Coca-cola','Fanta','Biscoito']);assert.deepEqual(c.services.map(s=>s.name),['Xerox','Impressão','Trabalhos Escolares']);
   assert.equal(shop.catalog(store,false).products[0].costCents,undefined);
@@ -24,7 +24,7 @@ test('3.0.23: produtos/serviços, venda com baixa de estoque, cupom PDF e cancel
  }finally{store.close();fs.rmSync(dir,{recursive:true,force:true})}
 });
 test('3.0.64: margem de lucro calcula o preço de venda e arredonda para cima no real inteiro',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-shop-margem-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-shop-margem-'));let store=new Store(dir);
  try{
   // 3,50 + 50% = 5,25 → 6,00 (o preço enviado pela tela é ignorado: vale a conta do servidor)
   const a=shop.saveProduct(store,{name:'Energético',category:'Bebidas',costCents:350,marginPercent:'50',priceCents:1,stock:3},'admin');

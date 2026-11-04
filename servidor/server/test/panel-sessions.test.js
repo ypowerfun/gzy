@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store');const panelSessions=require('../panel-sessions');
 test('3.0.48: login do painel fica ativo com uso, sobrevive a reinício e não grava o token',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-panel-sess-'));let clock=Date.parse('2026-10-15T12:00:00Z');const now=()=>clock;
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-panel-sess-'));let clock=Date.parse('2026-10-15T12:00:00Z');const now=()=>clock;
  let store=new Store(dir);
  try{
   let s=panelSessions(store,{now});const token='a'.repeat(64);

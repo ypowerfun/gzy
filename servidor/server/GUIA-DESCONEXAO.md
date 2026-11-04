@@ -1,9 +1,9 @@
-# Desconexão e recuperação de energia
+# Desconexão e recuperação de energia — Servidor 3.0.15
 
 ## Queda somente do Servidor
 Se o Servidor for fechado/reiniciado enquanto os PCs continuam ligados, o Cliente mantém a sessão local e o relógio continua contando. Ao reconectar, o tempo local é reconciliado automaticamente.
 
-## Queda somente do PC/Cliente — regra
+## Queda somente do PC/Cliente — regra 3.0.19
 Com o Servidor ativo, uma estação que não responde por 10 segundos fica **vermelha** (sem conexão). Somente a partir desse momento o Servidor abre uma janela de **1 minuto** aguardando a reconexão do cliente; o painel mostra quantos segundos faltam.
 - Se o cliente voltar dentro de 1 minuto, a estação volta a ficar **verde** e a sessão continua normalmente (o tempo é reconciliado com o relógio do PC).
 - Se não voltar, a sessão é encerrada e o tempo é devolvido a partir do instante em que a estação ficou vermelha.
@@ -25,8 +25,8 @@ Cada recuperação cria um registro de log do tipo `recuperacao-energia`, conten
 - segundos devolvidos;
 - diferença detectada e indicação de que o maior checkpoint foi usado para evitar perda de saldo.
 
-## Auditoria pós-queda
+## Auditoria pós-queda — 3.0.15
 Quando a execução anterior do Servidor terminou de forma inesperada e havia PCs em uso, o Servidor cria uma auditoria somente para essas sessões. O painel mostra a verificação ao reiniciar. Se o PC também reiniciou, os checkpoints do Cliente, do Servidor e do último instante conhecido antes da queda são comparados e o maior saldo seguro é usado. O Sistema de log mostra os casos. Se ainda restar uma diferença calculável, o administrador recebe o botão **Devolver saldo**; a correção é única e fica registrada. Quando nenhum problema é encontrado, o painel informa que não houve perda de saldo nas máquinas em uso.
 
-## Batimento do Cliente
-O Cliente mantém uma linha de batimento independente da interface. Se a consulta normal de estado atrasar (interface ocupada, diálogo de recepção aberto, limpeza ou download do fundo), o PC envia um batimento leve para `/pc/heartbeat`. O Servidor apenas registra que o PC está vivo; saldo, sessão, reconciliação e modo administrador não são alterados. Um PC realmente desligado ou sem rede continua sendo encerrado após 10 segundos, com devolução do saldo restante.
+## Batimento do Cliente — 3.0.17 / 2.0.21
+O Cliente 2.0.21 mantém uma linha de batimento independente da interface. Se a consulta normal de estado atrasar (interface ocupada, diálogo de recepção aberto, limpeza ou download do fundo), o PC envia um batimento leve para `/pc/heartbeat`. O Servidor apenas registra que o PC está vivo; saldo, sessão, reconciliação e modo administrador não são alterados. Um PC realmente desligado ou sem rede continua sendo encerrado após 10 segundos, com devolução do saldo restante.

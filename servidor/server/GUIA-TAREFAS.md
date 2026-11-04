@@ -1,6 +1,6 @@
 # GameZoney — Lista de tarefas por computador
 
-Atualização: Servidor e Cliente. Atualize os dois para habilitar a função. Feche o cliente pelo modo administrador antes de instalar por cima. O MonitorGZ permanece separado da árvore do cliente.
+Atualização: Servidor 3.0.1 e Cliente 2.0.2. Atualize os dois para habilitar a função. Feche o cliente pelo modo administrador antes de instalar por cima. O MonitorGZ permanece separado da árvore do cliente.
 
 No servidor, clique no monitor do PC. A lista de programas da sessão mostra Nome (com .exe), PID e Status: Em execução ou Não respondendo. O status é consultado no Windows e atualizado nas consultas periódicas; a detecção de travamento não é instantânea. Se não for possível consultar o estado, será exibido Status indisponível.
 

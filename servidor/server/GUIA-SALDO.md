@@ -1,4 +1,4 @@
-# Servidor — pagamentos e saldo
+# Servidor 3.0.15 — pagamentos e saldo
 
 Em Clientes > Adicionar tempo, selecione Dinheiro, Pix, Cartão (Crédito) ou Cartão (Débito). A forma de pagamento aparece na fatura e no relatório CSV. Registros anteriores aparecem como Não informado. O registro não processa o pagamento.
 

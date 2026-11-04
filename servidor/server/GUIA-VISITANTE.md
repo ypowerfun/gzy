@@ -1,4 +1,4 @@
-# Visitante (sem cadastro)
+# Visitante (sem cadastro) — Servidor 3.0.22
 
 Para quem quer jogar sem criar conta. Em **Computadores / TVs**, clique na estação livre e em **Visitante**:
 
@@ -12,7 +12,7 @@ Para quem quer jogar sem criar conta. Em **Computadores / TVs**, clique na esta�
 - O visitante não acumula pontos de fidelidade.
 - Ao encerrar, o tempo não utilizado não fica guardado (não existe conta para guardá-lo) e o cadastro temporário é desativado; ele não aparece na lista de Clientes.
 
-## Visitantes em grupo
+## Visitantes em grupo — 3.0.22
 Em **Computadores / TVs**, clique em **Visitantes em grupo** (disponível para administrador e operador):
 1. Informe a quantidade (o máximo é o número de estações livres e conectadas no momento) ou marque as estações.
 2. Escolha a promoção ou os minutos por visitante e a forma de pagamento.

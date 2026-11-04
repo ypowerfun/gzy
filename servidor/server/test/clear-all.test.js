@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store,passwordHash}=require('../store');const shop=require('../shop');const cash=require('../cash');const {clearAll}=require('../clear-all');
 test('3.0.34: ClearAll apaga todos os registros e mantém estações, pareamentos e configurações',async()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-clear-'));let store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-clear-'));let store=new Store(dir);
  try{
   store.state.operators.push({id:'o1',username:'dono',hash:passwordHash('Senha-123456'),role:'admin',owner:true,active:true});
   store.state.settings.hourCents=900;store.state.settings.timeZone='America/Sao_Paulo';

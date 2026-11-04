@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {createServer}=require('../server'),{passwordHash}=require('../store');
 
 test('Ações dos PCs afetam apenas computadores e suportam admin, sessão e energia por escopo',async t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-pc-actions-')),app=createServer({directory,noTimer:true});
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'prime-pc-actions-')),app=createServer({directory,noTimer:true});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await app.close();fs.rmSync(directory,{recursive:true,force:true})});
  app.store.state.operators.push({id:'admin',username:'gestor',hash:passwordHash('Admin-123456'),role:'admin'});

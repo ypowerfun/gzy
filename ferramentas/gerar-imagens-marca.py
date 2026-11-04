@@ -49,13 +49,13 @@ tamanhos = [256, 128, 64, 48, 40, 32, 24, 20, 16]
 quadros = [quadrado(icone, s, 0.02 if s <= 32 else 0.04) for s in tamanhos]
 logo_full = sem_fundo_preto(banner)          # GZ + GameZoney + GESTÃO GAMER, fundo transparente
 
-S = os.path.join(raiz, 'servidor', 'server'); C = os.path.join(raiz, 'cliente', 'windows-client-1.0.2'); U = os.path.join(raiz, 'unico')
-for destino in [os.path.join(S, 'gamezoney.ico'), os.path.join(C, 'gamezoney.ico'), os.path.join(U, 'gamezoney.ico')]:
+S = os.path.join(raiz, 'servidor', 'server'); C = os.path.join(raiz, 'cliente', 'windows-client-1.0.1'); U = os.path.join(raiz, 'unico')
+for destino in [os.path.join(S, 'prime.ico'), os.path.join(C, 'prime.ico'), os.path.join(U, 'prime.ico')]:
     ico(quadros, destino)
 # Painel (servidor): logo da lateral e da tela de acesso, ícones e favicon
 def largura(img, w):
     return img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
-largura(logo_full, 960).save(os.path.join(S, 'public', 'logo-gamezoney.png'), optimize=True)
+largura(logo_full, 960).save(os.path.join(S, 'public', 'logo-prime.png'), optimize=True)
 quadrado(icone, 192, 0.06).save(os.path.join(S, 'public', 'icon-192.png'), optimize=True)
 quadrado(icone, 512, 0.06).save(os.path.join(S, 'public', 'icon-512.png'), optimize=True)
 quadrado(icone, 64, 0.03).save(os.path.join(S, 'public', 'favicon.ico'), sizes=[(64, 64), (32, 32), (16, 16)])
@@ -66,7 +66,7 @@ em_fundo(icone, 969).save(os.path.join(S, 'public', 'logo.jpg'), quality=92)
 em_fundo(icone, 969).save(os.path.join(C, 'logo.jpg'), quality=92)
 # Cliente: marca pequena (barra/topo) e logo completo (tela de login)
 quadrado(icone, 160, 0.02).crop(quadrado(icone, 160, 0.02).getbbox()).save(os.path.join(C, 'logo-marca.png'), optimize=True)
-largura(logo_full, 960).save(os.path.join(C, 'logo-gamezoney.png'), optimize=True)
+largura(logo_full, 960).save(os.path.join(C, 'logo-prime.png'), optimize=True)
 
 # Papel de parede padrão do login do cliente (1920x1080): preto, grade de hexágonos dourada discreta, faixa vermelha e o banner
 W, H = 1920, 1080

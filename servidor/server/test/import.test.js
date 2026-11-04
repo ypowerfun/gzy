@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),os=require('os'),path=require('path');
 const {Store}=require('../store');const imp=require('../import');const {workbook}=require('../excel');
 test('3.0.20: importação de clientes por planilha (xlsx/csv) cadastra sem senha, com saldo inicial, sem alterar existentes',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-import-'));const store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-import-'));const store=new Store(dir);
  try{
   store.memberSave({name:'Já existe',username:'ana'},'admin');
   const xlsx=workbook('Clientes',['Nome','Nick','Tempo'],[['João da Silva','joao.silva','01:30'],['Maria','maria_s',90],['Ana','ana','00:10'],['Carlos','carlos@lima','1h'],['Pedro','pedro-x','2h15'],['Ruim','ruim','abc']]);
@@ -22,7 +22,7 @@ test('3.0.20: importação de clientes por planilha (xlsx/csv) cadastra sem senh
 });
 
 test('3.0.33: importação com Pontos fidelidade (Nome, Nick, Tempo, Pontos fidelidade) — saldo inicial no extrato',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-import-pts-'));const store=new Store(dir);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prime-import-pts-'));const store=new Store(dir);
  try{
   const xlsx=workbook('Clientes',['Nome','Nick','Tempo','Pontos fidelidade'],[['João','joao_p','01:00',150],['Maria','maria_p',30,''],['Bia','bia_p','00:10','12,5'],['Ruim','ruim_p','00:10','abc']]);
   const parsed=imp.parse('c.xlsx',Buffer.from(xlsx).toString('base64'));assert.equal(parsed.columns.points,true);

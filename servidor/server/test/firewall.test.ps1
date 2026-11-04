@@ -1,8 +1,8 @@
 $ErrorActionPreference='Stop'
 . (Join-Path (Split-Path $PSScriptRoot) 'firewall-rules.ps1')
 function Assert($Condition,$Message) { if (!$Condition) { throw $Message } }
-$server=@(Get-GzFirewallPlan server 'C:\Arena Test\Servidor')
-$client=@(Get-GzFirewallPlan client 'C:\Arena Test\Cliente')
+$server=@(Get-PrimeFirewallPlan server 'C:\Arena Test\Servidor')
+$client=@(Get-PrimeFirewallPlan client 'C:\Arena Test\Cliente')
 foreach($rule in @($server)+@($client)) {
     Assert ($rule.Profile -eq 'Any') 'Todos os perfis devem ser incluidos'
     Assert ($rule.RemoteAddress -contains 'LocalSubnet') 'Alcance local obrigatorio'
@@ -16,8 +16,8 @@ Assert (@($server|Where-Object {$_.Direction -eq 'Inbound' -and $_.LocalPort -eq
 Assert (@($server|Where-Object {$_.Direction -eq 'Inbound' -and $_.LocalPort -eq '3000' -and $_.Protocol -eq 'TCP'}).Count -eq 1) 'Apps moveis pela rede local'
 Assert (@($client|Where-Object {$_.Direction -eq 'Inbound' -and $_.Protocol -eq 'TCP'}).Count -eq 0) 'Cliente nao deve abrir servidor TCP'
 Assert (@($client|Where-Object {$_.RemoteAddress -contains '255.255.255.255' -and $_.RemotePort -eq '3444' -and $_.Direction -eq 'Outbound'}).Count -eq 1) 'Broadcast somente para descoberta'
-Assert ($server[0].Name -eq @(Get-GzFirewallPlan server 'c:\arena test\servidor')[0].Name) 'Nomes estaveis em atualizacao'
-Assert ($server[0].Name -ne @(Get-GzFirewallPlan server 'C:\Outro servidor')[0].Name) 'Nao tocar outra instalacao'
+Assert ($server[0].Name -eq @(Get-PrimeFirewallPlan server 'c:\arena test\servidor')[0].Name) 'Nomes estaveis em atualizacao'
+Assert ($server[0].Name -ne @(Get-PrimeFirewallPlan server 'C:\Outro servidor')[0].Name) 'Nao tocar outra instalacao'
 
 # In-memory mocks. No Windows rule is read, added, updated or deleted below.
 $legacy=$client[0].LegacyName
@@ -27,20 +27,20 @@ function Remove-NetFirewallRule { [CmdletBinding()]param($PolicyStore,$Name);$sc
 $params='[CmdletBinding()]param($Name,$DisplayName,$Description,$Program,$Profile,$RemoteAddress,$Action,$Enabled,$EdgeTraversalPolicy,$PolicyStore,$Direction,$Protocol,$LocalPort,$RemotePort);'
 Set-Item Function:New-NetFirewallRule ([scriptblock]::Create($params+'if($script:deny){throw "Acesso negado simulado"};$script:created++;$script:rules[$Name]=@{Enabled=$Enabled;Action=$Action}'))
 foreach($command in @('Get-NetFirewallRule','New-NetFirewallRule','Remove-NetFirewallRule')) { Assert ((Get-Command $command).CommandType -eq 'Function') 'Teste exige mocks, nao cmdlets reais' }
-$w=@(Sync-GzFirewallRules $server Install)
+$w=@(Sync-PrimeFirewallRules $server Install)
 Assert ($script:created -eq 4 -and $w.Count -eq 0) 'Criar quatro regras de servidor'
-$w=@(Sync-GzFirewallRules $server Install)
+$w=@(Sync-PrimeFirewallRules $server Install)
 Assert ($script:created -eq 8 -and $script:rules.Count -eq 6) 'Recriar sem duplicar'
-$w=@(Sync-GzFirewallRules $client Install)
+$w=@(Sync-PrimeFirewallRules $client Install)
 Assert (!$script:rules.ContainsKey($legacy)) 'Regra com nome antigo removida'
 Assert ($script:rules.Count -eq 8) 'Servidor e cliente coexistem com regras externas'
-$w=@(Sync-GzFirewallRules $server Remove)
+$w=@(Sync-PrimeFirewallRules $server Remove)
 Assert ($script:rules.Count -eq 4 -and $script:rules.ContainsKey('Unrelated')) 'Remover somente regras da instalacao'
-$w=@(Sync-GzFirewallRules $server Remove)
+$w=@(Sync-PrimeFirewallRules $server Remove)
 Assert ($script:rules.Count -eq 4) 'Desinstalacao repetida sem efeitos extras'
 $script:deny=$true;$caught=$false
-try{Sync-GzFirewallRules $client Install | Out-Null}catch{$caught=$true}
+try{Sync-PrimeFirewallRules $client Install | Out-Null}catch{$caught=$true}
 Assert $caught 'Negacao deve informar falha';$script:deny=$false;$script:inactive=$true
-$w=@(Sync-GzFirewallRules $client Install)
+$w=@(Sync-PrimeFirewallRules $client Install)
 Assert ($w.Count -eq 3) 'Regra gravada mas ignorada por politica gera aviso, nao falha'
 Write-Output 'PASS: escopo, perfis, edge traversal so na entrada, nomes do instalador, recriacao sem duplicar, limpeza de nome antigo, remocao restrita, recusa e aviso de politica. Nenhuma alteracao no firewall real.'

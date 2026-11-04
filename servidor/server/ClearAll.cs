@@ -15,7 +15,7 @@ class ClearAll {
     [STAThread] static int Main(string[] args) {
         Application.EnableVisualStyles();
         int port = 3000;
-        string data = Environment.GetEnvironmentVariable("GZ_DATA_DIR");
+        string data = Environment.GetEnvironmentVariable("PRIME_DATA_DIR");
         if (String.IsNullOrEmpty(data)) data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameZoney", "data");
         for (int i = 0; i < args.Length - 1; i++) { if (args[i] == "/data") data = args[i + 1]; if (args[i] == "/port") port = Int32.Parse(args[i + 1]); }
         try { return Run(data, port); }
