@@ -54,7 +54,7 @@ async function renderShop() {
   const manage = kind => `<div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${kind}">+ ${kind === 'product' ? 'Novo Produto' : 'Novo Serviço'}</button>` : ''}</div>
     <div class="shop-card table-wrap">${kind === 'product' ? productTable : serviceTable}</div>`;
   $('#view').innerHTML = `<div class="shop-area">${tabs}
-   ${shopTab === 'products' ? manage('product') : shopTab === 'services' ? manage('service') : `
+   ${shopTab === 'categories' ? categoriesHtml(admin) : shopTab === 'products' ? manage('product') : shopTab === 'services' ? manage('service') : `
     <div class="shop-card pdv pdv-wide">
      <h3>PDV ${shopData.cash ? `<span class="badge on">CAIXA nº ${String(shopData.cash.number).padStart(4, '0')} ABERTO</span>` : '<span class="badge red">CAIXA FECHADO</span>'}</h3>
      ${shopData.cash ? '' : shopData.canSellClosed ? '<p class="hint cash-bypass">Caixa fechado: como administrador principal você pode vender, mas a venda não entra em nenhum caixa. <button type="button" data-cash-goto>Abrir caixa</button></p>' : '<div class="pdv-cash-warn">Abra o caixa para registrar vendas no PDV. <button type="button" data-cash-goto>Abrir caixa</button></div>'}
@@ -123,6 +123,25 @@ function showReceipt(sale) {
   const url = '/api/shop/receipt?id=' + encodeURIComponent(sale.id), num = String(sale.number).padStart(6, '0');
   modal('Cupom nº ' + num, `<p class="hint">Comprovante interno, <strong>sem valor fiscal</strong>. Para imprimir, abra o PDF e use Imprimir (ou Salvar como PDF).</p>${receiptPreview(sale)}<div class="toolbar-actions" style="margin-top:14px"><a class="button" style="background:#e63946;border-color:#e63946;color:#fff" href="${url}" target="_blank" rel="noopener">Abrir PDF para imprimir</a><a class="button" href="${url}" download="cupom-${num}.pdf">Baixar PDF</a></div>`);
 }
+// 1.0.5: Gerenciamento de Categoria
+function categoriesHtml(admin) {
+  const rows = shopData.categories.map(c => `<tr><td>${esc(c)}</td><td>${shopData.categoryUse?.[c] || 0}</td>${admin ? `<td class="actions-cell"><button class="icon-btn" data-cat-edit="${esc(c)}" title="Editar">${ICON.edit}</button><button class="icon-btn del" data-cat-remove="${esc(c)}" title="Remover">${ICON.del}</button></td>` : '<td></td>'}</tr>`).join('');
+  return `<div class="shop-bar">${admin ? '<button class="primary" data-cat-add>+ Nova Categoria</button>' : ''}</div><div class="shop-card table-wrap"><table><thead><tr><th>Categoria</th><th>Produtos</th><th>Ações</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhuma categoria.</td></tr>'}</tbody></table></div>`;
+}
+function categoryForm(old) {
+  modal(old ? 'Editar categoria' : 'Nova categoria', `<form><label>Nome da categoria<input name="name" required maxlength="60" value="${esc(old || '')}"></label>${old ? '<p class="hint">Os produtos desta categoria passam a usar o novo nome.</p>' : ''}<div class="dialog-actions"><button class="primary">Salvar</button></div></form>`);
+  $('#modal-body input').focus();
+  formAction(async d => { await api('/shop/category', {old: old || '', name: d.name}); await renderShop(); });
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-cat-add],[data-cat-edit],[data-cat-remove]'); if (!b || view !== 'shop') return;
+  try {
+    if (b.dataset.catAdd !== undefined) return categoryForm('');
+    if (b.dataset.catEdit) return categoryForm(b.dataset.catEdit);
+    const name = b.dataset.catRemove; if (!await ask(`Remover a categoria ${name}? Só é possível quando nenhum produto usa a categoria.`, {ok: 'Remover'})) return;
+    await api('/shop/category/remove', {name}); toast('Categoria removida.'); await renderShop();
+  } catch (err) { toast(err.message); }
+});
 function shopForm(kind, item) {
   item = item || {};
   if (kind === 'product') {

@@ -19,6 +19,8 @@ O GameZoney tem duas partes:
 
 Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir/Remover** — **Sessão, Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** — **Ranking** — **Configuração** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas. O painel se ajusta a qualquer resolução: **Senha** e **Sair** ficam sempre visíveis no fim do menu, sem rolar a página (em telas muito baixas o menu fica mais compacto).
 
+
+**Perfil** (botão ao lado de **Sair**): **Alterar senha**; **Idioma** do painel — Português (Brasil), English, Español, Français ou Русский (vale para o seu usuário; menus, títulos, botões e campos mudam de idioma; textos longos de ajuda e dados continuam em português); **Ajuda** (abre o site https://gamezoney.com/); **Feedback** (nome, email e comentário, enviados para a GameZoney; sem internet ou com o site fora do ar, o feedback fica guardado no servidor e é reenviado sozinho a cada 10 minutos).
 ---
 
 ## 1. Instalação
@@ -26,7 +28,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 **Servidor (PC da recepção)** — Windows 10/11 de 64 bits.
 1. Execute o instalador (ou o instalador único e marque **Instalar Servidor**). Ele já leva o motor (Node), o banco e as ferramentas; não baixa nada.
 2. O instalador configura o firewall do Windows (somente rede local) para as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (descoberta dos PCs). Se precisar repetir: menu Iniciar > GameZoney > **Reparar conexão de rede**.
-3. O servidor abre sozinho quando a conta entra no Windows e fica no ícone perto do relógio. Clique com o botão direito no ícone para abrir o painel, a pasta de dados, o diagnóstico ou encerrar o servidor. Fechar a janela do painel não encerra o servidor.
+3. O servidor abre sozinho quando a conta entra no Windows e fica no ícone perto do relógio. Clique com o botão direito no ícone para abrir o painel, o diagnóstico ou encerrar o servidor. Fechar a janela do painel não encerra o servidor.
 4. O painel abre em janela própria do GameZoney (motor WebView2 do Windows). **O WebView2 e o Edge não podem estar bloqueados** no PC do servidor (programas que "desativam o Edge" costumam bloquear também o WebView2 e o painel fica com a tela escura). O navegador padrão pode ser o Chrome ou outro.
 5. Deixe o IP do PC do servidor **fixo** (reserva no roteador). Mantenha o PC ligado, sem suspensão, durante o atendimento.
 
@@ -46,7 +48,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
 2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. **Data e hora** são sempre as do computador onde o servidor está instalado (as mesmas do relógio do Windows; para mudar, ajuste o relógio do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
 3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
-4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
+4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um troca a própria senha em **Perfil > Alterar senha** (botão **Perfil**, ao lado de **Sair**). Só o administrador principal (primeira conta) ativa/desativa contas.
 
 ---
 
@@ -81,7 +83,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 ## 5. Clientes e recargas
 
-- **Clientes > + Novo cliente:** nome, **Usuário/Nick** (3 a 32 caracteres; letras sem acento, números, espaço, ponto, hífen ou sublinhado; não se repete), senha (4 a 20 caracteres, opcional — se ficar vazia, o cliente cria a senha no primeiro acesso ao PC), CPF (opcional, não se repete), telefone e observações. **Ativar programa fidelidade** desmarcado: o cliente não ganha pontos.
+- **Clientes > + Novo cliente:** nome, **Usuário/Nick** (3 a 32 caracteres; letras sem acento, números, espaço, ponto, hífen ou sublinhado; não se repete), senha (4 a 20 caracteres, opcional — se ficar vazia, o cliente cria a senha no primeiro acesso ao PC), CPF (opcional, não se repete), telefone, **email** (opcional) e observações. **Ativar programa fidelidade** desmarcado: o cliente não ganha medalhas.
 - **Clique no nome do cliente** para **Adicionar tempo**:
   1. escolha uma **promoção** (só recargas com promoção geram medalhas) ou informe **em minutos** ou **em valor** (R$; os minutos são proporcionais ao valor da hora);
   2. escolha a **forma de pagamento** (Dinheiro, Pix, Cartão Crédito/Débito) — aparece na fatura e no relatório. Para dividir, marque **Pagamento combinado (até 3 formas)** e informe o valor de cada uma (ex.: R$ 10 no Pix + R$ 10 no Cartão + R$ 10 em Dinheiro = R$ 30). A soma precisa ser igual ao total; o painel mostra quanto falta ou passou;
@@ -113,7 +115,8 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 ## 8. Produtos/Serviços e Vendas (PDV)
 
-- **Produtos/Serviços** tem três abas: **Estoque** (primeira opção: estoque atual e **+ Entrada** de mercadoria), **Gerenciamento de Produtos** e **Gerenciamento de Serviços**.
+- **Produtos/Serviços** tem quatro abas: **Estoque** (primeira opção: estoque atual e **+ Entrada** de mercadoria), **Gerenciamento de Produtos**, **Gerenciamento de Serviços** e **Gerenciamento de Categoria**.
+- **Gerenciamento de Categoria** (administrador): **+ Nova Categoria**, editar (renomear — os produtos da categoria acompanham o novo nome) e remover (só quando nenhum produto usa a categoria; mude a categoria deles antes). A coluna **Produtos** mostra quantos produtos usam cada categoria.
 - A aba **Vendas** (o PDV) fica em **Caixa** (Caixa atual / Vendas / Caixas fechados).
 - **Cadastro (administrador), nas áreas de gerenciamento:** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
 - **Venda (administrador e operador), em Caixa > Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento (ou **Pagamento combinado**, até 3 formas: Dinheiro, Pix e Cartão, com o valor de cada uma) e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
@@ -138,7 +141,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - Ao atingir as medalhas, o prêmio é automático: com sessão ativa, o tempo entra na hora; sem sessão, vai para o saldo. Medalhas para vários prêmios liberam todos.
 - **Medalhas Corujão/Viradão** (administrador): quantidade de medalhas que cada participante pago recebe ao **Iniciar** um Corujão/Viradão (0 = nenhuma).
 - **Mensagem do prêmio:** texto que aparece na barra do cliente (variáveis `{premio}` e `{nick}`), com "Tempo antes | Tempo após" embaixo. Se o cliente não estiver jogando, a mensagem aparece quando ele iniciar a sessão.
-- O extrato de medalhas e o histórico ficam nesta tela, com busca por nick e **Exportar para Excel**.
+- O extrato de medalhas e o histórico ficam nesta tela, com busca por nick (**Filtrar histórico**) e, ao lado, **Exportar para Excel**.
 
 ---
 
@@ -162,8 +165,8 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ## 13. Sessão, Log e Estatística
 
-- **Sessão:** histórico completo de sessões (páginas de 100, busca por nick, **Exportar para Excel**). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
-- **Log:** o Sistema de log com todas as ações (logins, recargas, cadastros, configurações, Corujão/Viradão, falhas de TV, quedas de PC, recuperações).
+- **Sessão:** histórico completo de sessões (páginas de 100, busca por nick com **Buscar** e, ao lado, **Exportar para Excel**). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
+- **Log:** o Sistema de log com todas as ações (logins, recargas, cadastros, configurações, Corujão/Viradão, falhas de TV, quedas de PC, recuperações). Filtros por nick, data e tipo (**Filtrar**) e, ao lado, **Exportar CSV**.
 - **Estatística:** uso por máquina, por horário, por funcionário e por cliente, clientes grátis, duração, vendas e fluxo de caixa.
 
 ---
@@ -178,7 +181,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ## 15. Configuração (administrador)
 
-- **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
+- **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): **Bloquear Gerenciador de Tarefas** e **Bloquear Configurações** (fecha o app Configurações do Windows e o ajuste de data e hora durante a sessão). As antigas opções de Painel de Controle e da tela Ctrl+Alt+Del foram retiradas e ficam desligadas nos PCs. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
 - **Backup completo:** seção 16.
 - **Servidor IP** (abaixo do backup): mostra o IP (ou o domínio, em nuvem) que as TVs e os PCs usam para chegar ao servidor — só o IP, sem a porta.
@@ -213,7 +216,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 **Fim da sessão (limpeza).** Os programas abertos **depois do login** (jogos, lançadores e seus auxiliares) são fechados; os que já estavam abertos antes do login ficam. Nada de perfis, senhas, favoritos ou arquivos é apagado. Jogos com anticheat que o Windows não deixa fechar: o cliente pede para fechar e, se ficar só o processo de fundo, libera o PC; se a janela do jogo continuar aberta, o PC fica bloqueado com o aviso até a janela fechar. O resumo da sessão aparece na tela por até 30 segundos.
 
-**Proteção.** Durante a sessão o cliente aplica as restrições da Configuração das máquinas, fecha o Cheat Engine e as telas de data/hora (se marcado). O tempo usa relógio interno, não o relógio do Windows. A pasta do programa fica protegida contra alteração por usuários comuns. O **MonitorGZ** reabre o cliente se ele for fechado à força (sem zerar o tempo nem duplicar crédito).
+**Proteção.** Durante a sessão o cliente aplica as restrições da Configuração das máquinas, fecha o Cheat Engine e o app Configurações/data e hora (se **Bloquear Configurações** estiver marcado). O tempo usa relógio interno, não o relógio do Windows. A pasta do programa fica protegida contra alteração por usuários comuns. O **MonitorGZ** reabre o cliente se ele for fechado à força (sem zerar o tempo nem duplicar crédito).
 
 **Modo administrador (manutenção).**
 - No PC, **Acesso administrativo (recepção)** com uma conta Administrador do servidor: a barra mostra ADMIN, as restrições ficam suspensas e não há consumo de saldo. **Sair do administrador** reaplica tudo. **Fechar aplicativo** fecha o cliente (para atualizar).

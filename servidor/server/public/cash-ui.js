@@ -135,7 +135,7 @@ function gzTabs(group) {
   const a = gzActiveTab(), t = (key, label) => `<button data-gz-tab="${key}" class="${a === key ? 'active' : ''}">${label}</button>`;
   return group === 'caixa'
     ? `<div class="shop-tabs">${t('cash:current', '▣ Caixa atual')}${t('shop:sales', ICON.cart + ' Vendas')}${t('cash:history', '◷ Caixas fechados')}</div>`
-    : `<div class="shop-tabs">${t('cash:stock', '▤ Estoque')}${t('shop:products', ICON.box + ' Gerenciamento de Produtos')}${t('shop:services', ICON.gear + ' Gerenciamento de Serviços')}</div>`;
+    : `<div class="shop-tabs">${t('cash:stock', '▤ Estoque')}${t('shop:products', ICON.box + ' Gerenciamento de Produtos')}${t('shop:services', ICON.gear + ' Gerenciamento de Serviços')}${t('shop:categories', ICON.box + ' Gerenciamento de Categoria')}</div>`;
 }
 // Clique no menu: Caixa abre em "Caixa atual" (se estava no Estoque); Produtos/Serviços abre no Estoque (primeira aba).
 function gzNavFix() { if (view === 'cash' && cashTab === 'stock') cashTab = 'current'; if (view === 'shop') { view = 'cash'; cashTab = 'stock'; } }

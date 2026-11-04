@@ -71,7 +71,7 @@ class Launcher : ApplicationContext {
         bool ready=false;for(int i=0;i<60;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
-        var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());menu.Items.Add("Abrir no navegador",null,(s,e)=>OpenPanel(address));menu.Items.Add("Abrir pasta de dados",null,(s,e)=>Open(data));menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
+        var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());/* 1.0.5: "Abrir no navegador" e "Abrir pasta de dados" retirados do menu */menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Encerrar servidor",null,(s,e)=>{if(MessageBox.Show("Encerrar o servidor? As TVs não serão controladas enquanto ele estiver fechado. O prazo das sessões continua correndo.","GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes)ExitThread();});
         tray=new NotifyIcon();tray.Text="GameZoney • Servidor ativo";tray.Icon=AppIcon(SystemInformation.SmallIconSize);tray.ContextMenuStrip=menu;tray.Visible=true;tray.DoubleClick+=(s,e)=>ShowPanel();

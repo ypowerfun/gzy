@@ -9,6 +9,8 @@ const PAYMENTS = {cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'};
 function init(store) {
   const s = store.state;
   s.products ??= []; s.services ??= []; s.shopSales ??= []; s.shopSequence ??= 0;
+  // 1.0.5: categorias editáveis (Produtos/Serviços > Gerenciamento de Categoria); começa com as padrão + as já usadas
+  if (!Array.isArray(s.categories)) s.categories = [...new Set([...CATEGORIES, ...s.products.map(p => p.category).filter(Boolean)])];
   if (!s.shopSeeded) {   // itens de exemplo (podem ser editados ou removidos)
     const now = Date.now();
     for (const [name, category, cost, price, stock] of [['Coca-cola', 'Bebidas', 350, 600, 24], ['Fanta', 'Bebidas', 300, 550, 24], ['Biscoito', 'Snacks / Alimentos', 150, 300, 30]])
@@ -34,7 +36,7 @@ function marginPrice(costCents, percent) {
 }
 function saveProduct(store, input, actor) {
   const name = text(input.name, 'Nome do produto', 100);
-  const category = CATEGORIES.includes(input.category) ? input.category : fail('Escolha a categoria.');
+  const category = store.state.categories.includes(input.category) ? input.category : fail('Escolha a categoria.');
   const costCents = cents(input.costCents, 'Preço de custo'), margin = marginPercent(input.marginPercent);
   const priceCents = margin === null ? cents(input.priceCents, 'Preço de venda', 1) : marginPrice(costCents, margin);
   if (priceCents < 1) fail('Preço de venda: com margem de lucro, informe um preço de custo maior que zero.');
@@ -73,7 +75,7 @@ function removeItem(store, input, actor) {
 
 function catalog(store, isAdmin) {
   const strip = p => isAdmin ? p : (({costCents, marginPercent, ...rest}) => rest)(p);
-  return {categories: CATEGORIES, payments: PAYMENTS, products: store.state.products.filter(p => p.active).map(strip), services: store.state.services.filter(s => s.active)};
+  return {categories: store.state.categories, categoryUse: Object.fromEntries(store.state.categories.map(c => [c, store.state.products.filter(p => p.active && p.category === c).length])), payments: PAYMENTS, products: store.state.products.filter(p => p.active).map(strip), services: store.state.services.filter(s => s.active)};
 }
 
 function sell(store, input, actor) {
@@ -175,4 +177,25 @@ function linesPdf(lines, title) {
   return Buffer.concat(parts);
 }
 
-module.exports = {linesPdf, wrap, pad, center, brl, WIDTH, init, CATEGORIES, PAYMENTS, marginPrice, saveProduct, saveService, removeItem, catalog, sell, cancelSale, forPeriod, receiptLines, receiptPdf};
+// 1.0.5: Gerenciamento de Categoria — criar, renomear (os produtos acompanham) e remover (só sem produtos ativos).
+function saveCategory(store, input, actor) {
+  const name = text(input.name, 'Nome da categoria', 60), old = input.old === undefined || input.old === '' ? null : String(input.old);
+  const list = store.state.categories;
+  if (old !== null && !list.includes(old)) fail('Categoria não encontrada.');
+  if (list.some(c => c !== old && c.toLowerCase() === name.toLowerCase())) fail('Já existe uma categoria com esse nome.');
+  if (old === name) return {name};
+  return store.change(actor, 'produto', old ? `Categoria renomeada: ${old} → ${name}` : `Categoria criada: ${name}`, () => {
+    if (old) { list[list.indexOf(old)] = name; for (const p of store.state.products) if (p.category === old) p.category = name; }
+    else { if (list.length >= 100) fail('Limite de 100 categorias.'); list.push(name); }
+    return {name};
+  });
+}
+function removeCategory(store, input, actor) {
+  const name = String(input.name ?? ''), list = store.state.categories;
+  if (!list.includes(name)) fail('Categoria não encontrada.');
+  const used = store.state.products.filter(p => p.active && p.category === name).length;
+  if (used) fail(`${used} produto(s) usam esta categoria. Mude a categoria deles antes de remover.`);
+  if (list.length <= 1) fail('Mantenha pelo menos uma categoria.');
+  return store.change(actor, 'produto', 'Categoria removida: ' + name, () => { list.splice(list.indexOf(name), 1); return {ok: true}; });
+}
+module.exports = {saveCategory, removeCategory, linesPdf, wrap, pad, center, brl, WIDTH, init, CATEGORIES, PAYMENTS, marginPrice, saveProduct, saveService, removeItem, catalog, sell, cancelSale, forPeriod, receiptLines, receiptPdf};

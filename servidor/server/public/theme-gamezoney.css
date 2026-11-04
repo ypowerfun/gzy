@@ -306,3 +306,9 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
 /* 1.0.5: comprovante impresso sem cabeçalho/rodapé do navegador (endereço 127.0.0.1:3000, data, título, página).
    Com margem de página zero o Chromium/WebView2 não imprime essas linhas; a margem vai para o próprio comprovante. */
 @media print{@page{size:A4;margin:0}html,body{margin:0!important;background:#fff!important}#invoice{padding:18mm 16mm!important}}
+/* 1.0.5: Perfil */
+.profile-actions{display:grid;gap:10px}
+.profile-actions button{width:100%}
+.profile-actions label{margin:0}
+/* 1.0.5: botões de exportar ao lado dos filtros com a mesma altura */
+.filters a.button{display:inline-flex;align-items:center;align-self:stretch}

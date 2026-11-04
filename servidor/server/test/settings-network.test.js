@@ -81,3 +81,21 @@ test('1.0.5: Enviar Mensagem — PC conectado recebe no próximo contato; valida
  pc.sendMessage(st.id,'Servidor encerra em *20 minutos!*',15);const out=pc.stationState(st);assert.equal(out.messages.length,1);assert.equal(out.messages[0].seconds,15);assert.match(out.messages[0].text,/20 minutos/);
  s.db.close();
 });
+test('1.0.5: categorias, e-mail do cliente, idioma do perfil e feedback (envio e fila)',async t=>{
+ const http=require('node:http');let received=[],up=true;const central=http.createServer((req,res)=>{let b='';req.on('data',c=>b+=c);req.on('end',()=>{if(!up){res.statusCode=503;return res.end()}received.push(JSON.parse(b));res.end('{}')})});await new Promise(r=>central.listen(0,'127.0.0.1',r));
+ process.env.GZ_FEEDBACK_URL='http://127.0.0.1:'+central.address().port+'/api/feedback';
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-prof-'));const instance=createServer({directory,noTimer:true});await new Promise(r=>instance.server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+instance.server.address().port;let cookie='';
+ t.after(async()=>{delete process.env.GZ_FEEDBACK_URL;await instance.close();central.close();fs.rmSync(directory,{recursive:true,force:true})});
+ async function call(url,body,status=200){const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body)});const text=await r.text();assert.equal(r.status,status,text);if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return text?JSON.parse(text):null}
+ await call('/api/setup',{username:'admin',password:'password123'});await call('/api/login',{username:'admin',password:'password123'});
+ await call('/api/shop/category',{name:'Lanches'});await call('/api/shop/category',{name:'bebidas'},400);
+ const shopData=await call('/api/shop');assert(shopData.categories.includes('Lanches'));assert.equal(shopData.categoryUse['Bebidas'],2);
+ await call('/api/shop/category',{old:'Bebidas',name:'Refrigerantes'});assert(instance.store.state.products.filter(p=>p.category==='Refrigerantes').length>=2);
+ await call('/api/shop/category/remove',{name:'Refrigerantes'},400);await call('/api/shop/category/remove',{name:'Lanches'});assert(!instance.store.state.categories.includes('Lanches'));
+ await call('/api/shop/product',{name:'X',category:'Lanches',costCents:100,priceCents:200,stock:1},400);
+ const m=await call('/api/members',{name:'Ana',username:'ana1',email:'ana@exemplo.com'});assert.equal(m.email,'ana@exemplo.com');await call('/api/members',{name:'Bia',username:'bia1',email:'invalido'},400);
+ assert.equal((await call('/api/state')).operator.lang,'pt-BR');await call('/api/profile/lang',{lang:'en'});assert.equal((await call('/api/state')).operator.lang,'en');await call('/api/profile/lang',{lang:'de'},400);
+ assert.equal((await call('/api/feedback',{name:'Dono',email:'dono@exemplo.com',comment:'Muito bom!'})).sent,true);assert.equal(received[0].comment,'Muito bom!');assert(received[0].installId);
+ up=false;assert.equal((await call('/api/feedback',{name:'Dono',email:'dono@exemplo.com',comment:'Segundo'})).sent,false);await call('/api/feedback',{name:'',email:'x',comment:''},400);
+ up=true;const app=instance;assert.equal(app.store.state.feedback.filter(f=>!f.sentAt).length,1);
+});
