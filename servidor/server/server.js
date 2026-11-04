@@ -130,6 +130,17 @@ route('get','/api/shop',req=>{const c=require('./cash').current(store);return{..
 route('post','/api/shop/product',req=>{admin(req);const b=req.body;return require('./shop').saveProduct(store,{...b,costCents:Math.round(Number(b.costCents)),priceCents:Math.round(Number(b.priceCents)),stock:Number(b.stock)},actor(req))});
 route('post','/api/shop/service',req=>{admin(req);const b=req.body;return require('./shop').saveService(store,{...b,priceCents:Math.round(Number(b.priceCents))},actor(req))});
 route('post','/api/shop/remove',req=>{admin(req);return require('./shop').removeItem(store,req.body,actor(req))});
+ /* 1.0.5: Corujão/Viradão e Ranking */const events=require('./events');
+ route('get','/api/events',req=>events.list(store));
+ route('post','/api/events',req=>events.create(store,req.body,actor(req)));
+ route('post','/api/events/participant',req=>events.addParticipant(store,req.body,actor(req)));
+ route('post','/api/events/participant/remove',req=>events.removeParticipant(store,req.body,actor(req)));
+ route('post','/api/events/pay',req=>{if(Number(store.state.events.find(e=>e.id===String(req.body.eventId))?.priceCents)>0)cashRequired(req,'confirmar pagamento do Corujão/Viradão');return events.pay(store,req.body,actor(req))});
+ route('post','/api/events/start',req=>events.start(store,req.body,actor(req)));
+ route('post','/api/events/finish',req=>events.finish(store,req.body,actor(req)));
+ route('post','/api/events/remove',req=>{admin(req);return events.remove(store,req.body,actor(req))});
+ route('post','/api/events/medals',req=>{admin(req);return events.medalSettings(store,req.body,actor(req))});
+ route('get','/api/ranking',req=>events.ranking(store,req.query));
 route('post','/api/shop/sale',req=>{cashRequired(req,'vender produtos/serviços');return require('./shop').sell(store,req.body,actor(req))});
 // 3.0.31: Controle de Caixas e Estatistica
 // 3.0.32: recargas, visitantes e PDV so com caixa aberto. Somente o administrador principal pode operar com o caixa fechado.

@@ -8,15 +8,16 @@ O GameZoney tem duas partes:
 - **GameZoney Cliente** — instalado em cada PC gamer. Bloqueia o PC até a recepção liberar (ou o cliente entrar com nick e senha), mostra a barra de tempo e limpa a sessão no fim.
 
 Índice: 1. Instalação · 2. Primeiro acesso · 3. Painel de controle · 4. TVs (VIDAA e Android) · 5. Clientes e recargas ·
-6. Visitante · 7. Caixa · 8. Produtos/Serviços (Vendas) · 9. Faturas · 10. Fidelidade e promoções ·
-11. Transferir/Remover saldo · 12. Sessão/Log, Estatística · 13. Configuração · 14. Backup · 15. Cliente nos PCs ·
-16. Quedas de energia, de rede e de internet · 17. Remover, reinstalar e desinstalar · 18. Problemas comuns
+6. Visitante · 7. Caixa (Caixa atual, Vendas, Caixas fechados) · 8. Produtos/Serviços (Estoque e gerenciamento) · 9. Faturas ·
+10. Fidelidade, medalhas e promoções · 11. Corujão/Viradão · 12. Transferir/Remover saldo · 13. Sessão, Log e Estatística ·
+14. Ranking · 15. Configuração · 16. Backup · 17. Cliente nos PCs · 18. Quedas de energia, de rede e de internet ·
+19. Remover, reinstalar e desinstalar · 20. Problemas comuns
 
 ---
 
 ## Menu do painel
 
-Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configuração** — **Sessão/Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas.
+Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir/Remover** — **Sessão, Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** — **Ranking** — **Configuração** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas.
 
 ---
 
@@ -43,7 +44,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configura
 ## 2. Primeiro acesso
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
-2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **fuso horário é automático**: é sempre o do Windows onde o servidor está instalado (para mudar, ajuste o fuso do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 13).
+2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. O **fuso horário é automático**: é sempre o do Windows onde o servidor está instalado (para mudar, ajuste o fuso do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
 3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
@@ -81,18 +82,18 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 - **Clientes > + Novo cliente:** nome, **Usuário/Nick** (3 a 32 caracteres; letras sem acento, números, espaço, ponto, hífen ou sublinhado; não se repete), senha (4 a 20 caracteres, opcional — se ficar vazia, o cliente cria a senha no primeiro acesso ao PC), CPF (opcional, não se repete), telefone e observações. **Ativar programa fidelidade** desmarcado: o cliente não ganha pontos.
 - **Clique no nome do cliente** para **Adicionar tempo**:
-  1. escolha uma **promoção** (só recargas com promoção geram pontos) ou informe **em minutos** ou **em valor** (R$; os minutos são proporcionais ao valor da hora);
+  1. escolha uma **promoção** (só recargas com promoção geram medalhas) ou informe **em minutos** ou **em valor** (R$; os minutos são proporcionais ao valor da hora);
   2. escolha a **forma de pagamento** (Dinheiro, Pix, Cartão Crédito/Débito) — aparece na fatura e no relatório;
   3. **Iniciar após a recarga:** escolha uma estação livre para começar agora, ou **Guardar no saldo do cliente**.
 - **Pacote grátis** (R$ 0,00): em vez da forma de pagamento, exige **OBS** (motivo) e a **chave de autenticação** (senha do usuário logado no servidor).
-- **Importar planilha** (administrador principal): Excel (.xlsx) ou CSV com as colunas **Nome, Nick, Tempo, Pontos fidelidade**. Tempo aceita `01:30`, `90`, `1h30`, `45min`. Mostra uma prévia antes; clientes já cadastrados não são alterados; todos entram sem senha.
+- **Importar planilha** (administrador principal): Excel (.xlsx) ou CSV com as colunas **Nome, Nick, Tempo, Medalhas de fidelidade** (a coluna antiga "Pontos fidelidade" também é aceita). Tempo aceita `01:30`, `90`, `1h30`, `45min`. Mostra uma prévia antes; clientes já cadastrados não são alterados; todos entram sem senha.
 - O registro **não processa pagamentos** e não emite nota fiscal.
 
 ---
 
 ## 6. Visitante (sem cadastro)
 
-- No monitor livre, **Visitante**: escolha a promoção ou o tempo (em minutos ou em valor) e a forma de pagamento. A sessão começa na hora com o nome **Visitante**. Não acumula pontos e o tempo não usado não fica guardado.
+- No monitor livre, **Visitante**: escolha a promoção ou o tempo (em minutos ou em valor) e a forma de pagamento. A sessão começa na hora com o nome **Visitante**. Não acumula medalhas e o tempo não usado não fica guardado.
 - **Visitantes em grupo:** libera várias estações livres e conectadas de uma vez, com o mesmo tempo; cada estação vira uma venda. O resultado mostra estação por estação.
 
 ---
@@ -102,17 +103,19 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - **Abrir caixa:** informe o troco inicial. Com o caixa **fechado**, operadores e administradores adicionados não registram recargas, visitantes nem vendas do PDV (o administrador principal pode).
 - **+ Suprimento / − Sangria:** entrada ou retirada de dinheiro, com motivo.
 - **Fechar caixa:** informe o dinheiro contado; o sistema mostra a diferença e gera o **PDF** do fechamento (também há o **Parcial (PDF)**).
-- O resumo mostra total vendido, dinheiro esperado na gaveta, Pix/Cartão, cancelamentos, itens vendidos e estoque.
+- A tela tem três abas: **Caixa atual**, **Vendas** (o PDV, seção 8) e **Caixas fechados**.
+- O resumo mostra total vendido, dinheiro esperado na gaveta, Pix/Cartão, cancelamentos, itens vendidos e estoque. Pagamentos de Corujão/Viradão entram no caixa como venda.
 - **Caixas anteriores** (administrador principal): registrar caixas de datas passadas que não foram feitos no sistema.
 - O valor **Caixa de hoje** na tela inicial pode ser escondido com o olho.
 
 ---
 
-## 8. Produtos/Serviços (Vendas)
+## 8. Produtos/Serviços e Vendas (PDV)
 
-- A tela tem três áreas: **Vendas** (o PDV, primeira opção), **Gerenciamento de Produtos** e **Gerenciamento de Serviços**.
+- **Produtos/Serviços** tem três abas: **Estoque** (primeira opção: estoque atual e **+ Entrada** de mercadoria), **Gerenciamento de Produtos** e **Gerenciamento de Serviços**.
+- A aba **Vendas** (o PDV) fica em **Caixa** (Caixa atual / Vendas / Caixas fechados).
 - **Cadastro (administrador), nas áreas de gerenciamento:** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
-- **Venda (administrador e operador), na área Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
+- **Venda (administrador e operador), em Caixa > Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
 - Venda cancelada (administrador) sai da receita e devolve os produtos ao estoque.
 
 ---
@@ -122,39 +125,61 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
 - Mostra receita válida, despesas, resultado (receita − despesas), ticket médio, evolução por dia e a lista de faturas e transações (recargas e vendas do PDV).
 - **Ver fatura** → imprimir ou salvar em PDF (comprovante interno, não fiscal).
-- **Cancelar** exige motivo, mantém o registro no histórico e estorna minutos e pontos. Não é permitido se o cliente já usou o tempo/pontos ou se a recarga foi feita durante uma sessão.
+- **Cancelar** exige motivo, mantém o registro no histórico e estorna minutos e medalhas. Não é permitido se o cliente já usou o tempo/medalhas ou se a recarga foi feita durante uma sessão.
 - O CSV inclui todas as transações e despesas do período, inclusive as canceladas (identificadas), e abre no Excel.
 
 ---
 
-## 10. Fidelidade e promoções
+## 10. Fidelidade, medalhas e promoções
 
 - **Promoções** (botão na tela **Fidelidade**, ao lado de **Mensagem do prêmio**): cadastre nome, minutos e preço total; edite, desative ou remova. As promoções ativas aparecem no Adicionar tempo e no Visitante. Alterar uma promoção não muda recargas já registradas.
-- **Configurar programa:** todos os clientes ativos participam automaticamente (menos os que estiverem com "Ativar programa fidelidade" desmarcado). Os pontos só são gerados em **recargas com promoção**, pela regra de valor x pontos, que pode variar por dia da semana. Defina quantos pontos liberam o prêmio e quantos minutos ele dá (ex.: 10 pontos = 60 minutos).
-- Ao atingir os pontos, o prêmio é automático: com sessão ativa, o tempo entra na hora; sem sessão, vai para o saldo. Pontos para vários prêmios liberam todos.
+- **Configurar programa:** todos os clientes ativos participam automaticamente (menos os que estiverem com "Ativar programa fidelidade" desmarcado). As **medalhas** (antes chamadas de pontos) só são geradas em **recargas com promoção**, pela regra de valor x medalhas, que pode variar por dia da semana, e na participação em **Corujão/Viradão**. Defina quantas medalhas liberam o prêmio e quantos minutos ele dá (ex.: 10 medalhas = 60 minutos).
+- Ao atingir as medalhas, o prêmio é automático: com sessão ativa, o tempo entra na hora; sem sessão, vai para o saldo. Medalhas para vários prêmios liberam todos.
+- **Medalhas Corujão/Viradão** (administrador): quantidade de medalhas que cada participante pago recebe ao **Iniciar** um Corujão/Viradão (0 = nenhuma).
 - **Mensagem do prêmio:** texto que aparece na barra do cliente (variáveis `{premio}` e `{nick}`), com "Tempo antes | Tempo após" embaixo. Se o cliente não estiver jogando, a mensagem aparece quando ele iniciar a sessão.
-- O extrato de pontos e o histórico ficam nesta tela, com busca por nick e **Exportar para Excel**.
+- O extrato de medalhas e o histórico ficam nesta tela, com busca por nick e **Exportar para Excel**.
 
 ---
 
-## 11. Transferir/Remover saldo (administrador)
+## 11. Corujão/Viradão
 
-Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, informe os minutos (ou **Todo o saldo**) e o motivo. Encerre antes as sessões dos clientes envolvidos. Fica registrado (origem, destino, tempo, motivo, data e administrador). Não altera receitas nem pontos; remover tempo não é reembolso.
+Passo a passo (administrador e operador):
+
+1. **+ Criar Corujão/Viradão:** tipo (Corujão ou Viradão), nome, data e valor por participante (R$ 0,00 = gratuito).
+2. **+ Adicionar participantes:** busque por Usuário/Nick e marque os clientes (visitantes não participam).
+3. **Confirmar pagamento** de cada participante: escolha Dinheiro, Pix ou Cartão. O valor entra no caixa aberto como venda (aparece em **Caixa > Vendas**, nos itens do caixa e em Faturas). Com o caixa fechado, só o administrador principal registra (fora de caixa). Para desfazer antes de iniciar, cancele a venda; o participante volta a **Pendente**.
+4. **Iniciar ›:** cada participante **pago** recebe as medalhas definidas em **Fidelidade > Medalhas Corujão/Viradão** e a participação conta no **Ranking**. Quem não pagou fica de fora. Depois de iniciado não é possível adicionar participantes nem cancelar os pagamentos.
+5. **Encerrar** quando terminar. **Excluir** (administrador) só enquanto não há pagamento confirmado.
 
 ---
 
-## 12. Sessão/Log, Estatística
+## 12. Transferir/Remover saldo (administrador)
 
-- **Sessão/Log:** histórico completo de sessões e de pontos (páginas de 100, busca por nick, **Exportar para Excel**) e o **Sistema de log** com todas as ações (logins, recargas, cadastros, configurações, falhas de TV, quedas de PC, recuperações). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
+Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, informe os minutos (ou **Todo o saldo**) e o motivo. Encerre antes as sessões dos clientes envolvidos. Fica registrado (origem, destino, tempo, motivo, data e administrador). Não altera receitas nem medalhas; remover tempo não é reembolso.
+
+---
+
+## 13. Sessão, Log e Estatística
+
+- **Sessão:** histórico completo de sessões (páginas de 100, busca por nick, **Exportar para Excel**). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
+- **Log:** o Sistema de log com todas as ações (logins, recargas, cadastros, configurações, Corujão/Viradão, falhas de TV, quedas de PC, recuperações).
 - **Estatística:** uso por máquina, por horário, por funcionário e por cliente, clientes grátis, duração, vendas e fluxo de caixa.
 
 ---
 
-## 13. Configuração (administrador)
+## 14. Ranking
+
+- **Top 10 Medalhas:** clientes com mais medalhas conquistadas (resgates de prêmio não descontam; estornos descontam).
+- **Top 10 Participação em Viradão:** quem mais participou de Corujão/Viradão iniciados com pagamento confirmado.
+- **Top 10 Recargas Mês:** quem fez mais recargas pagas no mês escolhido (campo **Mês das recargas**; desempate pelo valor). Visitantes e pacotes grátis não entram.
+
+---
+
+## 15. Configuração (administrador)
 
 - **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): bloquear Gerenciador de Tarefas, Painel de Controle/Configurações, opções do Ctrl+Alt+Del (Bloquear, Sair, Alterar senha) e ajuste de **data e hora**. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
-- **Backup completo:** seção 14.
+- **Backup completo:** seção 16.
 - **Servidor IP** (abaixo do backup): mostra o endereço que as TVs e os PCs usam para chegar ao servidor.
   - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma) e a porta; ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
   - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). No topo do resultado aparece se o servidor está **disponível localmente (rede local)** ou **em nuvem**.
@@ -166,7 +191,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 14. Backup
+## 16. Backup
 
 - **Configuração > Backup completo do servidor:** backup diário automático (padrão às 03:00) em **Documentos\bkp gamezoney**, mais o botão **Criar backup completo agora**. Cada ZIP leva banco, usuários e senhas protegidas, saldos, histórico, faturas, despesas, fidelidade, configurações, imagens, pareamentos das TVs e a identidade dos PCs.
 - Copie os ZIPs para **outro disco ou dispositivo** (um backup no mesmo HD não protege contra falha do HD). Os arquivos têm dados pessoais: guarde com acesso restrito. Cópias antigas não são apagadas sozinhas.
@@ -174,7 +199,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 15. Cliente nos PCs
+## 17. Cliente nos PCs
 
 **Login.** O PC fica bloqueado na tela de login (com o fundo enviado pela recepção ou o padrão GameZoney). O cliente entra com **Usuário/Nick e senha** e precisa ter saldo; ou a recepção inicia a sessão pelo painel. Cliente sem senha cadastrada: ao entrar, aparece **Registrar senha** (Senha e Repetir senha), obrigatório. Depois de 7 tentativas erradas o PC bloqueia por 2 minutos. Durante a sessão, o cliente pode trocar a própria senha.
 
@@ -201,7 +226,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 16. Quedas de energia, de rede e de internet
+## 18. Quedas de energia, de rede e de internet
 
 - **Só o servidor caiu:** os PCs continuam a sessão e o relógio conta normalmente; ao voltar, o tempo é reconciliado. Depois de reiniciar, o servidor espera até **5 minutos** os PCs reconectarem (o roteador pode estar voltando junto) antes de usar os pontos de controle.
 - **Queda da internet ou da rede (o PC ficou sem falar com o servidor):** depois de 10 segundos a estação fica **vermelha**, mas a **sessão continua ativa e o tempo segue contando** no PC e no servidor, pelo tempo que for preciso. O cliente pode continuar jogando o que não precisa de internet. Quando a conexão volta, a estação fica verde e o tempo é conferido com o do PC. Se o tempo acabar durante a queda, o PC bloqueia sozinho e o servidor encerra a sessão por tempo esgotado. O painel mostra "Sem conexão há X min. A sessão continua ativa".
@@ -212,7 +237,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 17. Remover, reinstalar e desinstalar
+## 19. Remover, reinstalar e desinstalar
 
 - **Remover computador** (painel): revoga a associação; histórico e saldos ficam. Para usar o PC de novo: no PC, **Reconfigurar conexão com o servidor** (senha de manutenção), siga a descoberta e autorize na recepção como **Novo computador**.
 - **Manter o mesmo nome no painel:** remova o computador antigo e autorize o pedido como novo com o mesmo nome, ou use **Associação por arquivo (alternativa)** no cartão do PC e **Importar** no cliente.
@@ -221,12 +246,12 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 18. Problemas comuns
+## 20. Problemas comuns
 
 | Situação | O que fazer |
 |---|---|
 | Painel do servidor com a tela escura | Libere o Edge/WebView2 no programa que os desativou e instale o WebView2 Runtime da Microsoft; reabra o servidor |
-| PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 16); na recepção, Reparar conexão de rede |
+| PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 18); na recepção, Reparar conexão de rede |
 | PC novo não aparece para autorizar | Mesma rede do servidor (não use Wi-Fi de visitantes); firewall do servidor (Reparar conexão de rede) |
 | TV não troca de HDMI | Confira IP, entrada HDMI e pareamento (Parear TV); Testar HDMI |
 | TV não mostra o resumo | Configuração > Servidor IP > **Atualizar Automático**; a TV precisa alcançar a porta 3000 |
@@ -234,4 +259,4 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 | Recarga recusada "Abra o caixa" | Caixa > Abrir caixa |
 | Barra do PC sumiu | Ctrl+Alt+T |
 | PC preso em "Limpeza pendente" | Feche o jogo indicado na tela; ele libera sozinho |
-| Esqueceu a senha do administrador | Restaure um backup (seção 14) ou peça suporte |
+| Esqueceu a senha do administrador | Restaure um backup (seção 16) ou peça suporte |

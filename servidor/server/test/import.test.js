@@ -27,12 +27,12 @@ test('3.0.33: importação com Pontos fidelidade (Nome, Nick, Tempo, Pontos fide
   const xlsx=workbook('Clientes',['Nome','Nick','Tempo','Pontos fidelidade'],[['João','joao_p','01:00',150],['Maria','maria_p',30,''],['Bia','bia_p','00:10','12,5'],['Ruim','ruim_p','00:10','abc']]);
   const parsed=imp.parse('c.xlsx',Buffer.from(xlsx).toString('base64'));assert.equal(parsed.columns.points,true);
   const rows=imp.validate(store,parsed.rows);
-  assert.deepEqual(rows.map(r=>r.status),['new','new','new','error']);assert.match(rows[3].error,/Pontos fidelidade/);
+  assert.deepEqual(rows.map(r=>r.status),['new','new','new','error']);assert.match(rows[3].error,/Medalhas de fidelidade/);
   assert.deepEqual(rows.slice(0,3).map(r=>r.pointsMilli),[150000,0,12500]);
   const result=imp.importMembers(store,rows,'admin');assert.equal(result.imported,3);assert.equal(result.pointsMilli,162500);
   const j=store.state.members.find(m=>m.username==='joao_p');assert.equal(j.pointsMilli,150000);assert.equal(j.creditSeconds,3600);
   assert.equal(store.state.loyaltyLedger.filter(l=>l.reference==='import').length,2);
-  assert(store.logs({type:'membro'}).some(l=>l.detail.includes('162,5 ponto(s) fidelidade')));
+  assert(store.logs({type:'membro'}).some(l=>l.detail.includes('162,5 medalha(s) de fidelidade')));
   // CSV sem cabecalho: Nome;Nick;Tempo;Pontos
   const csv=imp.parse('c.csv',Buffer.from('Zé;ze_9;90;1.250\n','utf8').toString('base64'));assert.equal(csv.rows[0].pointsMilli,1250000);assert.equal(csv.rows[0].seconds,5400);
   // planilha antiga de 3 colunas continua funcionando (pontos = 0)

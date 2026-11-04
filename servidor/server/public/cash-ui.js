@@ -54,8 +54,8 @@ function cashHistoryHtml() {
 
 async function renderCash() {
   cashData = await api('/cash'); if (view !== 'cash') return;
-  $('#view-title').textContent = 'Controle de Caixas';
-  $('#view').innerHTML = `<div class="shop-tabs"><button data-cash-tab="current" class="${cashTab === 'current' ? 'active' : ''}">▣ Caixa atual</button><button data-cash-tab="stock" class="${cashTab === 'stock' ? 'active' : ''}">▤ Estoque</button><button data-cash-tab="history" class="${cashTab === 'history' ? 'active' : ''}">◷ Caixas fechados</button></div>
+  $('#view-title').textContent = cashTab === 'stock' ? 'Produtos e Serviços' : 'Controle de Caixas';
+  $('#view').innerHTML = `${gzTabs(cashTab === 'stock' ? 'produtos' : 'caixa')}
   <div id="cash-body">${cashTab === 'stock' ? cashStockHtml() : cashTab === 'history' ? cashHistoryHtml() : cashCurrentHtml()}</div>
   ${cashTab === 'current' ? `<p class="hint cash-setting">Adicionar tempo, liberar visitantes e vender produtos/serviços só é permitido com o caixa aberto. ${cashData.canSellClosed ? 'Você é o administrador principal: pode registrar mesmo com o caixa fechado (o valor não entra em nenhum caixa).' : 'Somente o administrador principal pode registrar com o caixa fechado.'}</p>` : ''}`;
   const open = $('#cash-open');
@@ -126,3 +126,22 @@ document.addEventListener('click', async e => {
     else previousCashDialog();
   } catch (err) { toast(err.message); }
 });
+
+// 1.0.5: CAIXA = Caixa atual / Vendas / Caixas fechados; PRODUTOS/SERVIÇOS = Estoque / Gerenciamento de Produtos / Gerenciamento de Serviços.
+// Vendas (PDV) continua na tela "shop" e Estoque na tela "cash"; as abas e o menu mostram cada uma no grupo certo.
+function gzActiveTab() { return view === 'cash' ? 'cash:' + cashTab : view === 'shop' ? 'shop:' + shopTab : ''; }
+function gzNavView() { if (view === 'cash') return cashTab === 'stock' ? 'shop' : 'cash'; if (view === 'shop') return shopTab === 'sales' ? 'cash' : 'shop'; return view; }
+function gzTabs(group) {
+  const a = gzActiveTab(), t = (key, label) => `<button data-gz-tab="${key}" class="${a === key ? 'active' : ''}">${label}</button>`;
+  return group === 'caixa'
+    ? `<div class="shop-tabs">${t('cash:current', '▣ Caixa atual')}${t('shop:sales', ICON.cart + ' Vendas')}${t('cash:history', '◷ Caixas fechados')}</div>`
+    : `<div class="shop-tabs">${t('cash:stock', '▤ Estoque')}${t('shop:products', ICON.box + ' Gerenciamento de Produtos')}${t('shop:services', ICON.gear + ' Gerenciamento de Serviços')}</div>`;
+}
+// Clique no menu: Caixa abre em "Caixa atual" (se estava no Estoque); Produtos/Serviços abre no Estoque (primeira aba).
+function gzNavFix() { if (view === 'cash' && cashTab === 'stock') cashTab = 'current'; if (view === 'shop') { view = 'cash'; cashTab = 'stock'; } }
+function gzOpenTab(key) {
+  const [v, t] = key.split(':'); if (v === 'cash') cashTab = t; else shopTab = t; view = v;
+  const nv = gzNavView(); document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.view === nv));
+  $('#view-title').textContent = nv === 'cash' ? 'Controle de Caixas' : 'Produtos e Serviços'; render();
+}
+document.addEventListener('click', e => { const t = e.target.closest('[data-gz-tab]'); if (t) gzOpenTab(t.dataset.gzTab); });

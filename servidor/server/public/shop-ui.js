@@ -42,7 +42,7 @@ function renderCart() {
 
 async function renderShop() {
   shopData = await api('/shop'); if (view !== 'shop') return;
-  $('#view-title').textContent = 'Produtos e Serviços';
+  $('#view-title').textContent = shopTab === 'sales' ? 'Controle de Caixas' : 'Produtos e Serviços';
   const admin = isAdmin();
   cart = cart.filter(l => (l.kind === 'product' ? shopData.products : shopData.services).some(i => i.id === l.id))
     .map(l => { const src = (l.kind === 'product' ? shopData.products : shopData.services).find(i => i.id === l.id); return {...l, name: src.name, priceCents: src.priceCents, stock: l.kind === 'product' ? src.stock : null}; });
@@ -50,8 +50,7 @@ async function renderShop() {
   const productTable = `<table><thead><tr><th>Nome</th><th>Categoria</th>${admin ? '<th>P. Custo</th><th>Margem</th>' : ''}<th>P. Venda</th><th>Cód. Barras</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>${shopData.products.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.category)}</td>${admin ? `<td>${money(p.costCents)}</td><td>${p.marginPercent != null ? String(p.marginPercent).replace('.', ',') + '%' : '—'}</td>` : ''}<td>${money(p.priceCents)}</td><td>${esc(p.barcode || '—')}</td><td>${p.stock <= 0 ? '<span class="badge red">SEM ESTOQUE</span>' : p.stock + ' un'}</td>${actions('product', p.id)}</tr>`).join('') || `<tr><td colspan="${admin ? 8 : 6}">Nenhum produto cadastrado.</td></tr>`}</tbody></table>`;
   const serviceTable = `<table><thead><tr><th>Nome do Serviço</th><th>Preço por Unidade</th><th>Ações</th></tr></thead><tbody>${shopData.services.map(s => `<tr><td>${esc(s.name)}</td><td>${money(s.priceCents)}</td>${actions('service', s.id)}</tr>`).join('') || '<tr><td colspan="3">Nenhum serviço cadastrado.</td></tr>'}</tbody></table>`;
   // 1.0.5: três áreas — Vendas (só o PDV, primeira opção), Gerenciamento de Produtos e Gerenciamento de Serviços
-  const tab = (key, icon, label) => `<button data-shop-tab="${key}" class="${shopTab === key ? 'active' : ''}">${icon} ${label}</button>`;
-  const tabs = `<div class="shop-tabs">${tab('sales', ICON.cart, 'Vendas')}${tab('products', ICON.box, 'Gerenciamento de Produtos')}${tab('services', ICON.gear, 'Gerenciamento de Serviços')}</div>`;
+  const tabs = gzTabs(shopTab === 'sales' ? 'caixa' : 'produtos'); // 1.0.5: Vendas fica em Caixa
   const manage = kind => `<div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${kind}">+ ${kind === 'product' ? 'Novo Produto' : 'Novo Serviço'}</button>` : ''}</div>
     <div class="shop-card table-wrap">${kind === 'product' ? productTable : serviceTable}</div>`;
   $('#view').innerHTML = `<div class="shop-area">${tabs}

@@ -29,9 +29,9 @@ class ClearAll {
         if (!File.Exists(node) || !File.Exists(script)) throw new Exception("Arquivos do servidor não encontrados. Execute o ClearAll.exe dentro da pasta de instalação do servidor GameZoney.");
 
         string aviso = "ATENÇÃO: esta ação APAGA TODOS OS REGISTROS do servidor GameZoney:\n\n" +
-            "• clientes, pontos fidelidade e saldos de tempo\n" +
+            "• clientes, medalhas de fidelidade e saldos de tempo\n" +
             "• administradores e operadores (inclusive o administrador principal)\n" +
-            "• recargas, faturas, sessões, promoções e prêmios\n" +
+            "• recargas, faturas, sessões, promoções, prêmios e Corujão/Viradão\n" +
             "• produtos, serviços, vendas do PDV, caixas e estoque\n" +
             "• despesas, contas a pagar, estatísticas e Sistema de log\n\n" +
             "SERÃO MANTIDOS: as estações (TVs e computadores) com o pareamento e as configurações gerais.\n\n" +

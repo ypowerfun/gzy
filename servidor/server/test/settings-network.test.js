@@ -36,3 +36,23 @@ test('1.0.5: estações de exemplo e Remover console',async t=>{
  const auto=await call('/api/network/auto',{});assert.equal(auto.mode,'local');assert.equal(typeof auto.available,'boolean');
  await call('/api/settings',{serverUrl:'https://gamezoney.invalid'});const cloud=await call('/api/network/auto',{});assert.equal(cloud.mode,'cloud');assert.equal(cloud.available,false);assert.equal(instance.store.state.settings.serverUrl,'https://gamezoney.invalid');
 });
+test('1.0.5: Corujão/Viradão — criar, participantes, pagamento no caixa, iniciar com medalhas; Ranking Top 10',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ev-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const s=new Store(dir),ev=require('../events'),shop=require('../shop');
+ const mk=n=>{const m={id:'m'+n,name:'N'+n,username:'nick'+n,active:true,creditSeconds:0,pointsMilli:0};s.state.members.push(m);return m};const a=mk(1),b=mk(2),c=mk(3);
+ ev.medalSettings(s,{medals:'2,5'},'admin');assert.equal(s.state.settings.eventMedalsMilli,2500);
+ const e=ev.create(s,{kind:'corujao',name:'Sexta',date:'2026-11-06',priceCents:3000},'admin');
+ for(const m of [a,b,c])ev.addParticipant(s,{eventId:e.id,memberId:m.id},'op');assert.throws(()=>ev.addParticipant(s,{eventId:e.id,memberId:a.id},'op'));
+ assert.throws(()=>ev.start(s,{eventId:e.id},'op'),/pagamento/);
+ assert.throws(()=>ev.pay(s,{eventId:e.id,memberId:a.id},'op'),/forma de pagamento/);
+ const sale=ev.pay(s,{eventId:e.id,memberId:a.id,paymentMethod:'pix'},'op');assert.equal(s.state.shopSales.at(-1).totalCents,3000);assert.equal(s.state.shopSales.at(-1).items[0].kind,'event');
+ const sb=ev.pay(s,{eventId:e.id,memberId:b.id,paymentMethod:'cash'},'op');shop.cancelSale(s,{id:sb.id,reason:'desistiu'},'admin');assert.equal(ev.list(s).events[0].participants.find(p=>p.memberId===b.id).paid,false);
+ ev.removeParticipant(s,{eventId:e.id,memberId:c.id},'op');assert.throws(()=>ev.removeParticipant(s,{eventId:e.id,memberId:a.id},'op'),/Pagamento já confirmado/);
+ ev.start(s,{eventId:e.id},'op');assert.equal(a.pointsMilli,2500);assert.equal(b.pointsMilli,0);assert.throws(()=>shop.cancelSale(s,{id:sale.id,reason:'x'},'admin'),/já iniciado/);assert.throws(()=>ev.addParticipant(s,{eventId:e.id,memberId:c.id},'op'));
+ ev.finish(s,{eventId:e.id},'op');
+ const r=ev.ranking(s,{});assert.deepEqual(r.participations.map(x=>[x.username,x.count]),[['nick1',1]]);assert.equal(r.medals[0].username,'nick1');assert.equal(r.medals[0].medalsMilli,2500);
+ s.state.sales.push({id:'x1',memberId:b.id,cents:700,status:'paid',at:Date.now()},{id:'x2',memberId:b.id,cents:700,status:'paid',at:Date.now()},{id:'x3',memberId:a.id,cents:5000,status:'paid',at:Date.now()},{id:'x4',memberId:a.id,cents:0,status:'paid',at:Date.now()},{id:'x5',memberId:c.id,cents:700,status:'canceled',at:Date.now()});
+ const rr=ev.ranking(s,{});assert.deepEqual(rr.recharges.map(x=>[x.username,x.count]),[['nick2',2],['nick1',1]]);assert.equal(ev.ranking(s,{month:'2001-01'}).recharges.length,0);
+ const e2=ev.create(s,{kind:'viradao',name:'Grátis',date:'2026-12-31',priceCents:0},'admin');ev.addParticipant(s,{eventId:e2.id,memberId:c.id},'op');ev.pay(s,{eventId:e2.id,memberId:c.id},'op');ev.remove(s,{eventId:ev.create(s,{name:'X',date:'2026-12-01',priceCents:0},'admin').id},'admin');assert.throws(()=>ev.remove(s,{eventId:e2.id},'admin'),/pagamentos/);
+ s.db.close();
+});

@@ -48,6 +48,7 @@ Type: files; Name: "{app}\public\icon-512.png"
 [Files]
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "netinfo.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "events.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion

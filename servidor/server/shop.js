@@ -109,6 +109,7 @@ function sell(store, input, actor) {
 function cancelSale(store, input, actor) {
   const sale = store.state.shopSales.find(s => s.id === input.id) || fail('Venda não encontrada.');
   if (sale.status === 'canceled') fail('Esta venda já foi cancelada.');
+  require('./events').blockCancel(store, sale);
   const reason = text(input.reason, 'Motivo', 300);
   return store.change(actor, 'cancelamento', `Cancelamento do cupom ${sale.number}: ${reason} • estoque devolvido`, () => {
     for (const i of sale.items) if (i.kind === 'product') { const p = store.state.products.find(p => p.id === i.itemId); if (p) p.stock += i.qty; }

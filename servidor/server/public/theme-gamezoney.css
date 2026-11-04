@@ -254,3 +254,24 @@ nav .nav-sep{height:1px;margin:10px 14px;background:linear-gradient(90deg,transp
 #ask #ask-detail:empty{display:none}
 /* 1.0.5: campos de senha mascarados sem type=password: o navegador nunca oferece "Salvar senha" */
 input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inherit}
+/* 1.0.5: Corujão/Viradão e Ranking */
+.ev-steps{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 16px}
+.ev-step{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line2);color:var(--muted);font-size:12px;letter-spacing:.04em}
+.ev-step b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--panel2);font-size:11px}
+.ev-step.done{color:var(--text);border-color:var(--red-dark)}.ev-step.done b{background:var(--red);color:#111}
+.ev-step.now{color:var(--red2);border-color:var(--red)}
+.ev-member-list{max-height:45vh;overflow:auto;margin:10px 0;border:1px solid var(--line);padding:6px}
+.ev-member{display:flex;align-items:center;gap:10px;margin:0;padding:8px 10px;cursor:pointer}.ev-member:hover{background:var(--panel2)}
+.ev-member input{width:auto;margin:0}
+.ev-pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.ev-month{display:flex;align-items:center;gap:10px;margin:0}.ev-month input{margin:0;width:auto}
+.rank-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.rank-list{list-style:none;margin:0;padding:0}
+.rank-list li{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
+.rank-list li:first-child{border-top:0}
+.rank-pos{display:inline-grid;place-items:center;min-width:30px;height:30px;font-weight:800;border:1px solid var(--line2);color:var(--muted)}
+.rank-1 .rank-pos{background:linear-gradient(180deg,#ffd75a,#c99a12);color:#111;border-color:#ffd75a}
+.rank-2 .rank-pos{background:linear-gradient(180deg,#e6e8ee,#9ea3ad);color:#111;border-color:#e6e8ee}
+.rank-3 .rank-pos{background:linear-gradient(180deg,#e2a46b,#9a5a26);color:#111;border-color:#e2a46b}
+.rank-nick{flex:1;font-weight:600;overflow-wrap:anywhere}
+.rank-value{text-align:right;color:var(--red2);font-size:13px}

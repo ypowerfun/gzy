@@ -1,8 +1,8 @@
 'use strict';
 // 3.0.20: importacao de clientes por planilha (Excel .xlsx ou .csv) com Nome, Usuario/Nick e Tempo.
-// 3.0.33: coluna opcional Pontos fidelidade (saldo inicial de pontos, registrado no extrato).
+// 3.0.33: coluna opcional Medalhas de fidelidade (saldo inicial de medalhas, registrado no extrato).
 // Cada linha vira um cadastro de cliente igual ao "Novo cliente" sem senha: o cliente cria a senha no
-// primeiro acesso ao PC. O tempo entra como saldo disponivel (nao gera receita nem pontos). Todos os
+// primeiro acesso ao PC. O tempo entra como saldo disponivel (nao gera receita nem medalhas). Todos os
 // clientes importados participam automaticamente do programa de fidelidade, como qualquer cadastro novo.
 const zlib = require('node:zlib');
 const {id, fail} = require('./store');
@@ -91,15 +91,15 @@ function detectColumns(rows) {
   for (let i = 0; i < Math.min(rows.length, 10); i++) {
     const h = rows[i].cells.map(c => typeof c === 'object' ? '' : norm(c)); const col = {};
     h.forEach((t, j) => {
-      // 3.0.33: coluna de pontos fidelidade (verificada antes de "tempo/saldo" para "saldo de pontos")
-      if (col.points === undefined && /(ponto|fidelidade|points)/.test(t)) col.points = j;
+      // 3.0.33: coluna de medalhas de fidelidade (verificada antes de "tempo/saldo" para "saldo de pontos")
+      if (col.points === undefined && /(ponto|medalha|fidelidade|points)/.test(t)) col.points = j;
       else if (col.nick === undefined && /(nick|usuario|login|apelido|user)/.test(t)) col.nick = j;
       else if (col.name === undefined && /(nome|cliente|name)/.test(t)) col.name = j;
       else if (col.time === undefined && /(tempo|saldo|hora|minuto|credito|segundo)/.test(t)) { col.time = j; col.unit = /segundo/.test(t) ? 'seconds' : /hora/.test(t) && !/minuto/.test(t) ? 'hours' : 'minutes'; }
     });
     if (col.nick !== undefined && (col.name !== undefined || col.time !== undefined)) return { header: i, ...col };
   }
-  return { header: -1, name: 0, nick: 1, time: 2, points: 3, unit: 'minutes' };   // sem cabecalho: Nome | Nick | Tempo | Pontos fidelidade
+  return { header: -1, name: 0, nick: 1, time: 2, points: 3, unit: 'minutes' };   // sem cabecalho: Nome | Nick | Tempo | Medalhas de fidelidade
 }
 const UNIT = { seconds: 1, minutes: 60, hours: 3600 };
 function parseTime(value, unit) {
@@ -118,12 +118,12 @@ function parseTime(value, unit) {
   return null;
 }
 
-// Pontos fidelidade: inteiro ou com ate 3 casas decimais (12, 12,5, 1.250). Vazio = 0. Retorna milesimos.
+// Medalhas de fidelidade: inteiro ou com ate 3 casas decimais (12, 12,5, 1.250). Vazio = 0. Retorna milesimos.
 const MAX_POINTS = 1000000;
 function parsePoints(value) {
   if (value === '' || value === null || value === undefined) return 0;
   if (typeof value === 'object') { const n = value.number; return Number.isFinite(n) && n >= 0 && !value.time ? Math.round(n * 1000) : null; }
-  let t = String(value).trim().replace(/\s+/g, '').replace(/pts?|pontos?/i, '');
+  let t = String(value).trim().replace(/\s+/g, '').replace(/pts?|pontos?|medalhas?/i, '');
   if (!t || t === '-') return 0;
   if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '');   // 1.250 ou 1.250,5
   t = t.replace(',', '.');
@@ -166,8 +166,8 @@ function validate(store, rows) {
     else if (seen.has(key)) item.error = 'Nick repetido na planilha.';
     else if (item.seconds === null || item.seconds === undefined || !Number.isSafeInteger(item.seconds) || item.seconds < 0) item.error = 'Tempo não reconhecido: "' + item.timeText + '". Use 01:30, 90 (minutos) ou 1h30.';
     else if (item.seconds > MAX_SECONDS) item.error = 'Tempo acima de 1000 horas.';
-    else if (item.pointsMilli === null || !Number.isSafeInteger(item.pointsMilli) || item.pointsMilli < 0) item.error = 'Pontos fidelidade não reconhecidos: "' + item.pointsText + '". Use um número, ex.: 150 ou 12,5.';
-    else if (item.pointsMilli > MAX_POINTS * 1000) item.error = 'Pontos fidelidade acima de ' + MAX_POINTS.toLocaleString('pt-BR') + '.';
+    else if (item.pointsMilli === null || !Number.isSafeInteger(item.pointsMilli) || item.pointsMilli < 0) item.error = 'Medalhas de fidelidade não reconhecidas: "' + item.pointsText + '". Use um número, ex.: 150 ou 12,5.';
+    else if (item.pointsMilli > MAX_POINTS * 1000) item.error = 'Medalhas de fidelidade acima de ' + MAX_POINTS.toLocaleString('pt-BR') + '.';
     else if (taken.has(key)) { item.status = 'exists'; item.note = 'Já cadastrado (' + taken.get(key).name + '): não será alterado.'; }
     if (item.error) item.status = 'error'; else if (!item.status) item.status = 'new';
     if (item.username) seen.add(key);
@@ -182,12 +182,12 @@ function importMembers(store, rows, actor) {
   const ok = checked.filter(r => r.status === 'new');
   if (!ok.length) fail('Nenhum cliente novo válido para importar.');
   const total = ok.reduce((a, r) => a + r.seconds, 0), points = ok.reduce((a, r) => a + r.pointsMilli, 0), now = Date.now(), stamp = new Date(now).toLocaleDateString('pt-BR');
-  store.change(actor, 'membro', `Importação de planilha: ${ok.length} cliente(s) cadastrado(s), ${Math.round(total / 60)} minuto(s) de saldo inicial, ${(points / 1000).toLocaleString('pt-BR')} ponto(s) fidelidade. Senhas serão criadas no primeiro acesso.`, () => {
+  store.change(actor, 'membro', `Importação de planilha: ${ok.length} cliente(s) cadastrado(s), ${Math.round(total / 60)} minuto(s) de saldo inicial, ${(points / 1000).toLocaleString('pt-BR')} medalha(s) de fidelidade. Senhas serão criadas no primeiro acesso.`, () => {
     for (const r of ok) {
       const m = { id: id(), creditSeconds: r.seconds, pointsMilli: r.pointsMilli, createdAt: now, name: r.name, username: r.username, cpf: '', phone: '', notes: 'Importado da planilha em ' + stamp + '.', active: true, importedAt: now, importedSeconds: r.seconds, importedPointsMilli: r.pointsMilli };
       store.state.members.push(m);
-      // pontos importados aparecem no extrato de pontos (Fidelidade) como saldo inicial
-      if (r.pointsMilli > 0) (store.state.loyaltyLedger ??= []).push({ id: id(), memberId: m.id, amount: r.pointsMilli, reason: 'Importação de planilha (saldo inicial de pontos)', reference: 'import', at: now });
+      // pontos importados aparecem no extrato de medalhas (Fidelidade) como saldo inicial
+      if (r.pointsMilli > 0) (store.state.loyaltyLedger ??= []).push({ id: id(), memberId: m.id, amount: r.pointsMilli, reason: 'Importação de planilha (saldo inicial de medalhas)', reference: 'import', at: now });
     }
     return null;
   });
