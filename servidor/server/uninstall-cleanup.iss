@@ -1,7 +1,7 @@
-﻿{ ===========================================================================
+﻿(* ===========================================================================
   GameZoney Servidor 1.0.5 - desinstalacao completa.
   Remove tudo o que foi instalado e o que o servidor criou, EXCETO os backups:
-   - pasta do aplicativo ({app}) inteira (logs, certificados, restos de versoes);
+   - pasta do aplicativo inteira (logs, certificados, restos de versoes);
    - %LOCALAPPDATA%\GameZoney\painel e painel-edge (dados da janela do painel);
    - %LOCALAPPDATA%\GameZoney\data (banco, pareamentos, certificado dos PCs, logs),
      MENOS a subpasta "backups". Antes de apagar, uma copia do banco vai para
@@ -10,25 +10,25 @@
   data-anterior-* (copias feitas pela restauracao).
   Desinstalacao com tela: pede confirmacao antes de apagar os dados.
   Desinstalacao silenciosa: os dados sao mantidos (seguranca).
-  =========================================================================== }
+  =========================================================================== *)
 var
   GzRemoveData: Boolean;
 
 procedure GzDeleteAllExcept(Dir, Keep: String);
 var
   FindRec: TFindRec;
-  Path: String;
+  ItemPath: String;
 begin
   if not DirExists(Dir) then exit;
   if FindFirst(AddBackslash(Dir) + '*', FindRec) then
   try
     repeat
       if (FindRec.Name <> '.') and (FindRec.Name <> '..') and (CompareText(FindRec.Name, Keep) <> 0) then begin
-        Path := AddBackslash(Dir) + FindRec.Name;
+        ItemPath := AddBackslash(Dir) + FindRec.Name;
         if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
-          DelTree(Path, True, True, True)
+          DelTree(ItemPath, True, True, True)
         else
-          DeleteFile(Path);
+          DeleteFile(ItemPath);
       end;
     until not FindNext(FindRec);
   finally
@@ -39,6 +39,7 @@ end;
 procedure GzSafetyCopy(Data: String);
 var
   Stamp, Target: String;
+  Ok: Boolean;
 begin
   if not FileExists(Data + '\gamezoney.sqlite') then exit;
   ForceDirectories(Data + '\backups');
@@ -47,7 +48,7 @@ begin
   if not FileCopy(Data + '\gamezoney.sqlite', Target, False) then
     Log('GameZoney: copia de seguranca do banco falhou: ' + Target);
   if FileExists(Data + '\gamezoney.sqlite-wal') then
-    FileCopy(Data + '\gamezoney.sqlite-wal', Target + '-wal', False);
+    Ok := FileCopy(Data + '\gamezoney.sqlite-wal', Target + '-wal', False);
 end;
 
 procedure GzUninstallAsk();
