@@ -36,6 +36,9 @@ Type: files; Name: "{app}\public\mobile-settings-ui.js"
 Type: files; Name: "{app}\mobile.js"
 Type: files; Name: "{app}\rankings.js"
 Type: files; Name: "{app}\tournaments.js"
+; 1.0.2: logo e tema da 1.0.1 com o nome antigo (agora logo-gamezoney.png e theme-gamezoney.css)
+Type: files; Name: "{app}\public\logo-prime.png"
+Type: files; Name: "{app}\public\theme-prime.css"
 
 [Files]
 Source: "network-guard.js"; DestDir: "{app}"; Flags: ignoreversion

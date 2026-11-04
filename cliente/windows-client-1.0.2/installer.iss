@@ -173,4 +173,6 @@ Type: dirifempty; Name: "{commonappdata}\GameZoney"
 
 [InstallDelete]
 Type: files; Name: "{app}\temp-access.dat"
+; 1.0.2: logo da 1.0.1 com o nome antigo (agora logo-gamezoney.png)
+Type: files; Name: "{app}\logo-prime.png"
 Type: files; Name: "{app}\GameZoneyMonitor.exe"
