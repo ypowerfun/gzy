@@ -7,10 +7,16 @@ O GameZoney tem duas partes:
 - **GameZoney Servidor** — instalado no PC da recepção. Guarda clientes, saldos, caixa e histórico, controla as TVs e mostra o painel.
 - **GameZoney Cliente** — instalado em cada PC gamer. Bloqueia o PC até a recepção liberar (ou o cliente entrar com nick e senha), mostra a barra de tempo e limpa a sessão no fim.
 
-Índice: 1. Instalação · 2. Primeiro acesso · 3. Computadores / TVs · 4. TVs (VIDAA e Android) · 5. Clientes e recargas ·
-6. Visitante · 7. Caixa · 8. Produtos/Serviços (PDV) · 9. Faturas e relatórios · 10. Fidelidade e promoções ·
-11. Transferir/Remover saldo · 12. Sessão e log, Estatística · 13. Configuração · 14. Backup · 15. Cliente nos PCs ·
+Índice: 1. Instalação · 2. Primeiro acesso · 3. Painel de controle · 4. TVs (VIDAA e Android) · 5. Clientes e recargas ·
+6. Visitante · 7. Caixa · 8. Produtos/Serviços (Vendas) · 9. Faturas · 10. Fidelidade e promoções ·
+11. Transferir/Remover saldo · 12. Sessão/Log, Estatística · 13. Configuração · 14. Backup · 15. Cliente nos PCs ·
 16. Quedas de energia e de rede · 17. Remover, reinstalar e desinstalar · 18. Problemas comuns
+
+---
+
+## Menu do painel
+
+Ordem: **Painel de controle, Clientes, Fidelidade, Transferir/Remover, Configuração** — **Sessão/Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas.
 
 ---
 
@@ -25,7 +31,7 @@ O GameZoney tem duas partes:
 
 **Cliente (PCs gamers)** — Windows 10/11 de 64 bits, conta do Windows **padrão** (não administradora) para os clientes.
 1. Execute o instalador (ou o instalador único e marque **Instalar Cliente**) **com a conta do PC dos clientes conectada no Windows**. O Windows pede a autorização de administrador.
-2. Ao abrir, o cliente procura o servidor na rede e mostra um **código**. Na recepção: **Computadores / TVs > PC aguardando autorização**, confira o código e clique em **Autorizar** (como novo computador ou no lugar de um computador livre). No PC, confirme a identidade do servidor e crie a **senha de manutenção** local.
+2. Ao abrir, o cliente procura o servidor na rede e mostra um **código**. Na recepção: **Painel de controle > PC aguardando autorização**, confira o código e clique em **Autorizar** (como novo computador ou no lugar de um computador livre). No PC, confirme a identidade do servidor e crie a **senha de manutenção** local.
 3. Recomendado: barra de tarefas do Windows **embaixo** e **sem ocultar automaticamente** (a aba do tempo fica nela).
 
 **Atualizar:** feche o servidor pelo ícone (Encerrar servidor) e instale por cima, na mesma conta do Windows. Nos PCs, entre como administrador no cliente, use **Fechar aplicativo** e instale por cima. Dados, associações e saldos são preservados.
@@ -38,12 +44,12 @@ O GameZoney tem duas partes:
 
 1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
 2. Em **Configuração**, confira o **valor da hora** (padrão R$ 7,00), o **endereço do servidor** usado pelas TVs (ex.: `http://192.168.1.100:3000`) e o fuso horário.
-3. Cadastre as estações em **Computadores / TVs > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
+3. Cadastre as estações em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um pode trocar a própria senha no botão **Senha** do painel. Só o administrador principal (primeira conta) ativa/desativa contas.
 
 ---
 
-## 3. Computadores / TVs
+## 3. Painel de controle
 
 - Cada estação aparece como um monitor: **verde** = em uso, **dourado** = modo administrador, sem cor = livre/desligada. O ponto ao lado dos PCs indica conexão do cliente (verde conectado, vermelho sem contato). Clique no monitor para abrir as ações.
 - **Iniciar sessão:** escolha o cliente (busca por nome, nick ou CPF) com saldo disponível. A sessão usa todo o saldo do cliente.
@@ -60,7 +66,7 @@ O GameZoney tem duas partes:
 
 ## 4. TVs (VIDAA e Android)
 
-Cadastre a TV em **Computadores / TVs > + Nova estação**: nome, tipo **TV / Console**, **IP da TV**, **entrada HDMI** (1 a 4) e o **Sistema da TV**:
+Cadastre a TV em **Painel de controle > + Nova estação**: nome, tipo **Console**, **IP da TV**, **entrada HDMI** (1 a 4) e o **Sistema da TV**:
 
 - **VIDAA (Hisense/Toshiba):** use **Parear TV**; a TV mostra um PIN de 4 números; digite em **Informar PIN**. Pareamento antigo pode ser trazido com **Importar pareamento**.
 - **Android TV / Google TV:** na TV, ative as Opções do desenvolvedor (Configurações > Sobre > clicar 7 vezes em Build) e ligue a **Depuração ADB pela rede**. Use **Parear TV** e aceite **Permitir depuração** na TV (marque "Sempre permitir").
@@ -100,15 +106,16 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 ---
 
-## 8. Produtos/Serviços (PDV)
+## 8. Produtos/Serviços (Vendas)
 
-- **Cadastro (administrador):** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
-- **Venda (administrador e operador):** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (confirmação Sim/Não). O cupom abre em PDF (comprovante interno, sem valor fiscal).
+- A tela tem três áreas: **Vendas** (o PDV, primeira opção), **Gerenciamento de Produtos** e **Gerenciamento de Serviços**.
+- **Cadastro (administrador), nas áreas de gerenciamento:** produto (nome, categoria, preço de custo, margem de lucro ou preço de venda, código de barras opcional, estoque) ou serviço (nome e preço). A margem calcula o preço de venda, arredondado para cima no real inteiro.
+- **Venda (administrador e operador), na área Vendas:** busque pelo nome ou leia o código de barras, ajuste a quantidade (limitada ao estoque), escolha a forma de pagamento e **Finalizar Venda** (caixa de confirmação: Confirmar/Cancelar). O cupom abre em PDF (comprovante interno, sem valor fiscal).
 - Venda cancelada (administrador) sai da receita e devolve os produtos ao estoque.
 
 ---
 
-## 9. Faturas e relatórios (administrador)
+## 9. Faturas (administrador)
 
 - Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
 - Mostra receita válida, despesas, resultado (receita − despesas), ticket médio, evolução por dia e a lista de faturas e transações (recargas e vendas do PDV).
@@ -134,9 +141,9 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-## 12. Sessão e log, Estatística
+## 12. Sessão/Log, Estatística
 
-- **Sessão e log:** histórico completo de sessões e de pontos (páginas de 100, busca por nick, **Exportar para Excel**) e o **Sistema de log** com todas as ações (logins, recargas, cadastros, configurações, falhas de TV, quedas de PC, recuperações). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
+- **Sessão/Log:** histórico completo de sessões e de pontos (páginas de 100, busca por nick, **Exportar para Excel**) e o **Sistema de log** com todas as ações (logins, recargas, cadastros, configurações, falhas de TV, quedas de PC, recuperações). **Ver resumo > Mostrar este resumo na TV** reenvia a tela de sessão finalizada.
 - **Estatística:** uso por máquina, por horário, por funcionário e por cliente, clientes grátis, duração, vendas e fluxo de caixa.
 
 ---

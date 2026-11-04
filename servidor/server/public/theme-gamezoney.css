@@ -237,3 +237,20 @@ nav button:hover{background:#17140c}
 .pc-actions-compact .hint{font-size:12px;margin:4px 0 8px}
 .pc-actions-compact .remote-actions{gap:6px}
 .pc-actions-compact .remote-actions button{padding:6px 10px;font-size:10.5px;letter-spacing:.04em;min-height:0}
+/* 1.0.5: Produtos/Serviços em três áreas; Vendas = PDV em tela própria, mais largo */
+.shop-area .shop-card{min-height:0}
+.pdv-wide{max-width:1180px;padding:20px 22px}
+.pdv-wide .pdv-results{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.pdv-wide .pdv-body{grid-template-columns:minmax(0,1fr) 260px;min-height:320px}
+.pdv-wide .pdv-head,.pdv-wide .pdv-line{grid-template-columns:minmax(140px,1fr) 70px 110px 28px}
+.pdv-wide .pdv-pay{padding:14px;gap:8px}
+.pdv-wide .pdv-total strong{font-size:22px}
+.pdv-wide .pdv-finish{font-size:15px;padding:13px 8px}
+/* 1.0.5: traço dourado separando os grupos do menu */
+nav .nav-sep{height:1px;margin:10px 14px;background:linear-gradient(90deg,transparent,var(--red2) 18%,var(--red2) 82%,transparent);opacity:.85}
+/* 1.0.5: caixa de confirmação do painel (no lugar da janela do navegador, que mostrava o endereço do servidor) */
+#ask{width:min(480px,94vw)}
+#ask .confirm-question{white-space:pre-line}
+#ask #ask-detail:empty{display:none}
+/* 1.0.5: campos de senha mascarados sem type=password: o navegador nunca oferece "Salvar senha" */
+input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inherit}

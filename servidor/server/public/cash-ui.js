@@ -122,7 +122,7 @@ function previousCashDialog() {
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-cash-previous],[data-cash-previous-remove]'); if (!t || view !== 'cash') return;
   try {
-    if (t.dataset.cashPreviousRemove) { const c = cashData.history.find(x => x.id === t.dataset.cashPreviousRemove); if (c && confirm(`Remover o caixa anterior de ${c.periodFrom.split('-').reverse().join('/')} a ${c.periodTo.split('-').reverse().join('/')} (${money(c.countedCents)})?`)) { await api('/cash/previous/remove', {id: c.id}); toast('Caixa anterior removido.'); await renderCash(); } }
+    if (t.dataset.cashPreviousRemove) { const c = cashData.history.find(x => x.id === t.dataset.cashPreviousRemove); if (c && await ask(`Remover o caixa anterior de ${c.periodFrom.split('-').reverse().join('/')} a ${c.periodTo.split('-').reverse().join('/')} (${money(c.countedCents)})?`)) { await api('/cash/previous/remove', {id: c.id}); toast('Caixa anterior removido.'); await renderCash(); } }
     else previousCashDialog();
   } catch (err) { toast(err.message); }
 });

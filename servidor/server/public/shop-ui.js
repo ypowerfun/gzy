@@ -1,6 +1,6 @@
 'use strict';
 // 3.0.23: Produtos/Servicos + PDV (venda no balcao) + cupom em PDF.
-let shopData = null, shopTab = 'products', cart = [], shopPay = '', shopQuery = '';
+let shopData = null, shopTab = 'sales', cart = [], shopPay = '', shopQuery = '';
 const centsOf = v => Math.round(Number(String(v ?? '').replace(',', '.')) * 100);
 // 3.0.64: preço de venda = custo + margem de lucro, sempre arredondado PARA CIMA no real inteiro (mesma conta do servidor)
 const marginPriceCents = (costCents, percent) => Math.ceil(costCents * (10000 + Math.round(percent * 100)) / 1000000) * 100;
@@ -27,6 +27,7 @@ const ICON = {
   cash: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3ecf7a" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
   pix: '<svg viewBox="0 0 24 24" width="20" height="20" fill="#32bcad"><path d="M12 2.5 21.5 12 12 21.5 2.5 12Z" opacity=".25"/><path d="M12 6 18 12 12 18 6 12Z"/></svg>',
   card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#cfd3dc" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 12h11.2L21 7H6"/></svg>',
   check: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 5 5 9-10"/></svg>'
 };
 function renderCart() {
@@ -48,16 +49,14 @@ async function renderShop() {
   const actions = (kind, id) => admin ? `<td class="actions-cell"><button class="icon-btn" data-shop-edit="${kind}" data-id="${id}" title="Editar">${ICON.edit}</button><button class="icon-btn del" data-shop-remove="${kind}" data-id="${id}" title="Remover">${ICON.del}</button></td>` : '<td></td>';
   const productTable = `<table><thead><tr><th>Nome</th><th>Categoria</th>${admin ? '<th>P. Custo</th><th>Margem</th>' : ''}<th>P. Venda</th><th>Cód. Barras</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>${shopData.products.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.category)}</td>${admin ? `<td>${money(p.costCents)}</td><td>${p.marginPercent != null ? String(p.marginPercent).replace('.', ',') + '%' : '—'}</td>` : ''}<td>${money(p.priceCents)}</td><td>${esc(p.barcode || '—')}</td><td>${p.stock <= 0 ? '<span class="badge red">SEM ESTOQUE</span>' : p.stock + ' un'}</td>${actions('product', p.id)}</tr>`).join('') || `<tr><td colspan="${admin ? 8 : 6}">Nenhum produto cadastrado.</td></tr>`}</tbody></table>`;
   const serviceTable = `<table><thead><tr><th>Nome do Serviço</th><th>Preço por Unidade</th><th>Ações</th></tr></thead><tbody>${shopData.services.map(s => `<tr><td>${esc(s.name)}</td><td>${money(s.priceCents)}</td>${actions('service', s.id)}</tr>`).join('') || '<tr><td colspan="3">Nenhum serviço cadastrado.</td></tr>'}</tbody></table>`;
-  $('#view').innerHTML = `<div class="shop-grid">
-   <div class="shop-main">
-    <div class="shop-tabs"><button data-shop-tab="products" class="${shopTab === 'products' ? 'active' : ''}">${ICON.box} Gerenciamento de Produtos</button><button data-shop-tab="services" class="${shopTab === 'services' ? 'active' : ''}">${ICON.gear} Gerenciamento de Serviços</button></div>
-    <div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${shopTab === 'products' ? 'product' : 'service'}">+ ${shopTab === 'products' ? 'Novo Produto' : 'Novo Serviço'}</button>` : ''}</div>
-    <div class="shop-card table-wrap">${shopTab === 'products' ? productTable : serviceTable}</div>
-   </div>
-   <div class="shop-side">
-    <div class="shop-bar">${admin ? '<button class="primary" data-shop-add="service">+ Novo Serviço</button>' : ''}</div>
-    <div class="shop-card table-wrap">${serviceTable}</div>
-    <div class="shop-card pdv">
+  // 1.0.5: três áreas — Vendas (só o PDV, primeira opção), Gerenciamento de Produtos e Gerenciamento de Serviços
+  const tab = (key, icon, label) => `<button data-shop-tab="${key}" class="${shopTab === key ? 'active' : ''}">${icon} ${label}</button>`;
+  const tabs = `<div class="shop-tabs">${tab('sales', ICON.cart, 'Vendas')}${tab('products', ICON.box, 'Gerenciamento de Produtos')}${tab('services', ICON.gear, 'Gerenciamento de Serviços')}</div>`;
+  const manage = kind => `<div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${kind}">+ ${kind === 'product' ? 'Novo Produto' : 'Novo Serviço'}</button>` : ''}</div>
+    <div class="shop-card table-wrap">${kind === 'product' ? productTable : serviceTable}</div>`;
+  $('#view').innerHTML = `<div class="shop-area">${tabs}
+   ${shopTab === 'products' ? manage('product') : shopTab === 'services' ? manage('service') : `
+    <div class="shop-card pdv pdv-wide">
      <h3>PDV ${shopData.cash ? `<span class="badge on">CAIXA nº ${String(shopData.cash.number).padStart(4, '0')} ABERTO</span>` : '<span class="badge red">CAIXA FECHADO</span>'}</h3>
      ${shopData.cash ? '' : shopData.canSellClosed ? '<p class="hint cash-bypass">Caixa fechado: como administrador principal você pode vender, mas a venda não entra em nenhum caixa. <button type="button" data-cash-goto>Abrir caixa</button></p>' : '<div class="pdv-cash-warn">Abra o caixa para registrar vendas no PDV. <button type="button" data-cash-goto>Abrir caixa</button></div>'}
      <div class="pdv-search"><input id="pdv-search" autocomplete="off" placeholder="Buscar por nome ou código de barras…" value="${esc(shopQuery)}"><span>${ICON.search}</span></div>
@@ -71,7 +70,8 @@ async function renderShop() {
       </div>
      </div>
     </div>
-   </div></div>`;
+   `}</div>`;
+  if (shopTab !== 'sales') return;
   const search = $('#pdv-search');
   const showResults = () => {
     shopQuery = search.value; const found = shopFind(search.value);
@@ -150,7 +150,7 @@ document.addEventListener('click', async e => {
     if (t.dataset.shopTab) { shopTab = t.dataset.shopTab; await renderShop(); }
     else if (t.dataset.shopAdd) shopForm(t.dataset.shopAdd);
     else if (t.dataset.shopEdit) { const k = t.dataset.shopEdit; shopForm(k, (k === 'product' ? shopData.products : shopData.services).find(i => i.id === t.dataset.id)); }
-    else if (t.dataset.shopRemove) { const k = t.dataset.shopRemove, item = (k === 'product' ? shopData.products : shopData.services).find(i => i.id === t.dataset.id); if (item && confirm(`Remover "${item.name}" do catálogo? As vendas já registradas não são alteradas.`)) { await api('/shop/remove', {kind: k, id: item.id}); toast('Item removido.'); await renderShop(); } }
+    else if (t.dataset.shopRemove) { const k = t.dataset.shopRemove, item = (k === 'product' ? shopData.products : shopData.services).find(i => i.id === t.dataset.id); if (item && await ask(`Remover "${item.name}" do catálogo? As vendas já registradas não são alteradas.`)) { await api('/shop/remove', {kind: k, id: item.id}); toast('Item removido.'); await renderShop(); } }
     else if (t.dataset.shopReceipt) showReceipt((typeof businessReport !== 'undefined' && businessReport?.shopSales || []).find(x => x.id === t.dataset.shopReceipt) || {id: t.dataset.shopReceipt, number: Number(t.dataset.number)});
     else if (t.dataset.shopCancel) businessForm('Cancelar venda', '<p>A venda será mantida no histórico como cancelada, sairá da receita e os produtos voltarão ao estoque.</p><label>Motivo<input name="reason" required maxlength="300" placeholder="Ex.: cliente desistiu"></label>', d => api('/shop/cancel', {id: t.dataset.shopCancel, ...d}));
   } catch (err) { toast(err.message); }

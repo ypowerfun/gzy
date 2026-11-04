@@ -8,7 +8,7 @@ O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógi
 
 No primeiro acesso, crie o usuário administrador e a senha. Em Configurações, confira o endereço deste PC na rede (usado pelas TVs).
 
-TVs: o Servidor já vem pronto para controlar TVs VIDAA (Hisense/Toshiba) e TVs Android (Android TV / Google TV). Cadastre cada TV em Computadores / TVs (IP da TV, entrada HDMI e "Sistema da TV": VIDAA ou Android) e use Parear TV:
+TVs: o Servidor já vem pronto para controlar TVs VIDAA (Hisense/Toshiba) e TVs Android (Android TV / Google TV). Cadastre cada TV em Painel de controle > + Nova estação, tipo Console (IP da TV, entrada HDMI e "Sistema da TV": VIDAA ou Android) e use Parear TV:
   - VIDAA: a TV mostra um PIN de 4 números; digite no painel.
   - Android: ative na TV "Depuração de rede/ADB" (Opções do desenvolvedor) e, ao parear, aceite "Permitir depuração" na TV (marque "Sempre permitir"). A TV precisa de um navegador instalado para mostrar o resumo da sessão.
 

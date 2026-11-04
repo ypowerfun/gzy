@@ -97,7 +97,7 @@ const STATS_RENDER = {
     ${admin ? `<form id="cf-balance" class="filters"><label>Saldo atual disponível (R$)<input name="balance" type="number" step="0.01" value="${(d.balanceCents / 100).toFixed(2)}"></label><button>Salvar saldo</button><button type="button" class="primary" id="cf-add">+ Nova conta a pagar</button></form>` : '<p class="hint">Somente o administrador cadastra contas e o saldo.</p>'}
     <h3>Contas a pagar</h3><div class="table-wrap"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Repetição</th>${admin ? '<th>Ações</th>' : ''}</tr></thead><tbody>${d.bills.map(b => `<tr><td>${b.dueDate.split('-').reverse().join('/')}${b.dueDate < d.today ? ' <span class="badge red">VENCIDA</span>' : ''}</td><td>${esc(b.description)}</td><td>${esc(b.category)}</td><td>${money(b.cents)}</td><td>${b.recurring === 'monthly' ? 'Mensal' : 'Única'}</td>${admin ? `<td class="toolbar-actions"><button data-bill-pay="${b.id}">Pagar</button><button data-bill-edit="${b.id}">Editar</button><button class="danger" data-bill-remove="${b.id}">Remover</button></td>` : ''}</tr>`).join('') || `<tr><td colspan="6">Nenhuma conta a pagar cadastrada.</td></tr>`}</tbody></table></div>
     <h3 style="margin-top:22px">Próximos vencimentos (90 dias)</h3><div class="table-wrap"><table><thead><tr><th>Data</th><th>Conta</th><th>Valor</th></tr></thead><tbody>${d.upcoming.map(u => `<tr><td>${u.date.split('-').reverse().join('/')}${u.overdue ? ' <span class="badge red">VENCIDA</span>' : ''}</td><td>${esc(u.description)}${u.recurring === 'monthly' ? ' <small class="subtext">mensal</small>' : ''}</td><td>${money(u.cents)}</td></tr>`).join('') || '<tr><td colspan="3">Nenhum vencimento nos próximos 90 dias.</td></tr>'}</tbody></table></div>
-    <p class="hint">Ao clicar em Pagar, a conta é lançada como despesa em Faturas e relatórios. Contas mensais passam para o próximo vencimento.</p>`;
+    <p class="hint">Ao clicar em Pagar, a conta é lançada como despesa em Faturas. Contas mensais passam para o próximo vencimento.</p>`;
   }
 };
 
@@ -116,8 +116,8 @@ document.addEventListener('click', async e => {
     else if (t.dataset.statsSales) { statsSalesTab = t.dataset.statsSales; $('#stats-body').innerHTML = STATS_RENDER.sales(statsLast.data); }
     else if (t.id === 'cf-add') billForm();
     else if (t.dataset.billEdit) billForm(statsLast.data.bills.find(b => b.id === t.dataset.billEdit));
-    else if (t.dataset.billPay) { const b = statsLast.data.bills.find(x => x.id === t.dataset.billPay); if (b && confirm(`Registrar o pagamento de "${b.description}" (${money(b.cents)})? A despesa será lançada em Faturas e relatórios.`)) { await api('/bills/pay', {id: b.id}); toast('Pagamento registrado.'); await loadStats(); } }
-    else if (t.dataset.billRemove) { const b = statsLast.data.bills.find(x => x.id === t.dataset.billRemove); if (b && confirm(`Remover a conta "${b.description}"?`)) { await api('/bills/remove', {id: b.id}); toast('Conta removida.'); await loadStats(); } }
+    else if (t.dataset.billPay) { const b = statsLast.data.bills.find(x => x.id === t.dataset.billPay); if (b && await ask(`Registrar o pagamento de "${b.description}" (${money(b.cents)})? A despesa será lançada em Faturas.`)) { await api('/bills/pay', {id: b.id}); toast('Pagamento registrado.'); await loadStats(); } }
+    else if (t.dataset.billRemove) { const b = statsLast.data.bills.find(x => x.id === t.dataset.billRemove); if (b && await ask(`Remover a conta "${b.description}"?`)) { await api('/bills/remove', {id: b.id}); toast('Conta removida.'); await loadStats(); } }
   } catch (err) { toast(err.message); }
 });
 document.addEventListener('submit', async e => {

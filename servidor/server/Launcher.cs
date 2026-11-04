@@ -227,6 +227,8 @@ class PanelWindow : Form {
     void Configure(){
         var core=web.CoreWebView2;var settings=core.Settings;
         settings.AreDevToolsEnabled=false;settings.IsStatusBarEnabled=false;settings.AreHostObjectsAllowed=false;settings.IsWebMessageEnabled=false;
+        // 1.0.5: nunca oferecer "Salvar senha" nem preencher campos sozinho (WebView2 Runtime antigo sem essas opções: ignora).
+        try{settings.IsPasswordAutosaveEnabled=false;settings.IsGeneralAutofillEnabled=false;}catch(Exception e){host.Log("Painel: não foi possível desligar o salvar senha do WebView2 ("+e.Message+").");}
         core.NewWindowRequested+=OnNewWindow;core.NavigationStarting+=OnNavigation;core.ProcessFailed+=OnProcessFailed;
         if(popup){
             core.WindowCloseRequested+=(s,e)=>Close();

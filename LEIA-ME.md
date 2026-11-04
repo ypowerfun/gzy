@@ -36,7 +36,7 @@ Os instaladores não têm nada de app Android/iOS.
 
 ## TVs
 O servidor já vem pronto para TVs **VIDAA** (Hisense/Toshiba, pareamento com PIN) e **Android TV / Google TV**
-(ADB pela rede, porta 5555, pareamento aceitando "Permitir depuração" na TV). No painel: Computadores / TVs →
+(ADB pela rede, porta 5555, pareamento aceitando "Permitir depuração" na TV). No painel: Painel de controle →
 estação → "Sistema da TV". Detalhes em `servidor/server/INSTALACAO.txt`.
 
 ## Testes
