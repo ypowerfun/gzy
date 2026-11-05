@@ -10,6 +10,10 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 - Não usar espelhos para domínios bloqueados (contenção).
 - Caddyfile: **não é usado** (era do app de celular, removido). Se um dia mudar, enviar o Caddyfile completo.
 - Commits no `main` com mensagem clara; entregar o zip do código-fonte (`git archive`) ao final de cada atualização.
+- **Toda atualização do site**: entregar o `gamezoney-site.zip` (`git archive HEAD site`) **e sempre mandar os comandos da VPS** (PowerShell, na pasta da chave: rcti2 `C:\Users\rcti2\Documents\VPS\ORACLE CLOUD POWER`, POWER `C:\Users\POWER\Downloads\VPS\ORACLE CLOUD POWER`):
+  `scp -i .\ssh-key-2026-11-02.key gamezoney-site.zip ubuntu@137.131.177.64:~` e
+  `ssh -t -i .\ssh-key-2026-11-02.key ubuntu@137.131.177.64 "rm -rf ~/site && unzip -o gamezoney-site.zip && cd site && sudo bash deploy/instalar-vps.sh"`
+  (+ conferir: `ssh -i .\ssh-key-2026-11-02.key ubuntu@137.131.177.64 "systemctl is-active gamezoney-site"`). Dizer também se precisa de instalador novo (só quando muda Servidor/Cliente).
 
 ## Estado atual — versão 1.0.5 (Servidor e Cliente)
 - `servidor/server/`: Node 24 + Express + SQLite (`node:sqlite`); painel em `public/` (app.js, *-ui.js, theme-gamezoney.css);
