@@ -109,13 +109,29 @@ Sem `MP_ACCESS_TOKEN`, o site mostra a chave `PIX_KEY` e você confirma o pagame
 
 O site envia por e-mail as boas-vindas, a chave da licença, o link de "esqueci a senha" e as respostas do suporte.
 
-1. No cPanel da HostGator, abra **E-mail › Contas de e-mail** e crie, por exemplo, `contato@gamezoney.com`.
-2. Preencha no arquivo de configuração:
+O plano da HostGator não traz contas de e-mail no cPanel; a aba E-mails oferece o **Titan** (pago depois de 30 dias). Escolha uma opção:
+
+**Opção A — Gmail (grátis, até ~500 e-mails/dia).** Bom para começar.
+1. Na conta Google que vai enviar, ative a **Verificação em duas etapas**.
+2. Em **Conta Google › Segurança › Senhas de app**, crie "GameZoney site" e copie a senha de 16 letras.
+3. Preencha:
    ```
-   SMTP_HOST=br123.hostgator.com.br   # nome do servidor mostrado no cPanel
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=seuemail@gmail.com
+   SMTP_PASS=<senha de app de 16 letras, sem espaços>
+   MAIL_FROM=GameZoney <seuemail@gmail.com>
+   ```
+
+**Opção B — Titan da HostGator (`contato@gamezoney.com`, R$ 9,49/mês por conta após o teste).**
+1. Em **E-mails**, crie a conta `contato` @gamezoney.com.
+2. Confira a **Zona de DNS**. O MX deve apontar para `mx1.titan.email` (prioridade 10) e `mx2.titan.email` (prioridade 20), e deve existir um TXT `v=spf1 include:spf.titan.email ~all`. A HostGator costuma criar isso sozinha; se o MX continuar `mail.gamezoney.com`, troque.
+3. Preencha:
+   ```
+   SMTP_HOST=smtp.titan.email
    SMTP_PORT=465
    SMTP_USER=contato@gamezoney.com
-   SMTP_PASS=<senha>
+   SMTP_PASS=<senha da conta Titan>
    MAIL_FROM=GameZoney <contato@gamezoney.com>
    ```
 
