@@ -79,7 +79,9 @@ function mailer(env, log = console) {
   if (env.SMTP_HOST) {
     const nodemailer = require('nodemailer');
     const port = Number(env.SMTP_PORT || 465);
-    transport = nodemailer.createTransport({host: env.SMTP_HOST, port, secure: port === 465, auth: env.SMTP_USER ? {user: env.SMTP_USER, pass: env.SMTP_PASS} : undefined});
+    // o servidor se apresenta (EHLO) com o domínio do site: o Titan recusa o login quando vem o nome da máquina do VPS
+    let ehlo = env.SMTP_EHLO_NAME; try { ehlo ||= new URL(env.SITE_URL || 'https://gamezoney.com').hostname; } catch { ehlo ||= 'gamezoney.com'; }
+    transport = nodemailer.createTransport({host: env.SMTP_HOST, port, secure: port === 465, name: ehlo, auth: env.SMTP_USER ? {user: env.SMTP_USER, pass: env.SMTP_PASS} : undefined});
   }
   return {
     enabled: !!transport,

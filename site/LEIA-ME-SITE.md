@@ -142,6 +142,8 @@ O plano da HostGator não traz contas de e-mail no cPanel; a aba E-mails oferece
    MAIL_FROM=GameZoney <contato@gamezoney.com>
    ```
 
+O site se apresenta ao servidor de e-mail como `gamezoney.com` (domínio de `SITE_URL`). O Titan recusa o login (`535 authentication failed`) quando vem o nome da máquina do VPS. Para usar outro nome, preencha `SMTP_EHLO_NAME`.
+
 Sem SMTP o site funciona, mas "esqueci a senha" fica indisponível. A chave da licença continua aparecendo em Minha conta.
 
 ## 5. Instaladores (Downloads)
