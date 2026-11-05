@@ -10,6 +10,7 @@
     $('#hello').textContent = 'Olá, ' + (me.user.name || me.user.email).split(' ')[0];
     $('#hello-sub').textContent = me.user.email + (me.user.google ? ' • conta Google' : '');
     $('#admin-link').classList.toggle('hidden', !me.admin);
+    document.dispatchEvent(new CustomEvent('gz:account-ready'));
     // 1.3: confirmação do e-mail
     const vb = $('#verify-box'), vq = new URLSearchParams(location.search).get('verificado');
     if (vq === '1') { vb.className = 'msg ok'; vb.style.display = 'block'; vb.textContent = 'E-mail confirmado. Obrigado!'; }
@@ -19,7 +20,11 @@
       $('#verify-resend').onclick = () => busy($('#verify-resend'), async () => { try { const r = await api('/api/auth/verify/resend', {}); vb.firstElementChild.textContent = r.sent ? 'Enviamos um novo link. Confira a caixa de entrada e o spam.' : 'Não foi possível enviar agora. Fale com o suporte.'; } catch (e) { vb.firstElementChild.textContent = e.message; } });
     } else vb.style.display = 'none';
     $('#download-list').innerHTML = me.downloads.length ? me.downloads.map(d => `<a class="btn ghost" href="/download/${encodeURIComponent(d.file)}">⬇ ${esc(d.file)} <small style="opacity:.7">(${size(d.size)})</small></a>`).join('') : '<p class="note">Os instaladores estarão disponíveis aqui em breve.</p>';
-    $('#license-list').innerHTML = me.licenses.length ? `<div class="table"><table><thead><tr><th>Chave</th><th>Situação</th><th>Computador</th><th></th></tr></thead><tbody>${me.licenses.map(l => `<tr><td><span class="key">${esc(l.key)}</span><br><small class="note">Vitalícia • desde ${fmtDate(l.createdAt)}</small></td><td>${l.status !== 'active' ? '<span class="pill bad">Bloqueada</span>' : l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Pronta para ativar</span>'}</td><td>${l.active ? esc(l.machine || '—') + '<br><small class="note">' + fmtDate(l.activatedAt) + '</small>' : '—'}</td><td>${l.active ? `<button class="btn small ghost" data-release="${l.id}">Liberar</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Você ainda não tem licença. Está no teste grátis? Compre abaixo para continuar usando depois dos 30 dias.</p>';
+    $('#license-list').innerHTML = me.licenses.length ? `<div class="table"><table><thead><tr><th>Chave</th><th>Situação</th><th>Computador</th><th></th></tr></thead><tbody>${me.licenses.map(l => `<tr><td><span class="key">${esc(l.key)}</span><button type="button" class="copy-license" data-copy-license="${esc(l.key)}">Copiar chave</button><br><small class="note">Vitalícia • desde ${fmtDate(l.createdAt)}</small></td><td>${l.status !== 'active' ? '<span class="pill bad">Bloqueada</span>' : l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Pronta para ativar</span>'}</td><td>${l.active ? esc(l.machine || '—') + '<br><small class="note">' + fmtDate(l.activatedAt) + '</small>' : '—'}</td><td>${l.active ? `<button class="btn small ghost" data-release="${l.id}">Liberar</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Você ainda não tem licença. <a href="/conta#comprar">Comprar licença</a></p>';
+    $$('[data-copy-license]').forEach(button => button.onclick = async () => {
+      try { await navigator.clipboard.writeText(button.dataset.copyLicense); button.textContent = 'Chave copiada'; }
+      catch { button.textContent = 'Selecione a chave para copiar'; }
+    });
     $$('[data-release]').forEach(b => b.onclick = async () => {
       const q = 'Liberar esta chave do computador atual? Depois ative-a no computador novo (Configuração › Licença).'; if (!window.confirm(window.gzSite ? gzSite.t(q) : q)) return;
       await busy(b, () => api('/api/licenses/' + b.dataset.release + '/release', {})); load();
@@ -31,8 +36,8 @@
     const contacts = [c.supportWhatsapp ? `WhatsApp: <a href="https://wa.me/${esc(c.supportWhatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.supportWhatsapp)}</a>` : '', c.supportEmail ? `E-mail: <a href="mailto:${esc(c.supportEmail)}">${esc(c.supportEmail)}</a>` : ''].filter(Boolean);
     if (contacts.length) $('#support-contacts').innerHTML = 'Abra um chamado (respondemos pelo e-mail da sua conta) ou fale direto: ' + contacts.join(' • ');
   }
-  function showOrder(o) {
-    const box = $('#checkout'); box.classList.remove('hidden');
+  function showOrder(o, navigate = true) {
+    const box = $('#checkout'); box.classList.remove('hidden'); if (navigate && location.hash !== '#comprar') location.hash = 'comprar';
     if (o.status === 'paid') {
       clearInterval(poll); poll = null;
       box.innerHTML = `<div class="msg ok" style="display:block;margin-top:18px">Pagamento confirmado! Sua chave de licença vitalícia:<br><span class="key" style="font-size:22px">${esc(o.licenseKey || '')}</span><br>Ative no GameZoney Servidor em Configuração › Licença. Também enviamos por e-mail.</div>`;
@@ -41,7 +46,7 @@
     if (o.status !== 'pending') { clearInterval(poll); poll = null; box.innerHTML = '<p class="msg err" style="display:block">Este PIX venceu. Clique em Pagar com PIX para gerar outro.</p>'; return; }
     if (o.method === 'card') {
       box.innerHTML = `<div class="msg ok" style="display:block;margin-top:18px">Confirmando o pagamento com cartão… Assim que o Mercado Pago aprovar, a chave aparece aqui (pode levar alguns minutos). <a href="${esc(o.checkoutUrl)}">Abrir o pagamento de novo</a></div>`;
-      if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order); } catch { } }, 5000);
+      if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order, false); } catch { } }, 5000);
       return;
     }
     if (o.provider === 'manual') {
@@ -49,8 +54,8 @@
       return;
     }
     box.innerHTML = `<div class="pix">${o.pixQr ? `<img alt="QR Code PIX" src="data:image/png;base64,${esc(o.pixQr)}">` : ''}<div><p>Abra o app do seu banco, escolha <b>PIX › Ler QR Code</b> ou <b>PIX Copia e Cola</b> e pague <b>${money(o.amountCents)}</b>.</p><label>PIX Copia e Cola<textarea readonly id="pix-code">${esc(o.pixCode)}</textarea></label><div class="row" style="margin-top:10px"><button class="btn small" id="copy-pix" type="button">Copiar código</button><span class="note">Vence às ${new Date(o.expiresAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} • a confirmação é automática</span></div></div></div>`;
-    $('#copy-pix').onclick = () => { navigator.clipboard?.writeText(o.pixCode).then(() => { $('#copy-pix').textContent = 'Copiado!'; }, () => { $('#pix-code').select(); }); };
-    if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order); } catch { } }, 5000);
+    $('#copy-pix').onclick = () => { if (navigator.clipboard?.writeText) navigator.clipboard.writeText(o.pixCode).then(() => { $('#copy-pix').textContent = 'Copiado!'; }, () => { $('#pix-code').select(); }); else $('#pix-code').select(); };
+    if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order, false); } catch { } }, 5000);
   }
   $('#buy').onclick = () => busy($('#buy'), async () => { try { showOrder((await api('/api/checkout', {method: 'pix'})).order); load(); } catch (e) { showMsg($('#buy-msg'), e.message); } });
   // cartão de crédito ou débito: vai para o Checkout do Mercado Pago e volta para /conta?pedido=...

@@ -1,7 +1,8 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {createApp,newKey,normalizeKey}=require('../server');
-const serverLicense=require('../../servidor/server/license');
+// verifica com o módulo real do GameZoney Servidor quando o repositório completo está presente
+const serverLicense=(()=>{try{return require('../../servidor/server/license')}catch{return require('./helpers/verify-license')}})();
 
 async function boot(t,env={},extra={}){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-'));const {publicKey,privateKey}=crypto.generateKeyPairSync('ed25519');
@@ -107,15 +108,17 @@ test('site: login com Google cria ou liga a conta pelo e-mail verificado',async 
  const idToken=claims=>'x.'+Buffer.from(JSON.stringify(claims)).toString('base64url')+'.y';let claims;
  const fakeFetch=async(url,opts)=>{assert.equal(url,'https://oauth2.googleapis.com/token');const p=new URLSearchParams(opts.body);assert.equal(p.get('code'),'CODE');assert.equal(p.get('redirect_uri'),'http://site.test/auth/google/callback');return {ok:true,status:200,json:async()=>({id_token:idToken(claims)})}};
  const s=await boot(t,{GOOGLE_CLIENT_ID:'cid',GOOGLE_CLIENT_SECRET:'sec'},{fetch:fakeFetch});
- const flow=async(expectOk=true)=>{let cookie='';const r1=await fetch(s.base+'/auth/google?next=/conta',{redirect:'manual'});const loc=new URL(r1.headers.get('location'));assert.equal(loc.host,'accounts.google.com');
+ const flow=async(expectOk=true,next='/conta',expected=next)=>{let cookie='';const r1=await fetch(s.base+'/auth/google?next='+encodeURIComponent(next),{redirect:'manual'});const loc=new URL(r1.headers.get('location'));assert.equal(loc.host,'accounts.google.com');
   const g=r1.headers.getSetCookie().find(x=>x.startsWith('gzg=')).split(';')[0];const state=loc.searchParams.get('state');
   const r2=await fetch(s.base+'/auth/google/callback?code=CODE&state='+state,{redirect:'manual',headers:{Cookie:g}});const sc=r2.headers.getSetCookie().find(x=>x.startsWith('gzs=')&&!x.startsWith('gzs=;'));
-  if(expectOk){assert.equal(r2.headers.get('location'),'/conta');cookie=sc.split(';')[0]}else assert.match(r2.headers.get('location'),/entrar\.html\?erro=/);
+  if(expectOk){assert.equal(r2.headers.get('location'),expected);cookie=sc.split(';')[0]}else assert.match(r2.headers.get('location'),/entrar\.html\?erro=/);
   return cookie};
  const ana=s.client();await ana('/api/auth/register',{name:'Ana',email:'ana@arena.com',password:'senha-forte-1'});
  claims={iss:'https://accounts.google.com',aud:'cid',exp:Date.now()/1000+60,sub:'g-1',email:'ANA@arena.com',email_verified:true,name:'Ana G'};
  const cookie=await flow();const me=await (await fetch(s.base+'/api/me',{headers:{Cookie:cookie}})).json();assert.equal(me.user.email,'ana@arena.com');assert.equal(me.user.google,true);assert.equal(me.user.name,'Ana');
  claims={...claims,sub:'g-2',email:'novo@gmail.com',name:'Novo Cliente'};const c2=await flow();assert.equal((await (await fetch(s.base+'/api/me',{headers:{Cookie:c2}})).json()).user.name,'Novo Cliente');
+ await flow(true,'/conta#comprar'); await flow(true,'/conta#suporte');
+ for (const next of ['//evil.com','/\\evil.com','https://evil.com','/conta?next=//evil.com']) await flow(true,next,'/conta');
  claims={...claims,sub:'g-3',email:'x@y.com',aud:'outro'};await flow(false);
  claims={...claims,aud:'cid',email_verified:false};await flow(false);
  // estado (state) diferente é recusado

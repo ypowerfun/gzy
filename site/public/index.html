@@ -12,20 +12,17 @@
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800;1,900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/premium.css?v=20261105-premium-2">
 </head>
 <body class="home">
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 <div class="promo-strip hidden" id="promo-strip"><span class="slashes">///</span> <span data-banner data-no-i18n></span> <span class="slashes">///</span></div>
-<header class="topbar"><div class="wrap">
-  <a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a>
-  <span class="nav-sep" aria-hidden="true"></span>
-  <nav class="nav"><a href="#recursos">Recursos</a><a href="#precos">Preços</a><a href="#duvidas">Dúvidas</a><a href="/guia" class="hidden" data-member>Guia</a><a href="#novidades">Atualizações</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav>
-</div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Oferta</a><a href="/atendimento.html">Atendimento</a><a href="/entrar.html" data-guest>Entrar</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav></div></header>
 
-<section class="hero2"><div class="wrap hero2-grid">
+<main id="conteudo"><section class="hero2" aria-labelledby="hero-title"><div class="wrap hero2-grid">
   <div class="hero2-text">
     <p class="eyebrow">Gestão para lan houses e arenas gamer</p>
-    <h1 class="mega"><span>Sua arena.</span> <span>No próximo</span> <span class="goldtxt">nível.</span></h1>
+    <h1 class="mega" id="hero-title"><span>Sua arena.</span> <span>No próximo</span> <span class="goldtxt">nível.</span></h1>
     <p class="lead2">Controle PCs, consoles, vendas e caixa em um único sistema. Mais controle para quem comanda o jogo.</p>
     <div class="ctas">
       <a class="btn gold" href="/conta#comprar">Quero a licença vitalícia <span class="arrow" aria-hidden="true">→</span></a>
@@ -35,7 +32,7 @@
     <p class="exp">10 anos de experiência no ramo de gerenciamento de Arena Gamer e Cyber Cafés.</p>
   </div>
   <div class="hero2-media protect">
-    <div class="hero2-photo"><img src="/img/hero-arena.jpg" alt="Arena gamer usando o GameZoney" draggable="false"></div>
+    <div class="hero2-photo"><img src="/img/hero-arena.jpg" alt="Cena ilustrativa de jogadores em uma arena gamer" width="1072" height="776" fetchpriority="high" draggable="false"></div>
     <div class="price-badge">
       <small>Licença vitalícia</small>
       <span class="old hidden" data-list-price></span>
@@ -62,30 +59,34 @@
       <div class="cmd"><span class="ic"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 42 15 24 24 6 15z"/><path d="M6 24l18 9 18-9M6 33l18 9 18-9"/></svg></span><div><b>Sua operação em uma tela</b><p>Mais clareza para gerenciar sua arena.</p></div></div>
     </div>
   </div>
-  <div class="grid feats">
-    <div class="card"><h3>Tempo de jogo</h3><p>Recargas por minutos ou por valor, sessões em tempo real, visitantes e pacotes. A sessão continua mesmo se a internet cair.</p></div>
-    <div class="card"><h3>PCs e consoles</h3><p>Controle de PCs gamers e de consoles em TVs VIDAA e Android TV: libera, bloqueia e mostra o resumo da sessão na tela.</p></div>
-    <div class="card"><h3>PIX, cartão e dinheiro</h3><p>Receba em PIX, cartão ou dinheiro, ou combine até 3 formas no mesmo pagamento. Tudo cai no caixa certo.</p></div>
-    <div class="card"><h3>Lanchonete e estoque</h3><p>PDV com produtos e serviços, categorias, estoque com baixa automática, cupom e cancelamento que devolve o estoque.</p></div>
-    <div class="card"><h3>PCs protegidos</h3><p>Bloqueio do Windows, do Gerenciador de Tarefas e das Configurações. O cliente só usa o PC com tempo liberado.</p></div>
-    <div class="card"><h3>Caixa e financeiro</h3><p>Abertura e fechamento de caixa, sangria, suprimento, faturas, contas a pagar e fluxo de caixa projetado.</p></div>
-    <div class="card"><h3>Fidelidade e ranking</h3><p>Medalhas automáticas, prêmios, Corujão/Viradão e Top 10 de medalhas, participação e recargas do mês.</p></div>
-    <div class="card"><h3>Estatísticas</h3><p>Máquinas mais usadas, horários de pico, clientes, duração das sessões e vendas por produto e funcionário.</p></div>
-    <div class="card"><h3>Suporte completo</h3><p>Atendimento por chamado e WhatsApp com quem entende o dia a dia de uma arena gamer.</p></div>
-  </div>
+<div class="feature-groups"><article class="feature-group"><span class="section-number" aria-hidden="true">01</span><h3>Operação da arena</h3><dl><div><dt>Tempo de jogo</dt><dd>Recargas por minutos ou por valor, sessões em tempo real, visitantes e pacotes. A sessão continua mesmo se a internet cair.</dd></div><div><dt>PCs e consoles</dt><dd>Controle de PCs gamers e de consoles em TVs VIDAA e Android TV: libera, bloqueia e mostra o resumo da sessão na tela.</dd></div><div><dt>PCs protegidos</dt><dd>Bloqueio do Windows, do Gerenciador de Tarefas e das Configurações. O cliente só usa o PC com tempo liberado.</dd></div></dl></article><article class="feature-group"><span class="section-number" aria-hidden="true">02</span><h3>Vendas e financeiro</h3><dl><div><dt>PIX, cartão e dinheiro</dt><dd>Receba em PIX, cartão ou dinheiro, ou combine até 3 formas no mesmo pagamento. Tudo cai no caixa certo.</dd></div><div><dt>Lanchonete e estoque</dt><dd>PDV com produtos e serviços, categorias, estoque com baixa automática, cupom e cancelamento que devolve o estoque.</dd></div><div><dt>Caixa e financeiro</dt><dd>Abertura e fechamento de caixa, sangria, suprimento, faturas, contas a pagar e fluxo de caixa projetado.</dd></div></dl></article><article class="feature-group"><span class="section-number" aria-hidden="true">03</span><h3>Clientes e crescimento</h3><dl><div><dt>Fidelidade e ranking</dt><dd>Medalhas automáticas, prêmios, Corujão/Viradão e Top 10 de medalhas, participação e recargas do mês.</dd></div><div><dt>Estatísticas</dt><dd>Máquinas mais usadas, horários de pico, clientes, duração das sessões e vendas por produto e funcionário.</dd></div><div><dt>Suporte completo</dt><dd>Atendimento por chamado e WhatsApp com quem entende o dia a dia de uma arena gamer.</dd></div></dl></article></div>
 </div></section>
 
-<section class="block2" id="telas"><div class="wrap">
-  <p class="eyebrow line">Por dentro do sistema</p>
-  <h2 class="mega2">Conheça as telas.</h2>
-  <div class="shots protect">
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="pdv" src="/img/telas/pdv-pt.jpg" alt="Vendas (PDV)" loading="lazy"></div><figcaption><b>Vendas (PDV)</b><span>Venda rápida por nome ou código de barras, com pagamento combinado.</span></figcaption></figure>
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="corujao" src="/img/telas/corujao-pt.jpg" alt="Corujão/Viradão" loading="lazy"></div><figcaption><b>Corujão/Viradão</b><span>Participantes, pagamento e medalhas em poucos cliques.</span></figcaption></figure>
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="caixa" src="/img/telas/caixa-pt.jpg" alt="Caixa" loading="lazy"></div><figcaption><b>Caixa</b><span>Abertura, sangria, suprimento e fechamento com conferência.</span></figcaption></figure>
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="estoque" src="/img/telas/estoque-pt.jpg" alt="Estoque" loading="lazy"></div><figcaption><b>Estoque</b><span>Entradas, baixas automáticas e histórico de movimentações.</span></figcaption></figure>
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="ranking" src="/img/telas/ranking-pt.jpg" alt="Ranking" loading="lazy"></div><figcaption><b>Ranking</b><span>Top 10 de medalhas, participação e recargas do mês.</span></figcaption></figure>
-    <figure><div class="shot" data-zoom><img draggable="false" data-tela="painel" src="/img/telas/painel-pt.jpg" alt="Painel de controle" loading="lazy"></div><figcaption><b>Painel de controle</b><span>PCs e consoles em tempo real, tempo restante e caixa do dia.</span></figcaption></figure>
-  </div>
+<section class="block2 demo-section" id="telas"><div class="wrap">
+<div class="section-heading"><div><p class="eyebrow line">Por dentro do sistema</p><h2 class="mega2">Veja o controle acontecer.</h2></div><p class="section-note">Explore as telas reais do GameZoney.</p></div>
+<div class="demo-tabs" role="tablist" aria-label="Telas do sistema"><button type="button" role="tab" id="tab-painel" aria-controls="demo-painel" aria-selected="true" tabindex="0">Painel de controle</button><button type="button" role="tab" id="tab-pdv" aria-controls="demo-pdv" aria-selected="false" tabindex="-1">Vendas (PDV)</button><button type="button" role="tab" id="tab-caixa" aria-controls="demo-caixa" aria-selected="false" tabindex="-1">Caixa</button><button type="button" role="tab" id="tab-estoque" aria-controls="demo-estoque" aria-selected="false" tabindex="-1">Estoque</button><button type="button" role="tab" id="tab-corujao" aria-controls="demo-corujao" aria-selected="false" tabindex="-1">Corujão/Viradão</button><button type="button" role="tab" id="tab-ranking" aria-controls="demo-ranking" aria-selected="false" tabindex="-1">Ranking</button></div><div class="demo-window"><section class="demo-panel" id="demo-painel" role="tabpanel" aria-labelledby="tab-painel">
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Painel de controle</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Painel de controle"><img data-tela="painel" src="/img/telas/painel-pt.jpg" alt="Painel de controle" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Painel de controle</h3><p>PCs e consoles em tempo real, tempo restante e caixa do dia.</p></div><button class="text-action" type="button" data-expand="painel">Ampliar tela <span aria-hidden="true">↗</span></button></div></section><section class="demo-panel" id="demo-pdv" role="tabpanel" aria-labelledby="tab-pdv" hidden>
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Vendas (PDV)</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Vendas (PDV)"><img data-tela="pdv" src="/img/telas/pdv-pt.jpg" alt="Vendas (PDV)" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Vendas (PDV)</h3><p>Venda rápida por nome ou código de barras, com pagamento combinado.</p></div><button class="text-action" type="button" data-expand="pdv">Ampliar tela <span aria-hidden="true">↗</span></button></div></section><section class="demo-panel" id="demo-caixa" role="tabpanel" aria-labelledby="tab-caixa" hidden>
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Caixa</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Caixa"><img data-tela="caixa" src="/img/telas/caixa-pt.jpg" alt="Caixa" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Caixa</h3><p>Abertura, sangria, suprimento e fechamento com conferência.</p></div><button class="text-action" type="button" data-expand="caixa">Ampliar tela <span aria-hidden="true">↗</span></button></div></section><section class="demo-panel" id="demo-estoque" role="tabpanel" aria-labelledby="tab-estoque" hidden>
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Estoque</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Estoque"><img data-tela="estoque" src="/img/telas/estoque-pt.jpg" alt="Estoque" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Estoque</h3><p>Entradas, baixas automáticas e histórico de movimentações.</p></div><button class="text-action" type="button" data-expand="estoque">Ampliar tela <span aria-hidden="true">↗</span></button></div></section><section class="demo-panel" id="demo-corujao" role="tabpanel" aria-labelledby="tab-corujao" hidden>
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Corujão/Viradão</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Corujão/Viradão"><img data-tela="corujao" src="/img/telas/corujao-pt.jpg" alt="Corujão/Viradão" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Corujão/Viradão</h3><p>Participantes, pagamento e medalhas em poucos cliques.</p></div><button class="text-action" type="button" data-expand="corujao">Ampliar tela <span aria-hidden="true">↗</span></button></div></section><section class="demo-panel" id="demo-ranking" role="tabpanel" aria-labelledby="tab-ranking" hidden>
+<div class="demo-toolbar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>GameZoney / Ranking</span><span class="demo-real">Tela do sistema</span></div>
+<button class="shot demo-image" type="button" data-zoom aria-label="Ampliar: Ranking"><img data-tela="ranking" src="/img/telas/ranking-pt.jpg" alt="Ranking" loading="lazy" width="1366" height="820"></button>
+<div class="demo-caption"><div><h3>Ranking</h3><p>Top 10 de medalhas, participação e recargas do mês.</p></div><button class="text-action" type="button" data-expand="ranking">Ampliar tela <span aria-hidden="true">↗</span></button></div></section></div></div></section>
+<section class="block2 setup-section" id="como-comecar"><div class="wrap">
+<p class="eyebrow line">Da instalação à primeira sessão</p><h2 class="mega2">Seu próximo passo é simples.</h2>
+<ol class="setup-steps"><li><span aria-hidden="true">01</span><h3>Crie sua conta</h3><p>Acesse os downloads e o guia de instalação em um só lugar.</p></li><li><span aria-hidden="true">02</span><h3>Conecte sua arena</h3><p>Instale o Servidor na recepção e o Cliente nos PCs gamers da sua rede.</p></li><li><span aria-hidden="true">03</span><h3>Comece a usar</h3><p>Explore todas as funções por 30 dias. O teste começa na primeira abertura do Servidor.</p></li></ol>
+<div class="compatibility"><div><strong>Feito para a sua estrutura.</strong><p>Windows 10 ou 11 de 64 bits e rede local. Para consoles: TVs VIDAA ou Android TV/Google TV compatíveis.</p></div><a class="btn outline" href="/guia">Ver guia de instalação <span aria-hidden="true">↗</span></a></div>
 </div></section>
 
 <section class="block2 hidden" id="avaliacoes"><div class="wrap">
@@ -95,25 +96,15 @@
   <p class="note" style="margin-top:22px">Já usa o GameZoney? <a href="/conta#avaliar">Deixe sua avaliação</a>.</p>
 </div></section>
 
-<section class="block2" id="precos"><div class="wrap">
-  <p class="eyebrow line">Sem mensalidade</p>
-  <h2 class="mega2">Escolha o seu pacote.</h2>
-  <div class="prices2">
-    <div class="pack">
-      <span class="pack-name">Pacote Padrão</span>
-      <div class="pack-price"><strong>R$ 0</strong><em>por 30 dias</em></div>
-      <ul><li>PCs e consoles sem limite</li><li>Todas as funções liberadas</li><li>Seus dados ficam guardados ao comprar</li><li>Sem cartão de crédito</li></ul>
-      <a class="btn outline" href="/entrar.html?criar=1&amp;next=/conta">Testar grátis</a>
-    </div>
-    <div class="pack premium">
-      <span class="pack-tag" data-price-label>Preço de Black Friday</span>
-      <span class="pack-name">Pacote Premium</span>
-      <div class="pack-price"><span class="old hidden" data-list-price></span><strong data-price>R$ 89,90</strong><em>Licença vitalícia • pagamento único</em></div>
-      <ul><li>Layout personalizado (no seu estilo)</li><li>Todas as funções liberadas</li><li>PCs e consoles sem limite</li><li>1 licença por servidor (PC da recepção)</li><li>Suporte completo</li><li>Novas atualizações</li></ul>
-      <a class="btn gold" href="/conta#comprar">Comprar agora <span class="arrow" aria-hidden="true">→</span></a>
-      <p class="note center">PIX, crédito ou débito</p>
-    </div>
-  </div>
+<section class="block2 offer-section" id="precos"><div class="wrap">
+<div class="section-heading"><div><p class="eyebrow line">Sem mensalidade</p><h2 class="mega2">Uma compra.<br><span class="goldtxt">Outro nível de gestão.</span></h2></div><p class="section-note">Sua licença não expira.<br>Sua operação continua.</p></div>
+<article class="offer-card">
+<div class="offer-includes"><span class="pack-name">Pacote Premium</span><h3>Licença vitalícia</h3><p>O GameZoney completo para a sua arena.</p>
+<ul class="offer-checks"><li>Todas as funções liberadas</li><li>PCs e consoles sem limite</li><li>Layout personalizado (no seu estilo)</li><li>Suporte completo</li><li>Novas atualizações</li><li>1 licença por servidor (PC da recepção)</li></ul>
+<p class="offer-delivery">Após a confirmação do pagamento, a chave fica disponível na sua conta e é enviada por e-mail.</p></div>
+<div class="offer-payment"><span class="offer-label" data-price-label>Preço de Black Friday</span><span class="old hidden" data-list-price></span><strong class="offer-value" data-price>R$ 89,90</strong><p>Pagamento único. Sem mensalidade.</p><a class="btn gold" href="/conta#comprar">Garantir minha licença <span aria-hidden="true">→</span></a><span class="payment-methods">PIX, crédito ou débito</span><p class="note">Você entra na sua conta antes de pagar.</p></div>
+</article>
+<aside class="trial-strip"><div><span class="eyebrow">Pacote Padrão · teste gratuito</span><h3>Prefere conhecer primeiro?</h3><p>Todas as funções por 30 dias, sem cartão. Seus dados ficam guardados ao comprar.</p></div><a class="btn outline" href="/entrar.html?criar=1&amp;next=/conta">Testar grátis por 30 dias <span aria-hidden="true">↗</span></a></aside>
 </div></section>
 
 <section class="block2" id="duvidas"><div class="wrap narrow">
@@ -129,32 +120,19 @@
   <details><summary>Onde encontro o passo a passo de instalação?</summary><p>Entre na sua conta e abra o Guia no menu: conectar os PCs ao servidor, cadastrar as TVs/consoles e importar clientes de outro sistema, com imagens.</p></details>
 </div></section>
 
-<section class="block2" id="novidades"><div class="wrap">
-  <p class="eyebrow line">Sempre evoluindo</p>
-  <h2 class="mega2">Atualizações.</h2>
-  <p class="sub2">O GameZoney recebe melhorias constantes. Confira o que chegou na versão 1.0.5.</p>
-  <div class="grid updates">
-    <div class="card"><span class="tagv">1.0.5</span><h3>Corujão/Viradão e Ranking</h3><p>Crie eventos, confirme pagamentos que entram no caixa e premie com medalhas. Ranking com Top 10 de medalhas, participação e recargas do mês.</p></div>
-    <div class="card"><span class="tagv">1.0.5</span><h3>Pagamento combinado</h3><p>Divida uma recarga ou venda em até 3 formas de pagamento, como PIX + cartão + dinheiro.</p></div>
-    <div class="card"><span class="tagv">1.0.5</span><h3>Mensagens para os PCs</h3><p>Envie avisos para um PC ou para todos, sem atrapalhar o jogo do cliente.</p></div>
-    <div class="card"><span class="tagv">1.0.5</span><h3>Painel em 5 idiomas</h3><p>Português (Brasil), English, Español, Français e Русский, escolhidos por usuário.</p></div>
-    <div class="card"><span class="tagv">1.0.5</span><h3>Categorias e estoque</h3><p>Gerenciamento de categorias de produtos e estoque integrado ao PDV.</p></div>
-    <div class="card"><span class="tagv">1.0.5</span><h3>Sessão protegida contra quedas</h3><p>Se a internet ou a rede cair, a sessão continua e o tempo segue contando no PC.</p></div>
-  </div>
-</div></section>
+<section class="release-teaser" id="novidades"><div class="wrap"><div><span class="tagv">1.0.5</span><h2>A arena evolui. O GameZoney também.</h2><p>Corujão, ranking, pagamento combinado e melhorias para o dia a dia.</p></div><a class="btn outline" href="/atualizacoes.html">Ver atualizações <span aria-hidden="true">↗</span></a></div></section>
 
 <section class="final-cta"><div class="wrap final-grid">
   <div><h2 class="mega2"><span>Uma compra.</span> <span class="goldtxt">Sua arena em outro nível.</span></h2><p>Licença vitalícia • 1 servidor da recepção</p></div>
-  <div class="final-buy"><span class="old hidden" data-list-price></span><strong data-price>R$ 89,90</strong><a class="btn gold" href="/conta#comprar">Aproveitar a Black Friday <span class="arrow" aria-hidden="true">→</span></a><p class="note">PIX, crédito ou débito</p></div>
+  <div class="final-buy"><span class="old hidden" data-list-price></span><strong data-price>R$ 89,90</strong><a class="btn gold" href="/conta#comprar">Garantir minha licença <span class="arrow" aria-hidden="true">→</span></a><p class="note">PIX, crédito ou débito</p></div>
 </div></section>
 
-<footer class="site"><div class="wrap">
-  <span>© 2026 GameZoney. Todos os direitos reservados.</span>
-  <span class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></span>
-  <span><a href="/termos.html">Termos de uso</a> · <a href="/privacidade.html">Privacidade</a> · <a href="/conta#suporte">Suporte</a></span>
-</div></footer>
+</main>
+<footer class="site premium-footer"><div class="wrap footer-grid"><div class="footer-brand"><a href="/"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253" loading="lazy"></a><p>Gestão profissional.<br>Essência gamer.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Licença vitalícia</a><a href="/atualizacoes.html">Atualizações</a></nav><nav aria-label="Ajuda"><h2>Precisa de ajuda?</h2><a href="/guia">Guia de instalação</a><a href="/atendimento.html">Atendimento</a><a href="/conta#suporte">Meus chamados</a><a href="/#duvidas">Dúvidas frequentes</a></nav><nav aria-label="Institucional"><h2>GameZoney</h2><a href="/termos.html">Termos de uso</a><a href="/privacidade.html">Privacidade</a><a href="https://www.instagram.com/gamezoney_" class="ig-link" target="_blank" rel="noopener">Instagram ↗</a></nav></div><div class="wrap footer-bottom"><span>© 2026 GameZoney. Todos os direitos reservados.</span><div class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></div></div></footer>
 <script src="/i18n-site-dict.js"></script>
+<script src="/i18n-premium.js?v=20261105-premium-2"></script>
 <script src="/i18n-site.js"></script>
-<script src="/site.js"></script>
+<script src="/site.js?v=20261105-premium-2"></script>
+<script src="/premium.js?v=20261105-premium-2"></script>
 </body>
 </html>

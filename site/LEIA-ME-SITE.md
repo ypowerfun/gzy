@@ -1,5 +1,7 @@
 # GameZoney — site gamezoney.com (venda, contas e licenças)
 
+> **Atualização premium (05/11/2026):** leia primeiro [ALTERACOES-PREMIUM.md](ALTERACOES-PREMIUM.md) para conhecer as mudanças, os testes e o procedimento de atualização de uma VPS existente.
+
 Software proprietário e confidencial da GameZoney. Não divulgar.
 
 O site roda no VPS da Oracle (Ubuntu 22.04 ARM, IP **137.131.177.64**) com banco de dados próprio (SQLite em `/var/lib/gamezoney-site/site.sqlite`, cópia automática diária em `/var/lib/gamezoney-site/backups`).

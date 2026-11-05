@@ -5,35 +5,24 @@
 <title>Entrar | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/premium.css?v=20261105-premium-2">
 </head>
-<body>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="/#recursos">Recursos</a><a href="/#precos">Preços</a><a href="/#duvidas">Dúvidas</a><a href="/guia" class="hidden" data-member>Guia</a><a href="/#novidades">Atualizações</a></nav></div></header>
-<main class="page"><div class="wrap">
-  <div class="box">
-    <div class="tabs"><button type="button" data-tab="login" class="on">Entrar</button><button type="button" data-tab="register">Criar conta</button></div>
-    <a class="btn google" id="google" href="/auth/google" style="margin-top:20px"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Entrar com Google</a>
-    <div class="or">ou com e-mail</div>
-    <form id="login-form">
-      <label>E-mail<input name="email" type="email" required autocomplete="email"></label>
-      <label>Senha<input name="password" type="password" required autocomplete="current-password"></label>
-      <button class="btn" style="width:100%;margin-top:20px">Entrar</button>
-      <p style="text-align:center;margin:16px 0 0"><a href="#" id="forgot">Esqueci a senha</a></p>
-    </form>
-    <form id="register-form" class="hidden">
-      <label>Nome<input name="name" required maxlength="100" autocomplete="name"></label>
-      <label>E-mail<input name="email" type="email" required autocomplete="email"></label>
-      <label>Senha (mínimo 8 caracteres)<input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
-      <button class="btn" style="width:100%;margin-top:20px">Criar conta e começar o teste</button>
-      <p class="note" style="margin:14px 0 0">Ao criar a conta você aceita os <a href="/termos.html">Termos de uso</a> e a <a href="/privacidade.html">Política de privacidade</a>.</p>
-    </form>
-    <p class="msg" id="msg"></p>
-  </div>
-</div></main>
-<footer class="site"><div class="wrap"><span>© 2026 GameZoney. Todos os direitos reservados.</span><span class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></span><span><a href="/termos.html">Termos de uso</a> · <a href="/privacidade.html">Privacidade</a></span></div></footer>
+<body class="auth">
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Oferta</a><a href="/atendimento.html">Atendimento</a><a href="/entrar.html" data-guest>Entrar</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav></div></header>
+<main class="page auth-page" id="conteudo"><div class="wrap auth-layout"><aside class="auth-story"><p class="eyebrow">Seu próximo nível começa aqui</p><h1>Sua arena.<br><span class="goldtxt">Seu comando.</span></h1><p>Downloads, licenças e suporte. Tudo o que você precisa para começar e seguir em frente.</p><div class="auth-photo"><img src="/img/hero-arena.jpg" alt="Cena ilustrativa de uma arena gamer" width="1072" height="776"></div><div class="auth-trust"><span>30 dias para testar</span><span>Sem cartão de crédito</span></div></aside>
+<section class="box auth-box" aria-labelledby="auth-title"><p class="eyebrow">Acesso GameZoney</p><h2 id="auth-title">Bem-vindo de volta.</h2><p id="auth-description" class="note">Entre para acessar sua conta.</p><div class="auth-purchase hidden" id="auth-purchase"><span>Licença vitalícia</span><strong data-price>R$ 89,90</strong><small>Pagamento único · 1 servidor da recepção</small></div>
+<div class="tabs" role="tablist" aria-label="Tipo de acesso"><button type="button" role="tab" id="auth-login-tab" aria-controls="login-form" aria-selected="true" data-tab="login" class="on">Entrar</button><button type="button" role="tab" id="auth-register-tab" aria-controls="register-form" aria-selected="false" data-tab="register" tabindex="-1">Criar conta</button></div>
+<div id="google-wrap" class="hidden"><a class="btn google" id="google" href="/auth/google" style="margin-top:20px"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Entrar com Google</a><div class="or">ou com e-mail</div></div>
+<form id="login-form" role="tabpanel" aria-labelledby="auth-login-tab"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" required autocomplete="email"><label for="login-password">Senha</label><div class="password-field"><input id="login-password" name="password" type="password" required autocomplete="current-password"><button type="button" class="password-toggle" data-password="login-password" aria-pressed="false">Mostrar</button></div><button type="submit" class="btn gold form-submit">Entrar</button><p class="auth-back"><a href="#recuperar" id="forgot">Esqueci a senha</a></p></form>
+<form id="register-form" class="hidden" role="tabpanel" aria-labelledby="auth-register-tab"><label for="register-name">Nome</label><input id="register-name" name="name" required maxlength="100" autocomplete="name"><label for="register-email">E-mail</label><input id="register-email" name="email" type="email" required autocomplete="email"><label for="register-password">Senha</label><div class="password-field"><input id="register-password" name="password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="password-hint"><button type="button" class="password-toggle" data-password="register-password" aria-pressed="false">Mostrar</button></div><p class="field-hint" id="password-hint">Use pelo menos 8 caracteres.</p><button type="submit" class="btn gold form-submit" id="register-submit">Criar conta e começar o teste</button><p class="note terms-note">Ao criar a conta você aceita os <a href="/termos.html">Termos de uso</a> e a <a href="/privacidade.html">Política de privacidade</a>.</p></form>
+<form id="forgot-form" class="hidden"><label for="forgot-email">E-mail da sua conta</label><input id="forgot-email" name="email" type="email" required autocomplete="email"><button type="submit" class="btn gold form-submit">Enviar link de recuperação</button><button type="button" class="text-action auth-back" id="back-login">Voltar para entrar</button></form><p role="status" aria-live="polite" class="msg" id="msg"></p></section></div></main>
+<footer class="site premium-footer"><div class="wrap footer-grid"><div class="footer-brand"><a href="/"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253" loading="lazy"></a><p>Gestão profissional.<br>Essência gamer.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Licença vitalícia</a><a href="/atualizacoes.html">Atualizações</a></nav><nav aria-label="Ajuda"><h2>Precisa de ajuda?</h2><a href="/guia">Guia de instalação</a><a href="/atendimento.html">Atendimento</a><a href="/conta#suporte">Meus chamados</a><a href="/#duvidas">Dúvidas frequentes</a></nav><nav aria-label="Institucional"><h2>GameZoney</h2><a href="/termos.html">Termos de uso</a><a href="/privacidade.html">Privacidade</a><a href="https://www.instagram.com/gamezoney_" class="ig-link" target="_blank" rel="noopener">Instagram ↗</a></nav></div><div class="wrap footer-bottom"><span>© 2026 GameZoney. Todos os direitos reservados.</span><div class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></div></div></footer>
 <script src="/i18n-site-dict.js"></script>
+<script src="/i18n-premium.js?v=20261105-premium-2"></script>
 <script src="/i18n-site.js"></script>
-<script src="/site.js"></script>
-<script src="/entrar.js"></script>
+<script src="/site.js?v=20261105-premium-2"></script>
+<script src="/premium.js?v=20261105-premium-2"></script>
+<script src="/entrar.js?v=20261105-premium-2"></script>
 </body>
 </html>

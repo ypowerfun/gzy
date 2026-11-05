@@ -204,7 +204,7 @@ function createApp(options = {}) {
   const redirectUri = SITE + '/auth/google/callback';
   app.get('/auth/google', (req, res) => {
     if (!gg.enabled) return res.redirect('/entrar.html?erro=' + encodeURIComponent('Login com Google ainda não configurado.'));
-    const state = crypto.randomBytes(16).toString('hex'), next = /^\/(?!\/)[a-z0-9/._-]*$/i.test(String(req.query.next || '')) ? String(req.query.next) : '/conta';
+    const state = crypto.randomBytes(16).toString('hex'), next = /^\/(?!\/)[a-z0-9/._#-]*$/i.test(String(req.query.next || '')) ? String(req.query.next) : '/conta';
     setCookie(res, 'gzg', state + '.' + Buffer.from(next).toString('base64url'), 600000);
     res.redirect(gg.authUrl(redirectUri, state));
   });
@@ -219,7 +219,7 @@ function createApp(options = {}) {
       if (!user) user = createUser({email: p.email, name: p.name || p.email.split('@')[0], googleSub: p.sub});
       login(res, user);
       const next = nextB64 ? Buffer.from(nextB64, 'base64url').toString('utf8') : '/conta';
-      res.redirect(/^\/(?!\/)[a-z0-9/._-]*$/i.test(next) ? next : '/conta');
+      res.redirect(/^\/(?!\/)[a-z0-9/._#-]*$/i.test(next) ? next : '/conta');
     } catch (e) { res.redirect('/entrar.html?erro=' + encodeURIComponent(e.message)); }
   });
 
