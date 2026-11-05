@@ -16,6 +16,7 @@ const required={
   'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
+  'INSTALACAO-en.txt':[`SERVER ${VERSION}`],
   'public/index.html':[`SERVER // ${VERSION}`],
   'shop.js':['marginPrice','Margem de lucro'],
   'public/shop-ui.js':['askFinishSale','marginPriceCents','Deseja realmente finalizar a venda?'],

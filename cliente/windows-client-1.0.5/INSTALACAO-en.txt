@@ -1,0 +1,17 @@
+﻿GameZoney CLIENT 1.0.5 — WINDOWS 10/11
+
+Install only on the arena's gaming PCs. The GameZoney Server must be installed on the front-desk PC.
+
+The Client starts automatically when the account signs in to Windows, through MonitorGZ, and tries to run at high priority.
+
+On first launch, the Client looks for the Server on the network, registers this PC's request and shows the login screen while it waits for authorization. Authorize the PC in the Server panel and confirm the Server's identity. The Sign in button works for customers and for the administrators registered on the Server.
+
+If the Server or the network goes down during an active session, time keeps counting on the Client; when communication returns, the remaining time is synchronized.
+
+When the session ends, the Client closes the open programs (including games and tray processes). GameZoney does not delete browser profiles, cookies, history or passwords. Unsaved work may be lost.
+
+The Client applies the Windows restrictions configured on the Server. A Server administrator can sign in to unlock access temporarily.
+
+The installer configures the GameZoney firewall rules (local network only). If needed, use the "Reparar conexao de rede" (repair network connection) shortcut in the Start menu.
+
+If this PC has the client of another arena management system: uninstall it before installing GameZoney Client (both would lock the PC at the same time).

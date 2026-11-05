@@ -20,14 +20,30 @@ SetupIconFile=gamezoney.ico
 UninstallDisplayIcon={app}\GameZoney.exe
 AppMutex=Local\GameZoneyServer_3000
 CloseApplications=no
-InfoBeforeFile=INSTALACAO.txt
+InfoBeforeFile=INSTALACAO-en.txt
+; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
+ShowLanguageDialog=yes
+LanguageDetectionMethod=none
 VersionInfoVersion=1.0.5.0
 
 [Languages]
-Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl
+Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
+Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl; InfoBeforeFile: INSTALACAO.txt
+
+[CustomMessages]
+english.GzDesktopIcon=Create a desktop shortcut
+brazilianportuguese.GzDesktopIcon=Criar atalho na área de trabalho
+english.GzOpenApp=Open GameZoney Server
+brazilianportuguese.GzOpenApp=Abrir GameZoney Servidor
+english.GzFirewallStatus=Configuring Windows Firewall for GameZoney...
+brazilianportuguese.GzFirewallStatus=Configurando o Firewall do Windows para o GameZoney...
+english.GzFirewallFailed=GameZoney Server was installed, but the firewall was not configured (administrator permission canceled, group policy or an antivirus with its own firewall). Details in firewall-status.log in the application folder. Use the "Reparar conexao de rede" (repair network connection) shortcut in the Start menu and allow the change.
+brazilianportuguese.GzFirewallFailed=O GameZoney Servidor foi instalado, mas o firewall nao foi configurado (permissao de administrador cancelada, politica de grupo ou antivirus com firewall proprio). Detalhes em firewall-status.log na pasta do aplicativo. Use o atalho "Reparar conexao de rede" no menu Iniciar e autorize a alteracao.
+english.GzUninstallAsk=Also delete the GameZoney Server data from this computer?%n%nThis deletes: customers, balances, cash register, invoices, history, TV/PC pairings and settings.%n%nBackups are NOT deleted: Documents\bkp gamezoney and the server backups folder (which also keeps a copy of the database made now, before deleting).%n%nYes = remove everything (except backups)   ·   No = keep the data
+brazilianportuguese.GzUninstallAsk=Apagar também os dados do GameZoney Servidor deste computador?%n%nSerão apagados: clientes, saldos, caixa, faturas, histórico, pareamentos das TVs/PCs e configurações.%n%nNÃO serão apagados os backups: Documentos\bkp gamezoney e a pasta de backups do servidor (onde também fica uma cópia do banco feita agora, antes de apagar).%n%nSim = remover tudo (menos os backups)   ·   Não = manter os dados
 
 [Tasks]
-Name: desktopicon; Description: "Criar atalho na área de trabalho"; Flags: checkedonce
+Name: desktopicon; Description: "{cm:GzDesktopIcon}"; Flags: checkedonce
 
 ; 3.0.70: app GameZoney SV retirado — arquivos dele saem de instalações anteriores
 [InstallDelete]
@@ -100,7 +116,7 @@ Name: "{autodesktop}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Worki
 Name: "{userstartup}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Parameters: "/silent"; WorkingDir: "{app}"
 
 [Run]
-Filename: "{app}\GameZoney.exe"; Description: "Abrir GameZoney Servidor"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\GameZoney.exe"; Description: "{cm:GzOpenApp}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 

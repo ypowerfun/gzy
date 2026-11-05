@@ -73,7 +73,7 @@ function rankList(title, items, value, empty) {
 }
 async function renderRanking() {
   const request = ++rankingRequest, r = await api('/ranking' + (rankingMonth ? '?month=' + rankingMonth : '')); if (view !== 'ranking' || request !== rankingRequest) return;
-  rankingMonth = r.month; const [y, m] = r.month.split('-'), monthName = new Date(Number(y), Number(m) - 1, 15).toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'});
+  rankingMonth = r.month; const [y, m] = r.month.split('-'), monthName = new Date(Number(y), Number(m) - 1, 15).toLocaleDateString(({en: 'en-US', es: 'es', fr: 'fr', ru: 'ru'})[window.gzI18n && gzI18n.lang] || 'pt-BR', {month: 'long', year: 'numeric'});
   $('#view').innerHTML = `<div class="toolbar"><h2>Ranking</h2><label class="ev-month">Mês das recargas<input type="month" id="rank-month" value="${r.month}"></label></div><div class="rank-grid">
   ${rankList('Top 10 Medalhas', r.medals, x => medalsText(x.medalsMilli) + ' medalha(s)', 'Nenhum cliente com medalhas ainda.')}
   ${rankList('Top 10 Participação em Viradão', r.participations, x => x.count + ' participação(ões)', 'Nenhuma participação em Corujão/Viradão iniciado ainda.')}

@@ -55,11 +55,8 @@ procedure GzUninstallAsk();
 begin
   GzRemoveData := False;
   if UninstallSilent then exit;
-  GzRemoveData := MsgBox('Apagar também os dados do GameZoney Servidor deste computador?' + #13#10#13#10 +
-    'Serão apagados: clientes, saldos, caixa, faturas, histórico, pareamentos das TVs/PCs e configurações.' + #13#10#13#10 +
-    'NÃO serão apagados os backups: Documentos\bkp gamezoney e a pasta de backups do servidor ' +
-    '(onde também fica uma cópia do banco feita agora, antes de apagar).' + #13#10#13#10 +
-    'Sim = remover tudo (menos os backups)   ·   Não = manter os dados', mbConfirmation, MB_YESNO or MB_DEFBUTTON1) = IDYES;
+  { 1.0.5: texto no idioma escolhido na instalacao (english/brazilianportuguese) - [CustomMessages] do installer.iss }
+  GzRemoveData := MsgBox(CustomMessage('GzUninstallAsk'), mbConfirmation, MB_YESNO or MB_DEFBUTTON1) = IDYES;
 end;
 
 procedure GzUninstallCleanup();

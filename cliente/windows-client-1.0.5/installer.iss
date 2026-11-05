@@ -20,11 +20,40 @@ SetupIconFile=gamezoney.ico
 UninstallDisplayIcon={app}\GameZoneyCliente.exe
 AppMutex=Local\GameZoneyCliente,Local\GameZoney.Supervisor
 CloseApplications=no
-InfoBeforeFile=INSTALACAO.txt
+InfoBeforeFile=INSTALACAO-en.txt
+; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
+ShowLanguageDialog=yes
+LanguageDetectionMethod=none
 VersionInfoVersion=1.0.5.0
 
 [Languages]
-Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl
+Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
+Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.isl; InfoBeforeFile: INSTALACAO.txt
+
+[CustomMessages]
+english.GzOptimizing=Optimizing client startup...
+brazilianportuguese.GzOptimizing=Otimizando a inicialização do cliente...
+english.GzOpenApp=Open GameZoney Client
+brazilianportuguese.GzOpenApp=Abrir GameZoney Cliente
+english.GzFirewallStatus=Configuring Windows Firewall for GameZoney...
+brazilianportuguese.GzFirewallStatus=Configurando o Firewall do Windows para o GameZoney...
+english.GzFirewallFailed=GameZoney Client was installed, but Windows refused to create the firewall rules (group policy or an antivirus with its own firewall). Details in firewall-status.log in the application folder. The "Reparar conexao de rede" (repair network connection) shortcut in the Start menu tries again.
+brazilianportuguese.GzFirewallFailed=O GameZoney Cliente foi instalado, mas o Windows recusou a criacao das regras de firewall (politica de grupo ou antivirus com firewall proprio). Detalhes em firewall-status.log na pasta do aplicativo. O atalho "Reparar conexao de rede" no menu Iniciar tenta novamente.
+english.GzAutostartStatus=Configuring fast startup with Windows...
+brazilianportuguese.GzAutostartStatus=Configurando a inicializacao rapida com o Windows...
+english.GzProtectStatus=Protecting the application folder...
+brazilianportuguese.GzProtectStatus=Protegendo a pasta do aplicativo...
+english.GzProtectFailed=The client was installed, but the folder protection could not be completed. The application will still work. See C:\ProgramData\GameZoney\client-install.log for diagnostics.
+brazilianportuguese.GzProtectFailed=O cliente foi instalado, mas a protecao da pasta nao pode ser concluida. O aplicativo continuara utilizavel. Consulte C:\ProgramData\GameZoney\client-install.log para diagnostico.
+english.GzPolicyStatus=Checking the permission for the Windows restrictions...
+brazilianportuguese.GzPolicyStatus=Conferindo a permissao das restricoes do Windows...
+english.GzPolicyFailed=The client was installed, but the permission for the Windows restrictions (Task Manager, Control Panel) could not be granted to the PC account. Details in C:\ProgramData\GameZoney\client-install.log. Sign in with the PC account and use the "Reparar restricoes do Windows" (repair Windows restrictions) shortcut in the Start menu.
+brazilianportuguese.GzPolicyFailed=O cliente foi instalado, mas nao foi possivel liberar a permissao das restricoes do Windows (Gerenciador de Tarefas, Painel de Controle) para a conta do PC. Detalhes em C:\ProgramData\GameZoney\client-install.log. Entre com a conta do PC e use o atalho "Reparar restricoes do Windows" no menu Iniciar.
+english.GzUninstallCanceled=Uninstall was canceled: the administrator was not authorized or the Windows restrictions could not be removed (see the previous message).
+brazilianportuguese.GzUninstallCanceled=A desinstalação foi cancelada: o administrador não foi autorizado ou as restrições do Windows não puderam ser retiradas (veja a mensagem anterior).
+english.GzFilesInUse=GameZoney Client was removed, but some of its files were in use and could not be deleted. Restart the PC and delete the GameZoneyCliente folder in AppData\Local of the PC account, if it still exists.
+brazilianportuguese.GzFilesInUse=O GameZoney Cliente foi removido, mas alguns arquivos dele estavam em uso e nao puderam ser apagados. Reinicie o PC e apague a pasta GameZoneyCliente em AppData\Local da conta do PC, se ela ainda existir.
+
 
 [Files]
 Source: "GUIA-GAMEZONEY.md"; DestDir: "{app}"; Flags: ignoreversion
@@ -71,9 +100,9 @@ Name: "{app}"; Attribs: hidden system
 
 [Run]
 ; 2.0.29: pre-compila o cliente e o monitor (ngen) para abrir mais rapido no boot (sem compilacao JIT a cada inicio)
-Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\GameZoneyCliente.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "Otimizando a inicialização do cliente..."
-Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\MonitorGZ.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "Otimizando a inicialização do cliente..."
-Filename: "{app}\MonitorGZ.exe"; Description: "Abrir GameZoney Cliente"; Flags: nowait postinstall skipifsilent runasoriginaluser
+Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\GameZoneyCliente.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "{cm:GzOptimizing}"
+Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\MonitorGZ.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "{cm:GzOptimizing}"
+Filename: "{app}\MonitorGZ.exe"; Description: "{cm:GzOpenApp}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [Code]
 { 2.0.33: removido o acesso temporario da instalacao. A maquina aguarda a aprovacao no servidor e o
@@ -146,7 +175,7 @@ begin
   RepairGzPolicyAccess();
   Result := Exec(ExpandConstant('{app}\GameZoneyCliente.exe'), '/recover', '', SW_SHOWNORMAL, ewWaitUntilTerminated, ExitCode);
   if Result then Result := ExitCode = 0;
-  if not Result then MsgBox('A desinstalação foi cancelada: o administrador não foi autorizado ou as restrições do Windows não puderam ser retiradas (veja a mensagem anterior).', mbError, MB_OK);
+  if not Result then MsgBox(CustomMessage('GzUninstallCanceled'), mbError, MB_OK);
 end;
 
 #include "firewall-installer.iss"

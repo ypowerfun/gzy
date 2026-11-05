@@ -20,10 +20,12 @@ O GameZoney tem duas partes:
 Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir/Remover** — **Sessão, Log, Faturas, Estatística** — **Caixa, Produtos/Serviços** — **Ranking** — **Configuração** (os grupos são separados por um traço dourado). Transferir/Remover e Configuração aparecem só para administradores. Confirmações (remover, desativar, pagar etc.) aparecem numa caixa do próprio painel, com **Confirmar** e **Cancelar**. O painel nunca pede para salvar senhas. O painel se ajusta a qualquer resolução: **Senha** e **Sair** ficam sempre visíveis no fim do menu, sem rolar a página (em telas muito baixas o menu fica mais compacto).
 
 
-**Perfil** (botão ao lado de **Sair**): **Alterar senha**; **Idioma** do painel — Português (Brasil), English, Español, Français ou Русский (vale para o seu usuário; menus, títulos, botões e campos mudam de idioma; textos longos de ajuda e dados continuam em português); **Ajuda** (abre o site https://gamezoney.com/); **Feedback** (nome, email e comentário, enviados para a GameZoney; sem internet ou com o site fora do ar, o feedback fica guardado no servidor e é reenviado sozinho a cada 10 minutos).
+**Perfil** (botão ao lado de **Sair**): **Alterar senha**; **Idioma** do painel — Português (Brasil), English, Español, Français ou Русский (vale para o seu usuário; o painel inteiro muda de idioma — menus, títulos, botões, campos, avisos, textos de ajuda, Estatística, Configuração, Ranking e mensagens do Log; nomes, nicks, produtos e outros dados cadastrados continuam como foram digitados); **Ajuda** (abre o site https://gamezoney.com/); **Feedback** (nome, email e comentário, enviados para a GameZoney; sem internet ou com o site fora do ar, o feedback fica guardado no servidor e é reenviado sozinho a cada 10 minutos).
 ---
 
 ## 1. Instalação
+
+**Idioma do instalador**: os instaladores (Servidor, Cliente e o instalador único) abrem em **inglês** por padrão. A primeira tela pergunta o idioma: mantenha **English** ou troque para **Português (Brasil)**. No instalador único, o idioma escolhido vale também para o instalador do Servidor e do Cliente que ele abre. O desinstalador usa o mesmo idioma da instalação. Os nomes dos atalhos do menu Iniciar continuam em português (ex.: **Reparar conexao de rede**).
 
 **Servidor (PC da recepção)** — Windows 10/11 de 64 bits.
 1. Execute o instalador (ou o instalador único e marque **Instalar Servidor**). Ele já leva o motor (Node), o banco e as ferramentas; não baixa nada.
