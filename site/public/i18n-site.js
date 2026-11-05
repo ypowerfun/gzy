@@ -74,6 +74,8 @@
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
   window.gzSite = {
     get lang() { return lang; }, t: translate,
+    // 1.7: texto original em português de um elemento (o editor de design usa para reconhecer o elemento em qualquer idioma)
+    ptOf(el) { let out = ''; const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { const r = texts.get(n); out += r && n.nodeValue === r.shown ? r.pt : n.nodeValue; } return out; },
     set(next) { if (!LANGS.includes(next) || next === lang) return; lang = next; cache = new Map(); try { localStorage.setItem('gz-site-lang', lang); } catch { } apply(); }
   };
 })();

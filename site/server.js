@@ -69,7 +69,7 @@ function createApp(options = {}) {
     next();
   });
   const smallJson = express.json({limit: '64kb'});
-  app.use((req, res, next) => req.path === '/api/reviews' ? next() : smallJson(req, res, next)); // avaliações com imagens têm limite próprio (community.js)
+  app.use((req, res, next) => (req.path === '/api/reviews' || req.path === '/api/admin/design/image') ? next() : smallJson(req, res, next)); // avaliações e imagens do design têm limite próprio
 
   // ---------- limite de tentativas (por IP) ----------
   const buckets = new Map();
@@ -440,6 +440,8 @@ function createApp(options = {}) {
 
   // ---------- avaliações e chat ao vivo (community.js) ----------
   const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
+  // 1.7: design do site (editor visual) e parceiros do rodapé
+  require('./design')(app, {db, needAdmin, jsonOnly, api, fail, str, dataDir});
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
   app.use('/img', (req, res, next) => { // 1.4: vale para todas as imagens do site (capturas e foto do topo)

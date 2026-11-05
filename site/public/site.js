@@ -39,13 +39,13 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
 (function footerInstagram() {
   document.querySelectorAll('footer.site').forEach(w => {
     if (w.querySelector('.ig-link')) return;
-    const a = document.createElement('a'); a.className = 'ig-link'; a.href = IG_URL; a.target = '_blank'; a.rel = 'noopener';
+    const a = document.createElement('a'); a.className = 'ig-link'; a.dataset.gzDyn = ''; a.href = IG_URL; a.target = '_blank'; a.rel = 'noopener';
     a.title = 'Instagram @gamezoney_'; a.innerHTML = IG_SVG + '<span>@gamezoney_</span>'; w.appendChild(a);
   });
 })();
 (function liveChat() {
   if (document.body.dataset.noChat !== undefined) return;
-  const box = document.createElement('div'); box.className = 'chat-widget';
+  const box = document.createElement('div'); box.className = 'chat-widget'; box.dataset.gzDyn = '';
   box.innerHTML = `<button type="button" class="chat-open" aria-label="Fale conosco" aria-expanded="false" aria-controls="chat-panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2zm0 2v11.2L7.2 16H20V6H4zm3 3h10v2H7V9zm0 3h7v2H7v-2z"/></svg><span>Fale conosco</span></button>
   <section class="chat-panel hidden" id="chat-panel" role="dialog" aria-label="Atendimento GameZoney">
     <header><div><b>Equipe GameZoney</b><small class="chat-status"></small></div><button type="button" class="chat-close" aria-label="Fechar">✕</button></header>
@@ -128,5 +128,95 @@ document.addEventListener('click', e => {
   view.querySelector('.zoom-close').onclick = () => view.close();
   view.addEventListener('click', event => { if (event.target === view) view.close(); });
   view.addEventListener('close', () => { view.remove(); if (previousFocus?.isConnected) previousFocus.focus(); });
-  document.body.appendChild(view); view.showModal(); view.querySelector('.zoom-close').focus();
+  view.dataset.gzDyn = ''; document.body.appendChild(view); view.showModal(); view.querySelector('.zoom-close').focus();
 });
+
+// ---------- 1.7: design do site (alterações feitas no editor do /admin) e parceiros do rodapé ----------
+// Cada alteração aponta para um elemento pelo caminho (posição entre os irmãos) dentro do topo, do rodapé ou da página,
+// e guarda uma "assinatura" (texto original em português ou nome da imagem). Se o HTML mudar e a assinatura não bater,
+// a alteração é ignorada (nada quebra). Textos entram sempre como texto puro (nunca HTML).
+window.gzDesign = (() => {
+  const MOBILE = 760, SKIP = '[data-gz-dyn],script,style,noscript,#gz-design';
+  const kids = el => [...el.children].filter(c => !c.matches(SKIP));
+  const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const scopeOf = el => { const h = el.closest('header.topbar'); if (h) return ['*h', h]; const f = el.closest('footer'); if (f) return ['*f', f]; return ['page', document.body]; };
+  function pathOf(el) {
+    const [key, root] = scopeOf(el); const idx = [];
+    for (let n = el; n && n !== root; n = n.parentElement) { const p = n.parentElement; if (!p) return null; const i = kids(p).indexOf(n); if (i < 0) return null; idx.unshift(i); }
+    return {key, p: idx.join('.') || '0', root};
+  }
+  function find(root, p) { let el = root; if (p === '0' && root !== document.body) return root; for (const i of p.split('.').map(Number)) { el = kids(el)[i]; if (!el) return null; } return el; }
+  function sigOf(el) {
+    if (el.dataset.gzSig !== undefined) return el.dataset.gzSig;
+    let s;
+    if (el.tagName === 'IMG') s = 'img:' + String(el.getAttribute('src') || '').split('?')[0].split('/').pop().replace(/-(pt|en|es)(\.\w+)$/, '$2');
+    else { const t = norm(window.gzSite && gzSite.ptOf ? gzSite.ptOf(el) : el.textContent); s = t ? t.slice(0, 60) : el.tagName.toLowerCase() + '.' + (el.classList[0] || ''); }
+    el.dataset.gzSig = s; return s;
+  }
+  // estado original, para o editor conseguir restaurar
+  const orig = new WeakMap();
+  function snap(el) {
+    if (orig.has(el)) return orig.get(el);
+    const o = {style: el.getAttribute('style'), noI18n: el.hasAttribute('data-no-i18n'), text: el.children.length || /^(IMG|INPUT|TEXTAREA|SELECT|SVG|VIDEO|IFRAME|BR|HR|PICTURE|SOURCE)$/i.test(el.tagName) ? null : norm(window.gzSite && gzSite.ptOf ? gzSite.ptOf(el) : el.textContent),
+      href: el.getAttribute('href'), src: el.getAttribute('src'), alt: el.getAttribute('alt'), tela: el.getAttribute('data-tela'), srcset: el.getAttribute('srcset')};
+    orig.set(el, o); return o;
+  }
+  const lang = () => (window.gzSite && gzSite.lang) || 'pt';
+  function applyItem(el, it, editing) {
+    sigOf(el); const o = snap(el);
+    el.setAttribute('style', o.style || ''); if (!o.style) el.removeAttribute('style');
+    el.classList.remove('gz-ghost');
+    if (it.x) { if (editing) el.classList.add('gz-ghost'); else el.style.setProperty('display', 'none', 'important'); }
+    const b = innerWidth <= MOBILE ? it.m : it.d;
+    if (b) { if (b.z && b.z !== 100) el.style.zoom = b.z / 100; if (b.dx || b.dy) el.style.translate = `${b.dx || 0}px ${b.dy || 0}px`; }
+    if (it.t && o.text !== null) { const v = it.t[lang()] || it.t.pt; if (v !== undefined) { el.setAttribute('data-no-i18n', ''); if (el.textContent !== v) el.textContent = v; } }
+    else if (o.text !== null && !o.noI18n && el.hasAttribute('data-no-i18n')) restoreText(el, o);
+    if (el.tagName === 'A') { if (it.h) el.setAttribute('href', it.h); else if (o.href !== null) el.setAttribute('href', o.href); }
+    if (el.tagName === 'IMG') {
+      if (it.i) { el.removeAttribute('data-tela'); el.removeAttribute('srcset'); el.setAttribute('src', it.i); el.closest('picture')?.querySelectorAll('source').forEach(s => s.remove()); }
+      else if (o.src !== null && el.getAttribute('src') !== o.src && !o.tela) el.setAttribute('src', o.src);
+      if (typeof it.a === 'string' && it.a) el.setAttribute('alt', it.a);
+    }
+  }
+  function restoreText(el, o) { if (!o.noI18n) el.removeAttribute('data-no-i18n'); el.textContent = o.text; }
+  function restore(el) {
+    const o = orig.get(el); if (!o) return;
+    applyItem(el, {}, true);
+    if (o.text !== null) restoreText(el, o);
+    if (o.tela) { el.setAttribute('data-tela', o.tela); el.setAttribute('src', `/img/telas/${o.tela}-${lang()}.jpg`); }
+    if (o.srcset) el.setAttribute('srcset', o.srcset);
+    if (o.alt !== null) el.setAttribute('alt', o.alt);
+  }
+  const state = {key: null, lists: {page: [], '*h': [], '*f': []}, partners: [], editing: false};
+  const roots = () => ({page: document.body, '*h': document.querySelector('header.topbar'), '*f': document.querySelector('footer')});
+  function resolve(scope, it) { const root = roots()[scope]; if (!root) return null; const el = find(root, it.p); if (!el || (scope === 'page' && el.closest('header.topbar,footer'))) return null; return sigOf(el) === it.s ? el : null; }
+  function applyAll() {
+    for (const scope of ['*h', '*f', 'page']) for (const it of state.lists[scope]) { const el = resolve(scope, it); if (el) applyItem(el, it, state.editing); }
+  }
+  function partners() {
+    document.querySelectorAll('footer .footer-trust').forEach(box => {
+      box.querySelector('.partners')?.remove(); if (!state.partners.length) return;
+      const w = document.createElement('div'); w.className = 'partners'; w.dataset.gzDyn = '';
+      const t = document.createElement('span'); t.className = 'partners-title'; t.textContent = 'Parceiros'; w.appendChild(t);
+      for (const p of state.partners) {
+        const a = document.createElement(p.url ? 'a' : 'span'); a.className = 'partner'; a.title = p.name;
+        if (p.url) { a.href = p.url; a.target = '_blank'; a.rel = 'noopener nofollow'; }
+        const img = document.createElement('img'); img.src = p.img; img.alt = p.name; img.loading = 'lazy'; img.draggable = false; a.appendChild(img); w.appendChild(a);
+      }
+      box.prepend(w);
+    });
+  }
+  const CACHE = 'gz-design:' + location.pathname;
+  function use(d) { state.key = d.key || null; state.lists = {page: d.page || [], '*h': d.header || [], '*f': d.footer || []}; state.partners = d.partners || []; applyAll(); partners(); }
+  async function load() {
+    if (location.pathname.startsWith('/admin')) return;
+    try { const c = JSON.parse(localStorage.getItem(CACHE) || 'null'); if (c) use(c); } catch { } // evita "piscar" o original
+    try { const d = await api('/api/design?page=' + encodeURIComponent(location.pathname)); use(d); try { localStorage.setItem(CACHE, JSON.stringify(d)); } catch { } } catch { }
+    if (/[?&]design=1\b/.test(location.search)) { const s = document.createElement('script'); s.src = '/design-editor.js?v=17'; document.body.appendChild(s); }
+  }
+  // troca de idioma ou de largura (computador ↔ celular): aplica de novo
+  let wide = innerWidth > MOBILE; addEventListener('resize', () => { const w = innerWidth > MOBILE; if (w !== wide) { wide = w; applyAll(); } });
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-lang]')) setTimeout(applyAll, 0); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load); else load();
+  return {state, pathOf, find, sigOf, snap, applyItem, applyAll, restore, resolve, partners, MOBILE, scopeOf};
+})();

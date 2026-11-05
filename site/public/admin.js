@@ -12,6 +12,7 @@
     $('#orders').innerHTML = table(['Data', 'Cliente', 'Valor', 'Forma', 'Situação', 'Chave', ''], d.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${esc(o.email)}</td><td>${money(o.amountCents)}</td><td>${o.provider === 'manual' ? 'PIX manual' : o.method === 'card' ? 'Cartão Mercado Pago' : 'PIX Mercado Pago'}</td><td><span class="pill ${(ST[o.status] || [])[1] || ''}">${(ST[o.status] || [o.status])[0]}</span><br><small class="note">${esc(o.note || '')}</small></td><td>${o.licenseKey ? `<span class="key" style="font-size:13px">${esc(o.licenseKey)}</span>` : '—'}</td><td>${o.status !== 'paid' ? `<button class="btn small" data-approve="${o.id}">Confirmar pagamento</button>` : ''}</td></tr>`));
     $('#licenses').innerHTML = table(['Chave', 'Cliente', 'Situação', 'Computador', ''], d.licenses.map(l => `<tr><td><span class="key" style="font-size:13px">${esc(l.key)}</span><br><small class="note">${fmtDate(l.createdAt)} ${esc(l.note || '')}</small></td><td>${esc(l.email)}</td><td>${l.status === 'active' ? (l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Não ativada</span>') : '<span class="pill bad">Bloqueada</span>'}</td><td>${esc(l.machine || '—')}<br><small class="note">${esc(l.installId)} ${l.releases ? '• trocas: ' + l.releases : ''} ${l.machines ? '• ' + l.machines + ' computador(es)' : ''}</small>${l.suspect ? `<br><span class="pill bad" title="3 ou mais trocas de computador em 30 dias">Suspeita de revenda (${l.recentTransfers} trocas em 30 dias)</span>` : ''}</td><td class="row">${l.active ? `<button class="btn small ghost" data-lic="${l.id}" data-op="release">Liberar</button>` : ''}<button class="btn small ${l.status === 'active' ? 'danger' : ''}" data-lic="${l.id}" data-op="${l.status === 'active' ? 'blocked' : 'active'}">${l.status === 'active' ? 'Bloquear' : 'Desbloquear'}</button></td></tr>`));
     renderTickets(d.tickets);
+    loadDesign();
     $('#users').innerHTML = table(['Nome', 'E-mail', 'Telefone', 'Login', 'Criado', 'Último acesso'], d.users.map(u => `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone)}</td><td>${u.google ? 'Google' : 'E-mail'}</td><td>${fmtDate(u.created_at)}</td><td>${fmtDate(u.last_login_at)}</td></tr>`));
     $('#feedbacks').innerHTML = table(['Recebido', 'Nome', 'E-mail', 'Comentário', 'Versão'], d.feedback.map(f => `<tr><td>${fmtDate(f.received_at)}</td><td>${esc(f.name)}</td><td>${esc(f.email)}</td><td style="white-space:pre-wrap">${esc(f.comment)}</td><td>${esc(f.server_version)}</td></tr>`));
     const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
@@ -23,6 +24,30 @@
     $$('[data-approve]').forEach(b => b.onclick = () => { if (window.confirm('Confirmar o pagamento deste pedido e emitir a licença?')) busy(b, () => api('/api/admin/orders/' + b.dataset.approve + '/approve', {}).then(load, e => alert(e.message))); });
     $$('[data-lic]').forEach(b => b.onclick = () => busy(b, () => api('/api/admin/licenses/' + b.dataset.lic, b.dataset.op === 'release' ? {release: true} : {status: b.dataset.op}).then(load, e => alert(e.message))));
   }
+  // ---------- 1.7: design do site e parceiros ----------
+  const PAGE_NAMES = {'/': 'Página inicial', '*h': 'Topo (todas as páginas)', '*f': 'Rodapé (todas as páginas)', '/atendimento': 'Atendimento', '/atualizacoes': 'Atualizações', '/entrar': 'Entrar', '/conta': 'Minha conta', '/guia': 'Guia', '/termos': 'Termos de uso', '/privacidade': 'Privacidade', '/redefinir': 'Redefinir senha'};
+  let partnerList = [];
+  async function loadDesign() {
+    let d; try { d = await api('/api/admin/design'); } catch { return; }
+    const pages = Object.entries(d.pages);
+    $('#design-pages').innerHTML = pages.length ? `<div class="table"><table><thead><tr><th>Página</th><th>Alterações</th><th></th></tr></thead><tbody>${pages.map(([k, n]) => `<tr><td>${esc(PAGE_NAMES[k] || k)}</td><td>${n}</td><td class="row">${k.startsWith('*') ? '' : `<a class="btn small ghost" href="${esc(k)}?design=1">Editar</a>`}<button class="btn small danger" data-dreset="${esc(k)}">Restaurar original</button></td></tr>`).join('')}</tbody></table></div><p><button class="btn small danger" data-dreset="all">Restaurar o site inteiro</button></p>` : '<p class="note">Nenhuma alteração: o site está como o original.</p>';
+    $$('[data-dreset]').forEach(b => b.onclick = () => { if (window.confirm(b.dataset.dreset === 'all' ? 'Restaurar o site inteiro como era originalmente (todas as páginas, topo e rodapé)?' : 'Restaurar esta parte como era originalmente?')) busy(b, () => api('/api/admin/design/reset', {page: b.dataset.dreset}).then(() => { showMsg($('#design-msg'), 'Original restaurado.', true); loadDesign(); }, e => showMsg($('#design-msg'), e.message))); });
+    partnerList = d.partners; renderPartners();
+  }
+  function renderPartners() {
+    $('#partner-list').innerHTML = partnerList.length ? `<div class="table"><table><tbody>${partnerList.map((p, i) => `<tr><td style="width:130px"><img src="${esc(p.img)}" alt="" style="max-height:40px;max-width:120px;background:#0e1117;padding:4px;border-radius:4px"></td><td><b>${esc(p.name)}</b><br><small class="note">${esc(p.url || 'sem link')}</small></td><td class="row" style="justify-content:flex-end">${i ? `<button class="btn small ghost" data-pmove="${i}" data-d="-1" title="Subir">↑</button>` : ''}${i < partnerList.length - 1 ? `<button class="btn small ghost" data-pmove="${i}" data-d="1" title="Descer">↓</button>` : ''}<button class="btn small danger" data-pdel="${i}">Excluir</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Nenhum parceiro ainda.</p>';
+    $$('[data-pmove]').forEach(b => b.onclick = () => { const i = Number(b.dataset.pmove), j = i + Number(b.dataset.d); [partnerList[i], partnerList[j]] = [partnerList[j], partnerList[i]]; savePartners(b); });
+    $$('[data-pdel]').forEach(b => b.onclick = () => { if (window.confirm('Excluir este parceiro do rodapé?')) { partnerList.splice(Number(b.dataset.pdel), 1); savePartners(b); } });
+  }
+  const savePartners = btn => busy(btn, async () => { try { partnerList = (await api('/api/admin/partners', {partners: partnerList})).partners; renderPartners(); showMsg($('#design-msg'), 'Parceiros salvos.', true); } catch (e) { showMsg($('#design-msg'), e.message); loadDesign(); } });
+  $('#partner-form').onsubmit = e => { e.preventDefault(); const f = e.target, file = f.logo.files[0]; if (!file) return;
+    if (file.size > 3 * 1024 * 1024) return showMsg($('#design-msg'), 'Logo muito grande (máximo 3 MB).');
+    busy(f.querySelector('button'), async () => { try {
+      const data = await new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = err; r.readAsDataURL(file); });
+      const {url} = await api('/api/admin/design/image', {data});
+      partnerList = (await api('/api/admin/partners', {partners: [...partnerList, {name: f.name.value, url: f.url.value.trim(), img: url}]})).partners;
+      f.reset(); renderPartners(); showMsg($('#design-msg'), 'Parceiro adicionado. Já aparece no rodapé do site.', true);
+    } catch (err) { showMsg($('#design-msg'), err.message); } }); };
   // ---------- chamados: caixa própria (Abertos / Fechados), no mesmo formato do chat ----------
   let tickets = [], ticketTab = 'open', ticketId = null;
   function renderTickets(list) {

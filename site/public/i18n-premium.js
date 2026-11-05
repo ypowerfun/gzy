@@ -1,6 +1,9 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  'Compra 100% segura':['100% secure purchase','Compra 100% segura'],
+  'Pagamento pelo Mercado Pago • Site protegido (HTTPS)':['Payment via Mercado Pago • Protected site (HTTPS)','Pago por Mercado Pago • Sitio protegido (HTTPS)'],
+  'Parceiros':['Partners','Socios'],
   'Você ainda não tem licença.':['You do not have a license yet.','Todavía no tiene una licencia.'],
   'Menu':['Menu','Menú'],
   'Navegação principal':['Main navigation','Navegación principal'],
