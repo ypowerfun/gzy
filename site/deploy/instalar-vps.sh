@@ -6,7 +6,7 @@ set -euo pipefail
 [ "$(id -u)" = 0 ] || { echo "Rode com sudo: sudo bash deploy/instalar-vps.sh"; exit 1; }
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 APP=/opt/gamezoney-site; DATA=/var/lib/gamezoney-site; ENVF=/etc/gamezoney-site.env
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l
 
 echo "== 1/7 Pacotes básicos"
 apt-get update -y
@@ -48,8 +48,11 @@ systemctl daemon-reload && systemctl enable gamezoney-site && systemctl restart 
 
 echo "== 6/7 Caddy (gamezoney.com e www)"
 cp "$APP/deploy/Caddyfile" /etc/caddy/Caddyfile
-chown caddy:caddy /var/log/caddy 2>/dev/null || true
-caddy validate --config /etc/caddy/Caddyfile && systemctl enable caddy && systemctl restart caddy
+caddy validate --config /etc/caddy/Caddyfile
+# o "caddy validate" (como root) cria o arquivo de log; o serviço roda como usuário caddy e precisa ser o dono
+chown -R caddy:caddy /var/log/caddy
+systemctl enable caddy && systemctl restart caddy
+sleep 2; systemctl is-active --quiet caddy || { echo "ATENÇÃO: o Caddy não iniciou. Veja: sudo journalctl -u caddy -n 30"; }
 
 echo "== 7/7 Firewall do Ubuntu (portas 80 e 443)"
 iptables -C INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT
