@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Guia | GameZoney</title>
+<link rel="icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800;1,900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body class="home">
+<header class="topbar"><div class="wrap">
+  <a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a>
+  <span class="nav-sep" aria-hidden="true"></span>
+  <nav class="nav"><a href="/#recursos">Recursos</a><a href="/#precos">Preços</a><a href="/#duvidas">Dúvidas</a><a href="/guia" style="color:var(--gold2)">Guia</a><a href="/#novidades">Atualizações</a><a class="btn outline small" href="/conta">Minha conta</a></nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+  <p class="eyebrow line">Passo a passo</p>
+  <h1 class="mega2">Guia do GameZoney.</h1>
+  <div class="guide-wrap">
+    <nav class="guide-toc"><a href="#pcs">1. Conectar os PCs ao servidor</a><a href="#tvs">2. Conectar TVs e consoles</a><a href="#importar">3. Importar clientes (CSV)</a></nav>
+    <div class="guide protect">
+
+      <section id="pcs">
+        <h2>Conectar os PCs ao servidor (rede local)</h2>
+        <p class="intro">O GameZoney Servidor fica no PC da recepção e controla os PCs gamers pela rede local da arena. Tudo funciona sem internet.</p>
+        <div class="diagram"><svg viewBox="0 0 720 230" role="img" aria-label="Diagrama da rede local">
+          <g fill="none" stroke="#d4a017" stroke-width="2"><rect x="20" y="80" width="170" height="80" rx="10"/><rect x="290" y="90" width="140" height="60" rx="10"/><rect x="530" y="10" width="170" height="56" rx="10"/><rect x="530" y="88" width="170" height="56" rx="10"/><rect x="530" y="166" width="170" height="56" rx="10"/></g>
+          <g fill="none" stroke="#8d909b" stroke-width="2" stroke-dasharray="6 5"><path d="M190 120H290"/><path d="M430 120H480V38H530"/><path d="M480 116H530"/><path d="M480 120V194H530"/></g>
+          <text x="105" y="114" text-anchor="middle">PC da recepção</text><text x="105" y="134" text-anchor="middle" class="muted">GameZoney Servidor</text>
+          <text x="360" y="117" text-anchor="middle">Roteador / Wi-Fi</text><text x="360" y="135" text-anchor="middle" class="muted">mesma rede</text>
+          <text x="615" y="36" text-anchor="middle">PC gamer 01</text><text x="615" y="54" text-anchor="middle" class="muted">GameZoney Cliente</text>
+          <text x="615" y="114" text-anchor="middle">PC gamer 02</text><text x="615" y="132" text-anchor="middle" class="muted">GameZoney Cliente</text>
+          <text x="615" y="192" text-anchor="middle">PC gamer 03</text><text x="615" y="210" text-anchor="middle" class="muted">GameZoney Cliente</text>
+        </svg></div>
+        <ol class="steps">
+          <li><b>Instale o Servidor no PC da recepção</b><p>Use o instalador único e marque Instalar Servidor. O instalador libera o firewall do Windows só na rede local (portas 3000, 3443 e 3444). Deixe o IP deste PC fixo (reserva no roteador).</p></li>
+          <li><b>Confira o endereço do servidor</b><p>Em Configuração › Servidor IP aparece o IP que os PCs e as TVs usam. Se o IP mudar (troca de roteador, cabo ↔ Wi-Fi), clique em Atualizar Automático.</p>
+            <figure><div class="shot" data-zoom><img draggable="false" data-guia="servidor-ip" src="/guia-img/servidor-ip-pt.jpg" alt="Configuração › Servidor IP"></div><figcaption>Configuração › Servidor IP</figcaption></figure></li>
+          <li><b>Instale o Cliente em cada PC gamer</b><p>Use o instalador único e marque Instalar Cliente, com a conta do Windows dos clientes conectada (conta padrão, não administradora). O Windows pede a autorização de administrador.</p></li>
+          <li><b>Autorize o PC no painel</b><p>Ao abrir, o cliente procura o servidor na rede e mostra um código. No Painel de controle aparece "PC aguardando autorização": confira se o código é o mesmo e clique em Autorizar computador.</p>
+            <figure><div class="shot" data-zoom><img draggable="false" data-guia="pc-autorizar" src="/guia-img/pc-autorizar-pt.jpg" alt="PC aguardando autorização"></div><figcaption>Painel de controle › PC aguardando autorização</figcaption></figure></li>
+          <li><b>Confirme no PC</b><p>No PC, confirme a identidade do servidor e crie a senha de manutenção local. Pronto: o PC aparece no Painel de controle e já pode receber sessões.</p></li>
+        </ol>
+        <p class="tip">Todos os PCs precisam estar na mesma rede do servidor. Se um PC não encontrar o servidor, use menu Iniciar › GameZoney › Reparar conexao de rede no servidor e no PC.</p>
+      </section>
+
+      <section id="tvs">
+        <h2>Conectar TVs e consoles</h2>
+        <p class="intro">O console (PlayStation, Xbox, Switch…) fica ligado numa entrada HDMI da TV. O GameZoney controla a TV pela rede: libera a entrada do console no início da sessão e mostra o resumo no final.</p>
+        <div class="diagram"><svg viewBox="0 0 720 150" role="img" aria-label="Diagrama do console na TV">
+          <g fill="none" stroke="#d4a017" stroke-width="2"><rect x="20" y="45" width="160" height="60" rx="10"/><rect x="280" y="35" width="180" height="80" rx="10"/><rect x="540" y="45" width="160" height="60" rx="10"/></g>
+          <g fill="none" stroke="#8d909b" stroke-width="2"><path d="M180 75H280"/></g><g fill="none" stroke="#8d909b" stroke-width="2" stroke-dasharray="6 5"><path d="M460 75H540"/></g>
+          <text x="100" y="72" text-anchor="middle">Console</text><text x="100" y="90" text-anchor="middle" class="muted">PS5 • Xbox • Switch</text>
+          <text x="230" y="66" text-anchor="middle" class="muted">HDMI</text>
+          <text x="370" y="70" text-anchor="middle">TV VIDAA ou Android TV</text><text x="370" y="90" text-anchor="middle" class="muted">na rede da arena</text>
+          <text x="500" y="66" text-anchor="middle" class="muted">rede</text>
+          <text x="620" y="72" text-anchor="middle">PC da recepção</text><text x="620" y="90" text-anchor="middle" class="muted">GameZoney Servidor</text>
+        </svg></div>
+        <ol class="steps">
+          <li><b>Ligue o console e a TV na rede</b><p>Conecte o console numa entrada HDMI da TV e deixe a TV na mesma rede do servidor (cabo ou Wi-Fi). Anote o IP da TV (nas configurações de rede da TV) e, se possível, deixe esse IP fixo no roteador.</p></li>
+          <li><b>Cadastre a estação</b><p>Painel de controle › + Nova estação: nome, Tipo Console, a entrada HDMI do console, o Sistema da TV e o Endereço IP. Clique em Salvar estação.</p>
+            <figure><div class="shot" data-zoom><img draggable="false" data-guia="tv-nova-estacao" src="/guia-img/tv-nova-estacao-pt.jpg" alt="Nova estação do tipo Console"></div><figcaption>Painel de controle › + Nova estação</figcaption></figure></li>
+          <li><b>Pareie a TV</b><p>Clique na estação e use Parear TV. VIDAA (Hisense/Toshiba): a TV mostra um PIN de 4 números; digite em Informar PIN. Android TV/Google TV: ative as Opções do desenvolvedor (Configurações › Sobre › clique 7 vezes em Build), ligue a Depuração ADB pela rede, use Parear TV e aceite "Permitir depuração" na TV (marque "Sempre permitir").</p>
+            <figure><div class="shot" data-zoom><img draggable="false" data-guia="tv-parear" src="/guia-img/tv-parear-pt.jpg" alt="Configurar estação de TV"></div><figcaption>Clique na estação › Parear TV / Informar PIN / Testar HDMI</figcaption></figure></li>
+          <li><b>Teste</b><p>Use Testar HDMI. Ao iniciar a sessão, a TV troca para a entrada do console; ao terminar, mostra a página com o resumo da sessão.</p></li>
+        </ol>
+        <p class="tip">A TV precisa alcançar a porta 3000 do servidor. Na Android TV, é preciso ter um navegador instalado para mostrar o resumo da sessão.</p>
+      </section>
+
+      <section id="importar">
+        <h2>Importar clientes de outro sistema (CSV)</h2>
+        <p class="intro">Traga os clientes do gerenciador antigo com o saldo de tempo e as medalhas, sem digitar um por um.</p>
+        <ol class="steps">
+          <li><b>Exporte os clientes do sistema antigo</b><p>No gerenciador antigo, exporte a lista de clientes em planilha (Excel .xlsx ou CSV).</p></li>
+          <li><b>Deixe as colunas no formato do GameZoney</b><p>A planilha precisa ter as colunas Nome, Nick, Tempo e Medalhas de fidelidade. O tempo pode ser 01:30 (horas:minutos), 90 (minutos), 1h30 ou 45min. As medalhas podem ser 150 ou 12,5 (vazio = 0).</p>
+            <div class="csv-table" data-no-i18n><table><thead><tr><th>Nome</th><th>Nick</th><th>Tempo</th><th>Medalhas de fidelidade</th></tr></thead><tbody><tr><td>Lucas Ferreira</td><td>lucasf</td><td>01:30</td><td>150</td></tr><tr><td>Mariana Alves</td><td>mari_gamer</td><td>90</td><td>20</td></tr><tr><td>Pedro Henrique</td><td>pedrohk</td><td>2h</td><td>0</td></tr><tr><td>Juliana Costa</td><td>jucosta</td><td>45min</td><td>12,5</td></tr></tbody></table></div>
+            <p><a class="btn outline small" href="/guia/modelo-clientes.csv">Baixar modelo CSV</a></p></li>
+          <li><b>Importe no painel</b><p>No GameZoney Servidor, abra Clientes › Importar planilha (administrador principal), escolha o arquivo e confira a prévia: novos clientes, saldo inicial total e medalhas.</p>
+            <figure><div class="shot" data-zoom><img draggable="false" data-guia="importar" src="/guia-img/importar-pt.jpg" alt="Importar clientes com prévia"></div><figcaption>Clientes › Importar planilha</figcaption></figure></li>
+          <li><b>Confirme a importação</b><p>Cada cliente entra sem senha e cria a senha no primeiro acesso ao PC. Todos participam do programa de fidelidade. Nicks já cadastrados não são alterados.</p></li>
+        </ol>
+        <p class="tip">O CSV pode usar ";" (ponto e vírgula) ou "," como separador. O Excel em português costuma salvar com ";".</p>
+      </section>
+
+      <p class="note">Precisa de ajuda? Use o botão Fale conosco ou abra um chamado em <a href="/conta#suporte">Minha conta › Suporte</a>.</p>
+    </div>
+  </div>
+</div></main>
+<footer class="site"><div class="wrap">
+  <span>© 2026 GameZoney. Todos os direitos reservados.</span>
+  <span class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></span>
+  <span><a href="/termos.html">Termos de uso</a> · <a href="/privacidade.html">Privacidade</a></span>
+</div></footer>
+<script src="/i18n-site-dict.js"></script>
+<script src="/i18n-site.js"></script>
+<script src="/site.js"></script>
+</body>
+</html>

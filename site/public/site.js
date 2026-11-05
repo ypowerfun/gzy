@@ -19,6 +19,8 @@ async function loadConfig() {
   $$('[data-price-label]').forEach(e => e.textContent = siteConfig.priceLabel);
   $$('[data-list-price]').forEach(e => { if (siteConfig.listPriceCents > siteConfig.priceCents) { e.textContent = 'De ' + money(siteConfig.listPriceCents); e.classList.remove('hidden'); } });
   const badge = $('#promo-badge'); if (badge) badge.textContent = siteConfig.priceLabel + ' • Licença vitalícia ' + money(siteConfig.priceCents);
+  // 1.4: faixa do topo (texto editável no /admin)
+  const strip = $('#promo-strip'); if (strip && siteConfig.banner) { $$('[data-banner]').forEach(e => e.textContent = siteConfig.banner); strip.classList.remove('hidden'); }
 }
 async function loadMe() { try { return await api('/api/me'); } catch { return {user: null}; } }
 (async () => {

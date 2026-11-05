@@ -131,7 +131,7 @@ test('site: feedback dos servidores, páginas e chaves',async t=>{
  await anon('/api/feedback',{id:'f2',comment:''},400);
  const dono=s.client();await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');
  const fb=(await dono('/api/admin/overview')).feedback;assert.equal(fb.length,1);assert.equal(fb[0].comment,'Muito bom!');
- const home=await (await fetch(s.base+'/')).text();assert.match(home,/GameZoney \| O Sistema Completo de Gestão para Arena Gamer, PCs e Consoles/);assert.match(home,/gerencie a lanchonete e proteja seus PCs em uma única plataforma simples e com suporte completo/);assert.match(home,/10 anos de experiência/);assert.match(home,/Novas Atualizações/);assert.match(home,/data-lang="en"/);
+ const home=await (await fetch(s.base+'/')).text();assert.match(home,/GameZoney \| O Sistema Completo de Gestão para Arena Gamer, PCs e Consoles/);assert.match(home,/Controle PCs, consoles, vendas e caixa em um único sistema/);assert.match(home,/10 anos de experiência/);assert.match(home,/Atualizações/);assert.match(home,/data-lang="en"/);
  assert.equal((await fetch(s.base+'/nao-existe')).status,404);
  const cfg=await anon('/api/config');assert.equal(cfg.priceCents,8990);assert.equal(cfg.trialDays,30);assert.equal(cfg.google,false);
  for(let i=0;i<50;i++)assert.match(newKey(),/^GZ(-[A-HJ-NP-Z2-9]{4}){4}$/);

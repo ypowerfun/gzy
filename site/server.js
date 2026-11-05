@@ -40,8 +40,9 @@ const DUMMY_HASH = hashPassword('gamezoney-tempo-constante'); // mesma demora qu
 function createApp(options = {}) {
   const env = {...process.env, ...(options.env || {})};
   const SITE = (env.SITE_URL || 'https://gamezoney.com').replace(/\/+$/, '');
-  const PRICE = Number(env.PRICE_CENTS || 8990), LIST_PRICE = Number(env.LIST_PRICE_CENTS || 0);
-  const PRICE_LABEL = env.PRICE_LABEL || 'Preço de Black Friday';
+  // 1.4: oferta (preço "por", preço "de" riscado, texto da promoção e faixa do topo) editável em /admin; o .env vale como padrão
+  const OFFER_DEFAULT = {priceCents: Number(env.PRICE_CENTS || 8990), listPriceCents: Number(env.LIST_PRICE_CENTS || 0) || 18990, priceLabel: env.PRICE_LABEL || 'Preço de Black Friday', banner: env.PROMO_BANNER || 'Black Friday GameZoney'};
+  function offer() { let saved = {}; try { saved = JSON.parse(db.get("SELECT value FROM settings WHERE key='offer'")?.value || '{}'); } catch { } return {...OFFER_DEFAULT, ...saved}; }
   const ADMINS = new Set(String(env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean));
   const secureCookie = env.COOKIE_SECURE ? env.COOKIE_SECURE === '1' : SITE.startsWith('https://');
   const dataDir = env.DATA_DIR || path.join(__dirname, 'data');
@@ -138,8 +139,8 @@ function createApp(options = {}) {
   });
 
   // ---------- configuração pública ----------
-  app.get('/api/config', (req, res) => res.json({priceCents: PRICE, listPriceCents: LIST_PRICE, priceLabel: PRICE_LABEL, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled,
-    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}));
+  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled,
+    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}); });
 
   // ---------- contas ----------
   app.post('/api/auth/register', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
@@ -289,7 +290,7 @@ function createApp(options = {}) {
     return db.get('SELECT * FROM orders WHERE id=?', o.id);
   }
   app.post('/api/checkout', jsonOnly, limit('checkout', 20, 3600000), api(async req => {
-    const u = needUser(req), now = Date.now(), card = req.body?.method === 'card';
+    const u = needUser(req), now = Date.now(), card = req.body?.method === 'card', PRICE = offer().priceCents;
     if (card && !pay.enabled) fail(400, 'Pagamento com cartão indisponível no momento. Use o PIX.');
     const provider = card ? 'mercadopago-card' : (pay.enabled ? 'mercadopago' : 'manual');
     let o = db.get("SELECT * FROM orders WHERE user_id=? AND status='pending' AND provider=? AND expires_at>? AND amount_cents=? ORDER BY created_at DESC LIMIT 1", u.id, provider, now + 60000, PRICE);
@@ -377,8 +378,18 @@ function createApp(options = {}) {
       tickets: db.all('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id ORDER BY (t.status=\'open\') DESC, t.created_at DESC LIMIT 300'),
       feedback: db.all('SELECT * FROM feedback ORDER BY received_at DESC LIMIT 300'),
       audit: db.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200'),
-      reviews: extra.adminReviews(), unreadChats: extra.unreadChats()
+      reviews: extra.adminReviews(), unreadChats: extra.unreadChats(), offer: offer()
     };
+  }));
+  app.post('/api/admin/offer', jsonOnly, api(req => {
+    needAdmin(req); const b = req.body || {};
+    const priceCents = Math.round(Number(b.priceCents)), listPriceCents = Math.round(Number(b.listPriceCents || 0));
+    if (!Number.isFinite(priceCents) || priceCents < 100 || priceCents > 10000000) fail(400, 'Preço inválido (mínimo R$ 1,00).');
+    if (!Number.isFinite(listPriceCents) || listPriceCents < 0 || (listPriceCents && listPriceCents <= priceCents)) fail(400, 'O preço "de" precisa ser maior que o preço "por" (ou 0 para não mostrar).');
+    const o = {priceCents, listPriceCents, priceLabel: str(b.priceLabel, 60) || OFFER_DEFAULT.priceLabel, banner: str(b.banner, 60)};
+    db.run("INSERT INTO settings(key,value) VALUES('offer',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(o));
+    db.audit(req.user.email, 'oferta', `de ${money(listPriceCents)} por ${money(priceCents)} • ${o.priceLabel} • ${o.banner}`);
+    return {offer: offer()};
   }));
   app.post('/api/admin/orders/:id/approve', jsonOnly, api(req => {
     needAdmin(req); const o = db.get('SELECT * FROM orders WHERE id=?', req.params.id) || fail(404, 'Pedido não encontrado.');
@@ -413,11 +424,23 @@ function createApp(options = {}) {
   const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
-  app.use('/img/telas', (req, res, next) => {
+  app.use('/img', (req, res, next) => { // 1.4: vale para todas as imagens do site (capturas e foto do topo)
     const dest = req.headers['sec-fetch-dest'], site = req.headers['sec-fetch-site'];
     if ((dest && dest !== 'image') || site === 'cross-site') return res.status(403).send('Imagem protegida.'); // abrir em nova aba/baixar ou usar em outro site
     res.set('Cache-Control', 'private, max-age=86400'); next();
   });
+  // ---------- 1.4: Guia (só para quem fez login) ----------
+  const privateDir = path.join(__dirname, 'private');
+  app.get(['/guia', '/guia.html'], (req, res) => req.user ? res.set('Cache-Control', 'no-store').sendFile(path.join(privateDir, 'guia.html')) : res.redirect('/entrar.html?next=/guia'));
+  app.get('/guia-img/:file', (req, res) => {
+    if (!req.user) return res.status(401).send('Entre na sua conta.');
+    const dest = req.headers['sec-fetch-dest'];
+    if ((dest && dest !== 'image') || req.headers['sec-fetch-site'] === 'cross-site') return res.status(403).send('Imagem protegida.');
+    if (!/^[a-z0-9-]+-(pt|en|es)\.jpg$/.test(req.params.file)) return res.status(404).send('');
+    res.set('Cache-Control', 'private, max-age=86400').sendFile(path.join(privateDir, 'guia-img', req.params.file), err => { if (err && !res.headersSent) res.status(404).send(''); });
+  });
+  app.get('/guia/modelo-clientes.csv', (req, res) => req.user ? res.download(path.join(privateDir, 'modelo-clientes.csv'), 'modelo-clientes.csv') : res.redirect('/entrar.html?next=/guia'));
+
   // ---------- páginas ----------
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
   app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));

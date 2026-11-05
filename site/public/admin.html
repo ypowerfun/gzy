@@ -7,10 +7,19 @@
 <link rel="stylesheet" href="/site.css">
 </head>
 <body data-no-chat>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="#oferta">Preço</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
 <main class="page"><div class="wrap dash">
   <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
   <div class="stats" id="stats"></div>
+  <section class="card" id="oferta"><h3>Preço e promoção</h3>
+    <p class="note">O que você salvar aqui aparece na hora no site (página inicial, pacotes, Minha conta) e vale para as próximas compras. Pedidos já criados mantêm o valor deles.</p>
+    <form id="offer-form" class="row" style="align-items:flex-end">
+      <label style="flex:1;min-width:150px">Preço "de" (riscado) R$<input name="list" inputmode="decimal" placeholder="189,90"></label>
+      <label style="flex:1;min-width:150px">Preço "por" R$<input name="price" inputmode="decimal" required placeholder="89,90"></label>
+      <label style="flex:2;min-width:200px">Texto da promoção<input name="label" maxlength="60" placeholder="Preço de Black Friday"></label>
+      <label style="flex:2;min-width:200px">Faixa do topo (vazio = sem faixa)<input name="banner" maxlength="60" placeholder="Black Friday GameZoney"></label>
+      <button class="btn">Salvar</button>
+    </form><p class="msg" id="offer-msg"></p></section>
   <section class="card" id="chat"><h3><span>Chat ao vivo</span><small class="note">Enquanto esta página está aberta, os visitantes veem você como <b style="color:var(--green)">online</b>.</small></h3>
     <div class="admin-chat"><div class="chat-list" id="chat-list"></div>
       <div class="chat-pane"><div class="chat-head" id="chat-head"><span class="note">Escolha uma conversa.</span></div><div class="chat-log" id="admin-log"></div>

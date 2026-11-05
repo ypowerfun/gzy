@@ -161,6 +161,28 @@ sudo mv ~/*.exe /var/lib/gamezoney-site/downloads/ && sudo chown gamezoney:gamez
 
 Envie o zip novo, descompacte e rode de novo `sudo bash deploy/instalar-vps.sh`. Banco, configuração, chave e downloads são mantidos.
 
+## Visual e conteúdo (1.4)
+
+- **Página inicial** no estilo Black Friday:
+  - faixa no topo com o texto da promoção;
+  - "Sua arena. No próximo nível." e foto da arena com o selo do preço;
+  - destaques (PCs e consoles sem limite / Windows 10 e 11 / Suporte especializado);
+  - "O centro de comando da sua arena";
+  - recursos, telas, avaliações, pacotes, dúvidas e atualizações;
+  - chamada final com o preço.
+
+  A foto fica em `public/img/hero-arena.jpg`: troque por uma foto em alta resolução quando tiver.
+- **Preço e promoção:** edite em `/admin › Preço e promoção`: preço "de" (riscado), preço "por", texto da promoção e faixa do topo.
+  - O que for salvo vale na hora no site e nas próximas compras.
+  - `PRICE_CENTS`, `LIST_PRICE_CENTS` e `PRICE_LABEL` do `.env` só valem até a primeira edição no admin.
+- **Pacotes:**
+  - **Pacote Padrão:** teste grátis de 30 dias.
+  - **Pacote Premium:** licença vitalícia com layout personalizado, todas as funções, PCs e consoles sem limite, 1 licença por servidor, suporte completo e novas atualizações.
+- **Telas:** o Painel de controle aparece com o menu lateral; Vendas (PDV), Corujão/Viradão, Caixa, Estoque e Ranking aparecem só com a área da tela.
+- **Guia** (menu ao lado de Dúvidas, só para quem fez login; `/guia`): conectar os PCs ao servidor, conectar TVs e consoles, e importar clientes por CSV (com modelo para baixar).
+  - A página e as imagens ficam em `private/` e só são entregues com a sessão aberta.
+- **Menu:** "Novas Atualizações" passou a se chamar **Atualizações**.
+
 ## Segurança (1.3)
 
 - **Administrador só com e-mail confirmado.** Quem cria conta recebe um link de confirmação. Ninguém vira administrador só por cadastrar o e-mail do `ADMIN_EMAILS`: o `/admin` exige o e-mail confirmado. Para confirmar o seu e-mail direto no VPS (se o e-mail não chegar):

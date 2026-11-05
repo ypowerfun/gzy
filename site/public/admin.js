@@ -4,6 +4,9 @@
   const table = (head, rows) => rows.length ? `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p class="note">Nada por aqui ainda.</p>';
   async function load() {
     let d; try { d = await api('/api/admin/overview'); } catch (e) { if (e.status === 401) location.href = '/entrar.html?next=/admin'; else document.querySelector('main .wrap').innerHTML = `<p class="msg err" style="display:block">${esc(e.message)}</p>`; return; }
+    // 1.4: preço e promoção
+    const of = $('#offer-form'), cents = c => c ? (c / 100).toFixed(2).replace('.', ',') : '';
+    if (of && !of.dataset.loaded) { of.list.value = cents(d.offer.listPriceCents); of.price.value = cents(d.offer.priceCents); of.label.value = d.offer.priceLabel; of.banner.value = d.offer.banner; of.dataset.loaded = '1'; }
     const s = d.stats;
     $('#stats').innerHTML = [['Clientes', s.users], ['Licenças', s.licenses], ['Ativadas', s.activeLicenses], ['Vendas pagas', s.paidOrders], ['Faturamento', money(s.revenueCents)], ['Chamados abertos', s.openTickets], ['Downloads', s.downloads]].map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
     $('#orders').innerHTML = table(['Data', 'Cliente', 'Valor', 'Forma', 'Situação', 'Chave', ''], d.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${esc(o.email)}</td><td>${money(o.amountCents)}</td><td>${o.provider === 'manual' ? 'PIX manual' : o.method === 'card' ? 'Cartão Mercado Pago' : 'PIX Mercado Pago'}</td><td><span class="pill ${(ST[o.status] || [])[1] || ''}">${(ST[o.status] || [o.status])[0]}</span><br><small class="note">${esc(o.note || '')}</small></td><td>${o.licenseKey ? `<span class="key" style="font-size:13px">${esc(o.licenseKey)}</span>` : '—'}</td><td>${o.status !== 'paid' ? `<button class="btn small" data-approve="${o.id}">Confirmar pagamento</button>` : ''}</td></tr>`));
@@ -50,5 +53,9 @@
   sendForm.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendForm.requestSubmit(); } });
   $('#chat-close').onclick = () => chatId && api('/api/admin/chats/' + chatId, {status: 'closed'}).then(pollChat);
   pollChat(); setInterval(pollChat, 4000);
+  const toCents = v => { let t = String(v || '0').trim(); if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.'); return Math.round(Number(t) * 100); }; // aceita 89,90 / 89.90 / 1.189,90
+  $('#offer-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
+    try { const r = await api('/api/admin/offer', {listPriceCents: toCents(f.list.value), priceCents: toCents(f.price.value), priceLabel: f.label.value, banner: f.banner.value});
+      showMsg($('#offer-msg'), `Salvo: de ${money(r.offer.listPriceCents)} por ${money(r.offer.priceCents)}.`, true); } catch (err) { showMsg($('#offer-msg'), err.message); } }); };
   load();
 })();

@@ -44,6 +44,7 @@
     }
     // capturas de tela do sistema no idioma escolhido
     if (el.dataset && el.dataset.tela) { const src = `/img/telas/${el.dataset.tela}-${lang}.jpg`; if (el.getAttribute('src') !== src) el.setAttribute('src', src); }
+    if (el.dataset && el.dataset.guia) { const src = `/guia-img/${el.dataset.guia}-${lang}.jpg`; if (el.getAttribute('src') !== src) el.setAttribute('src', src); }
     if (el.dataset && el.dataset.telaLink) { const href = `/img/telas/${el.dataset.telaLink}-${lang}.jpg`; if (el.getAttribute('href') !== href) el.setAttribute('href', href); }
   }
   function walk(root) {
