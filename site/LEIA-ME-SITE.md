@@ -21,6 +21,7 @@ O site roda no VPS da Oracle (Ubuntu 22.04 ARM, IP **137.131.177.64**) com banco
 2. Clique em **Adicionar regras de entrada** (Add Ingress Rules) e crie duas:
    - CIDR de origem `0.0.0.0/0`, protocolo TCP, porta de destino **80**;
    - CIDR de origem `0.0.0.0/0`, protocolo TCP, porta de destino **443**.
+   - Deixe **Intervalo de Portas de Origem** **vazio** (= Todos), como na regra do SSH (22). Se a origem ficar 80/443, o site não abre e o certificado HTTPS falha com "Timeout during connect".
 
 O firewall interno do Ubuntu é liberado pelo script de instalação.
 
