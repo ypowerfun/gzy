@@ -18,7 +18,7 @@ O site roda no VPS da Oracle (Ubuntu 22.04 ARM, IP **137.131.177.64**) com banco
 - **Chat ao vivo ("Fale conosco"):** botão no canto de todas as páginas. O visitante informa nome, e-mail e WhatsApp e conversa com você. Responda em `/admin › Chat ao vivo`. Enquanto o `/admin` está aberto, o visitante vê **Online agora**; fechado, vê "Deixe sua mensagem" e você recebe um e-mail a cada conversa nova. A resposta pode ir também por e-mail (caixa "enviar também por e-mail").
 - **Instagram:** ícone no rodapé com link para https://www.instagram.com/gamezoney_.
 - **Idioma:** o site abre sempre em Português (Brasil); English e Español só quando o visitante escolhe no rodapé (a escolha fica lembrada).
-- **Administração (`/admin`):** pedidos, licenças (emitir cortesia, liberar, bloquear), chamados (responder por e-mail), clientes, feedback e registro.
+- **Administração (`/admin`):** pedidos, licenças (emitir cortesia, liberar, bloquear), **chamados** (caixa própria com abas **Abertos** e **Fechados** e busca: escolha o chamado na lista, escreva a resposta e clique em **Responder e fechar**; ele vai para Fechados, o cliente recebe por e-mail e vê em Minha conta › Suporte; **Reabrir chamado** volta para Abertos), clientes, feedback e registro.
 
 ---
 

@@ -32,7 +32,10 @@
     <p role="status" aria-live="polite" class="msg" id="issue-msg"></p></section>
   <section class="card" id="pedidos"><h3>Pedidos</h3><div class="table" id="orders"></div></section>
   <section class="card" id="licencas"><h3>Licenças</h3><div class="table" id="licenses"></div></section>
-  <section class="card" id="chamados"><h3>Chamados de suporte</h3><div class="table" id="tickets"></div></section>
+  <section class="card" id="chamados"><h3><span>Chamados de suporte</span><small class="note">A resposta vai por e-mail para o cliente e aparece em Minha conta › Suporte.</small></h3>
+    <div class="ticket-tabs" role="tablist"><button type="button" class="on" data-ttab="open" role="tab">Abertos <span class="pill wait" id="tk-open-n">0</span></button><button type="button" data-ttab="closed" role="tab">Fechados <span class="pill" id="tk-closed-n">0</span></button><input id="tk-search" type="search" placeholder="Buscar por assunto, nome ou e-mail" aria-label="Buscar chamados"></div>
+    <div class="admin-chat tickets-box"><div class="chat-list" id="ticket-list"></div><div class="chat-pane ticket-pane" id="ticket-pane"><p class="note" style="padding:14px">Escolha um chamado.</p></div></div>
+    <p role="status" aria-live="polite" class="msg" id="ticket-msg"></p></section>
   <section class="card" id="clientes"><h3>Clientes</h3><div class="table" id="users"></div></section>
   <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
   <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>

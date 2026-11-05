@@ -58,7 +58,7 @@ test('site: conta por e-mail, compra por PIX manual confirmada pelo administrado
  await dono('/api/admin/licenses',{email:'ninguem@x.com'},404);
  // suporte
  await ana('/api/support',{subject:'Ajuda',message:'Como ativo a licença?'});const tk=(await dono('/api/admin/overview')).tickets[0];
- await dono('/api/admin/tickets/'+tk.id,{reply:'Configuração › Licença.',status:'closed'});assert.equal((await ana('/api/me')).tickets[0].reply,'Configuração › Licença.');
+ const ans=await dono('/api/admin/tickets/'+tk.id,{reply:'Configuração › Licença.',status:'closed'});assert.equal(ans.emailed,true);assert.equal((await dono('/api/admin/overview')).stats.openTickets,0);assert.equal((await dono('/api/admin/tickets/'+tk.id,{status:'open'})).emailed,undefined);assert.equal((await dono('/api/admin/overview')).stats.openTickets,1);await dono('/api/admin/tickets/'+tk.id,{status:'closed'});assert.equal((await ana('/api/me')).tickets[0].reply,'Configuração › Licença.');
  // sair
  await ana('/api/auth/logout',{});assert.equal((await ana('/api/me')).user,null);
  await ana('/api/auth/login',{email:'ana@arena.com',password:'senha-forte-1'});assert.equal((await ana('/api/me')).user.name,'Ana Souza');

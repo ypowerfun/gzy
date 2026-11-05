@@ -11,7 +11,7 @@
     $('#stats').innerHTML = [['Clientes', s.users], ['Licenças', s.licenses], ['Ativadas', s.activeLicenses], ['Vendas pagas', s.paidOrders], ['Faturamento', money(s.revenueCents)], ['Chamados abertos', s.openTickets], ['Downloads', s.downloads]].map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
     $('#orders').innerHTML = table(['Data', 'Cliente', 'Valor', 'Forma', 'Situação', 'Chave', ''], d.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${esc(o.email)}</td><td>${money(o.amountCents)}</td><td>${o.provider === 'manual' ? 'PIX manual' : o.method === 'card' ? 'Cartão Mercado Pago' : 'PIX Mercado Pago'}</td><td><span class="pill ${(ST[o.status] || [])[1] || ''}">${(ST[o.status] || [o.status])[0]}</span><br><small class="note">${esc(o.note || '')}</small></td><td>${o.licenseKey ? `<span class="key" style="font-size:13px">${esc(o.licenseKey)}</span>` : '—'}</td><td>${o.status !== 'paid' ? `<button class="btn small" data-approve="${o.id}">Confirmar pagamento</button>` : ''}</td></tr>`));
     $('#licenses').innerHTML = table(['Chave', 'Cliente', 'Situação', 'Computador', ''], d.licenses.map(l => `<tr><td><span class="key" style="font-size:13px">${esc(l.key)}</span><br><small class="note">${fmtDate(l.createdAt)} ${esc(l.note || '')}</small></td><td>${esc(l.email)}</td><td>${l.status === 'active' ? (l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Não ativada</span>') : '<span class="pill bad">Bloqueada</span>'}</td><td>${esc(l.machine || '—')}<br><small class="note">${esc(l.installId)} ${l.releases ? '• trocas: ' + l.releases : ''} ${l.machines ? '• ' + l.machines + ' computador(es)' : ''}</small>${l.suspect ? `<br><span class="pill bad" title="3 ou mais trocas de computador em 30 dias">Suspeita de revenda (${l.recentTransfers} trocas em 30 dias)</span>` : ''}</td><td class="row">${l.active ? `<button class="btn small ghost" data-lic="${l.id}" data-op="release">Liberar</button>` : ''}<button class="btn small ${l.status === 'active' ? 'danger' : ''}" data-lic="${l.id}" data-op="${l.status === 'active' ? 'blocked' : 'active'}">${l.status === 'active' ? 'Bloquear' : 'Desbloquear'}</button></td></tr>`));
-    $('#tickets').innerHTML = table(['Chamado', 'Resposta'], d.tickets.map(t => `<tr><td><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Fechado'}</span><br><small class="note">${esc(t.name)} &lt;${esc(t.email)}&gt; • ${fmtDate(t.created_at)}</small><p style="white-space:pre-wrap;margin:6px 0 0">${esc(t.message)}</p></td><td style="min-width:280px"><textarea data-reply="${t.id}" placeholder="Resposta (vai por e-mail para o cliente)">${esc(t.reply)}</textarea><div class="row" style="margin-top:8px"><button class="btn small" data-answer="${t.id}">Responder e fechar</button></div></td></tr>`));
+    renderTickets(d.tickets);
     $('#users').innerHTML = table(['Nome', 'E-mail', 'Telefone', 'Login', 'Criado', 'Último acesso'], d.users.map(u => `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone)}</td><td>${u.google ? 'Google' : 'E-mail'}</td><td>${fmtDate(u.created_at)}</td><td>${fmtDate(u.last_login_at)}</td></tr>`));
     $('#feedbacks').innerHTML = table(['Recebido', 'Nome', 'E-mail', 'Comentário', 'Versão'], d.feedback.map(f => `<tr><td>${fmtDate(f.received_at)}</td><td>${esc(f.name)}</td><td>${esc(f.email)}</td><td style="white-space:pre-wrap">${esc(f.comment)}</td><td>${esc(f.server_version)}</td></tr>`));
     const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
@@ -22,8 +22,37 @@
     $('#audit').innerHTML = table(['Data', 'Quem', 'Ação', 'Detalhe'], d.audit.map(a => `<tr><td>${fmtDate(a.at)}</td><td>${esc(a.actor)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`));
     $$('[data-approve]').forEach(b => b.onclick = () => { if (window.confirm('Confirmar o pagamento deste pedido e emitir a licença?')) busy(b, () => api('/api/admin/orders/' + b.dataset.approve + '/approve', {}).then(load, e => alert(e.message))); });
     $$('[data-lic]').forEach(b => b.onclick = () => busy(b, () => api('/api/admin/licenses/' + b.dataset.lic, b.dataset.op === 'release' ? {release: true} : {status: b.dataset.op}).then(load, e => alert(e.message))));
-    $$('[data-answer]').forEach(b => b.onclick = () => busy(b, () => api('/api/admin/tickets/' + b.dataset.answer, {reply: $(`[data-reply="${b.dataset.answer}"]`).value, status: 'closed'}).then(load, e => alert(e.message))));
   }
+  // ---------- chamados: caixa própria (Abertos / Fechados), no mesmo formato do chat ----------
+  let tickets = [], ticketTab = 'open', ticketId = null;
+  function renderTickets(list) {
+    if (list) tickets = list;
+    const q = ($('#tk-search').value || '').trim().toLowerCase();
+    const open = tickets.filter(t => t.status === 'open'), closed = tickets.filter(t => t.status !== 'open');
+    $('#tk-open-n').textContent = open.length; $('#tk-closed-n').textContent = closed.length;
+    $$('[data-ttab]').forEach(b => b.classList.toggle('on', b.dataset.ttab === ticketTab));
+    const shown = (ticketTab === 'open' ? open : closed).filter(t => !q || [t.subject, t.name, t.email, t.message].join(' ').toLowerCase().includes(q));
+    if (!shown.some(t => t.id === ticketId)) ticketId = shown[0]?.id || null;
+    $('#ticket-list').innerHTML = shown.length ? shown.map(t => `<button type="button" class="chat-item ${t.id === ticketId ? 'on' : ''}" data-ticket="${t.id}"><b>${esc(t.subject)}</b><small>${esc(t.name)} • ${fmtDate(t.created_at)}</small><small>${esc(t.message.slice(0, 70))}</small></button>`).join('')
+      : `<p class="note" style="padding:12px">${ticketTab === 'open' ? 'Nenhum chamado aberto.' : 'Nenhum chamado fechado.'}</p>`;
+    $$('[data-ticket]').forEach(b => b.onclick = () => { ticketId = b.dataset.ticket; renderTickets(); });
+    const t = tickets.find(x => x.id === ticketId), pane = $('#ticket-pane');
+    if (!t) { pane.innerHTML = '<p class="note" style="padding:14px">Escolha um chamado.</p>'; return; }
+    const head = `<div class="chat-head"><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Fechado'}</span><small class="note">${esc(t.name)} &lt;${esc(t.email)}&gt; • ${fmtDate(t.created_at)}</small></div>`;
+    const body = `<div class="ticket-body"><p class="ticket-label">Mensagem do cliente</p><p class="ticket-text">${esc(t.message)}</p>`;
+    pane.innerHTML = head + body + (t.status === 'open'
+      ? `</div><form id="ticket-form" class="ticket-form"><textarea name="reply" required placeholder="Resposta (vai por e-mail para o cliente)">${esc(t.reply)}</textarea><div class="row"><button class="btn small">Responder e fechar</button></div></form>`
+      : `${t.reply ? `<p class="ticket-label">Sua resposta${t.replied_at ? ' • ' + fmtDate(t.replied_at) : ''}</p><p class="ticket-text reply">${esc(t.reply)}</p>` : '<p class="note">Fechado sem resposta.</p>'}</div><div class="ticket-form"><div class="row"><button type="button" class="btn small ghost" id="ticket-reopen">Reabrir chamado</button></div></div>`);
+    const f = $('#ticket-form');
+    if (f) f.onsubmit = e => { e.preventDefault(); const reply = f.reply.value.trim(); if (!reply) return;
+      busy(f.querySelector('button'), async () => { try { const r = await api('/api/admin/tickets/' + t.id, {reply, status: 'closed'});
+        showMsg($('#ticket-msg'), r.emailed === false ? 'Chamado fechado. O e-mail não foi enviado, mas o cliente vê a resposta em Minha conta › Suporte.' : 'Resposta enviada por e-mail e chamado fechado (está em Fechados).', r.emailed !== false);
+        ticketId = null; await load(); } catch (err) { showMsg($('#ticket-msg'), err.message); } }); };
+    const ro = $('#ticket-reopen');
+    if (ro) ro.onclick = () => busy(ro, async () => { try { await api('/api/admin/tickets/' + t.id, {status: 'open'}); ticketTab = 'open'; showMsg($('#ticket-msg'), 'Chamado reaberto (está em Abertos).', true); await load(); } catch (err) { showMsg($('#ticket-msg'), err.message); } });
+  }
+  $$('[data-ttab]').forEach(b => b.onclick = () => { ticketTab = b.dataset.ttab; ticketId = null; renderTickets(); });
+  $('#tk-search').oninput = () => renderTickets();
   $('#issue-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
     try { const r = await api('/api/admin/licenses', {email: f.email.value, note: f.note.value}); showMsg($('#issue-msg'), 'Licença emitida: ' + r.key, true); f.reset(); load(); } catch (err) { showMsg($('#issue-msg'), err.message); } }); };
   // ---------- chat ao vivo ----------

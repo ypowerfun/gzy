@@ -428,12 +428,14 @@ function createApp(options = {}) {
     db.audit(req.user.email, 'licenca', `${lic.key}: ${req.body.release ? 'liberada ' : ''}${req.body.status || ''}`);
     return {ok: true};
   }));
-  app.post('/api/admin/tickets/:id', jsonOnly, api(req => {
+  app.post('/api/admin/tickets/:id', jsonOnly, api(async req => {
     needAdmin(req); const t = db.get('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id WHERE t.id=?', req.params.id) || fail(404, 'Chamado não encontrado.');
     const reply = str(req.body.reply, 4000), status = req.body.status === 'open' ? 'open' : 'closed';
     db.run('UPDATE tickets SET reply=?, status=?, replied_at=? WHERE id=?', reply || t.reply, status, Date.now(), t.id);
-    if (reply) mail.send(t.email, 'GameZoney suporte: ' + t.subject, `Olá, ${t.name}!\n\n${reply}\n\nSeus chamados: ${SITE}/conta#suporte`);
-    return {ok: true};
+    // o envio do e-mail não derruba o pedido se falhar; o cliente também vê a resposta em Minha conta › Suporte
+    const emailed = reply && reply !== t.reply ? await Promise.resolve(mail.send(t.email, 'GameZoney suporte: ' + t.subject, `Olá, ${t.name}!\n\n${reply}\n\nSeus chamados: ${SITE}/conta#suporte`)).then(r => r !== false, () => false) : undefined;
+    db.audit(req.user.email, 'chamado', `${t.subject} (${t.email}): ${status === 'open' ? 'reaberto' : 'respondido e fechado'}`);
+    return {ok: true, emailed};
   }));
 
   // ---------- avaliações e chat ao vivo (community.js) ----------
