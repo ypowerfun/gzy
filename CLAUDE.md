@@ -17,9 +17,12 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 - `cliente/windows-client-1.0.5/`: cliente C# WinForms (GameZoneyCliente.exe + MonitorGZ.exe) e `transport.js` (node.exe).
 - `unico/` + `GERAR-INSTALADOR-UNICO.cmd`: instalador único (Servidor e/ou Cliente).
 - Guia único: `GUIA-GAMEZONEY.md` (igual no servidor e no cliente — manter os dois iguais).
+- `site/`: site **gamezoney.com** (Node + Express + SQLite próprio; VPS Oracle Ubuntu 22.04 ARM 137.131.177.64; domínio na HostGator; Caddy no VPS com `site/deploy/Caddyfile` — este Caddyfile é do site, não do app antigo). Contas por e-mail/senha ou Google, compra por PIX (Mercado Pago ou PIX manual confirmado em `/admin`), chaves de licença, ativação, downloads, suporte e feedback. Guia de instalação: `site/LEIA-ME-SITE.md`; testes: `cd site && npm ci && node --test test/*.test.js`.
 - Uso **somente na rede local** por enquanto; próximo passo planejado: servidor rodando **também em nuvem**.
 
 ## Decisões já tomadas (não desfazer sem pedir)
+- **Licença comercial** (`license.js`, `public/license-ui.js`): teste grátis de **30 dias** (início em `state.license.trialStartedAt` + cópia em `%LOCALAPPDATA%\GameZoney\gz-license.json`); licença **vitalícia R$ 89,90** (Black Friday) comprada em gamezoney.com; chave `GZ-XXXX-XXXX-XXXX-XXXX` ativada em Configuração › Licença → o site devolve certificado **Ed25519** preso ao `installId` (chave pública embutida em `license.js`; a privada `license-private.pem` fica só no VPS e com o dono — **nunca no Git**). Teste vencido: só bloqueia (402) `/api/credit`, `/start`, `/guest-start*`, `/shop/sale`, `/events`, `/events/pay`, `/events/start`, `/cash/open`, `/members`, `/members/import`, `/loyalty/redeem`; dados mantidos.
+- Corujão/Viradão **sem campo Tipo**: o nome já diz (eventos novos `kind:'evento'`, sem prefixo; antigos mantêm "Corujão"/"Viradão").
 - 1.0.1 é a base (1.0.2–1.0.4 foram revertidas). Nomes internos `Gz*`/`GZ_*`; o servidor ainda aceita o cabeçalho antigo `X-Prime-Device` (PCs na 1.0.1) e restaura backups antigos (`prime-arena-full-backup`).
 - Senha do servidor 4–24 caracteres; senhas em campos mascarados (`data-secret`), nunca `type=password`; WebView2 com salvar senha desligado.
 - Confirmações pela caixa própria `ask()` (nunca `confirm()`/`alert()` do navegador — mostrava o IP).

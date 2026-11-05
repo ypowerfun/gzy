@@ -6,6 +6,8 @@ Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, 
 
 O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre numa janela própria do GameZoney; fechar a janela só esconde o painel.
 
+Teste grátis de 30 dias com todas as funções, a partir da primeira abertura. Para continuar depois do teste, compre a licença vitalícia em gamezoney.com e ative em Configuração > Licença.
+
 No primeiro acesso, crie o usuário administrador e a senha. Em Configurações, confira o endereço deste PC na rede (usado pelas TVs).
 
 TVs: o Servidor já vem pronto para controlar TVs VIDAA (Hisense/Toshiba) e TVs Android (Android TV / Google TV). Cadastre cada TV em Painel de controle > + Nova estação, tipo Console (IP da TV, entrada HDMI e "Sistema da TV": VIDAA ou Android) e use Parear TV:

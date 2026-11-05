@@ -6,6 +6,8 @@ This installer includes everything the Server needs (Node engine, database, tool
 
 The Server starts automatically when the account signs in to Windows (icon near the clock). The panel opens in its own GameZoney window; closing the window only hides the panel.
 
+30-day free trial with all features, starting at the first launch. To keep using it after the trial, buy the lifetime license at gamezoney.com and activate it in Settings > License.
+
 On first access, create the administrator user and password. In Settings, check this PC's network address (used by the TVs). The panel language can be changed in Profile > Language.
 
 TVs: the Server is ready to control VIDAA TVs (Hisense/Toshiba) and Android TVs (Android TV / Google TV). Register each TV in Control panel > + New station, type Console (TV IP, HDMI input and "TV system": VIDAA or Android) and use Pair TV:

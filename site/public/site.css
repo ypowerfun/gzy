@@ -1,0 +1,69 @@
+/* GameZoney — site gamezoney.com — software proprietário e confidencial. © 2026 GameZoney. */
+:root{--bg:#07080b;--bg2:#0e1016;--card:#12141b;--line:#262a35;--gold:#d4a017;--gold2:#ffce3a;--gold-dark:#7a580a;--text:#e9eaee;--muted:#8d909b;--green:#2fd27a;--red:#ff6b75;--radius:4px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Montserrat,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55}
+a{color:var(--gold2)}img{max-width:100%}
+h1,h2,h3{font-family:Rajdhani,Montserrat,sans-serif;letter-spacing:.04em;line-height:1.15;margin:0 0 .5em}
+.wrap{width:min(1180px,100% - 32px);margin:0 auto}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(7,8,11,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:20px;min-height:68px}
+.logo img{height:38px;display:block}
+.nav{display:flex;gap:22px;margin-left:auto;align-items:center}
+.nav a{color:var(--text);text-decoration:none;font-size:14px;letter-spacing:.05em;text-transform:uppercase;opacity:.85}.nav a:hover{opacity:1;color:var(--gold2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border:1px solid var(--gold);background:linear-gradient(180deg,var(--gold2),var(--gold));color:#111;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:13px;text-decoration:none;cursor:pointer;border-radius:var(--radius);font-family:inherit}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:transparent;color:var(--gold2)}.btn.small{padding:8px 14px;font-size:11px}.btn.danger{border-color:var(--red);color:var(--red);background:transparent}
+.btn.google{background:#fff;color:#1f1f1f;border-color:#dadce0;text-transform:none;letter-spacing:0;font-weight:600;font-size:15px;width:100%}
+.btn.google svg{width:18px;height:18px}
+.hero{position:relative;overflow:hidden;padding:96px 0 84px;border-bottom:1px solid var(--line);background:radial-gradient(900px 420px at 80% -10%,rgba(212,160,23,.22),transparent 60%),radial-gradient(700px 400px at -10% 110%,rgba(212,160,23,.12),transparent 60%)}
+.hero h1{font-size:clamp(34px,5.4vw,62px);text-transform:uppercase;max-width:900px}
+.hero h1 span{color:var(--gold2)}
+.hero p.lead{font-size:clamp(17px,2vw,21px);color:#c8cad2;max-width:760px;margin:0 0 30px}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.badge{display:inline-block;padding:5px 12px;border:1px solid var(--gold-dark);color:var(--gold2);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px;border-radius:999px;background:rgba(212,160,23,.08)}
+.note{color:var(--muted);font-size:14px}
+section.block{padding:80px 0;border-bottom:1px solid var(--line)}
+section.block h2{font-size:clamp(28px,3.6vw,42px);text-transform:uppercase}
+section.block h2 + p{color:var(--muted);max-width:720px;margin-top:-6px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(3,1fr);margin-top:34px}
+@media (max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}@media (max-width:600px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);padding:24px;border-radius:var(--radius)}
+.card h3{font-size:21px;color:var(--gold2);text-transform:uppercase}
+.card p{margin:0;color:#c3c5cc;font-size:15px}
+.ico{font-size:26px;display:block;margin-bottom:10px}
+.prices{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:34px;align-items:stretch}
+.price{background:var(--card);border:1px solid var(--line);padding:32px;display:flex;flex-direction:column;border-radius:var(--radius)}
+.price.best{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 20px 60px rgba(212,160,23,.15);position:relative}
+.price .tag{position:absolute;top:-13px;left:24px;background:var(--gold2);color:#111;font-weight:800;font-size:12px;letter-spacing:.1em;padding:4px 12px;text-transform:uppercase}
+.price .value{font-family:Rajdhani,sans-serif;font-size:56px;font-weight:700;color:var(--gold2);line-height:1;margin:14px 0 4px}
+.price .old{color:var(--muted);text-decoration:line-through}
+.price ul{list-style:none;padding:0;margin:20px 0 26px;flex:1}.price li{padding:7px 0 7px 28px;position:relative;border-bottom:1px dashed var(--line);font-size:15px}
+.price li:before{content:"✔";position:absolute;left:0;color:var(--green)}
+details{background:var(--card);border:1px solid var(--line);padding:16px 20px;margin-top:12px;border-radius:var(--radius)}
+summary{cursor:pointer;font-weight:700}details p{color:#c3c5cc;margin:12px 0 0}
+footer.site{padding:40px 0;color:var(--muted);font-size:14px}footer.site .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+footer.site a{color:var(--muted)}
+/* formulários / conta */
+.page{padding:48px 0 80px;min-height:calc(100vh - 160px)}
+.box{max-width:460px;margin:0 auto;background:var(--card);border:1px solid var(--line);padding:30px;border-radius:var(--radius)}
+label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;letter-spacing:.04em}
+input,textarea,select{width:100%;padding:12px 13px;background:#0a0b0f;border:1px solid var(--line);color:var(--text);font:inherit;border-radius:var(--radius)}
+input:focus,textarea:focus{outline:1px solid var(--gold);border-color:var(--gold)}
+textarea{min-height:120px;resize:vertical}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:6px}.tabs button{flex:1;background:none;border:0;color:var(--muted);padding:12px;font:inherit;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--gold2);border-color:var(--gold)}
+.msg{margin:14px 0 0;padding:10px 12px;border-radius:var(--radius);font-size:14px;display:none}.msg.err{display:block;background:rgba(255,107,117,.1);border:1px solid rgba(255,107,117,.4);color:#ffb3b9}.msg.ok{display:block;background:rgba(47,210,122,.08);border:1px solid rgba(47,210,122,.35);color:#9ff0c3}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:18px 0}.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.dash{display:grid;gap:20px}
+.dash .card h3{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.table{overflow-x:auto}
+.key{font-family:Consolas,monospace;font-size:17px;color:var(--gold2);letter-spacing:.06em;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;border:1px solid var(--line)}.pill.ok{color:var(--green);border-color:rgba(47,210,122,.4)}.pill.wait{color:var(--gold2);border-color:var(--gold-dark)}.pill.bad{color:var(--red);border-color:rgba(255,107,117,.4)}
+.pix{display:grid;gap:18px;grid-template-columns:220px 1fr;align-items:start;margin-top:16px}.pix img{background:#fff;padding:8px;width:220px;height:220px}
+.pix textarea{min-height:90px;font-family:Consolas,monospace;font-size:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hidden{display:none!important}
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.stats div{background:#0a0b0f;border:1px solid var(--line);padding:14px}.stats b{display:block;font-size:24px;color:var(--gold2);font-family:Rajdhani,sans-serif}
+.legal{max-width:820px}.legal h2{font-size:22px;margin-top:28px}
+@media (max-width:760px){.nav a:not(.btn){display:none}.pix{grid-template-columns:1fr}.hero{padding:60px 0}.box{padding:22px}}

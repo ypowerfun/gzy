@@ -1,0 +1,48 @@
+'use strict';
+(() => {
+  let me = null, poll = null;
+  const STATUS = {paid: ['Pago', 'ok'], pending: ['Aguardando pagamento', 'wait'], expired: ['Vencido', 'bad'], canceled: ['Cancelado', 'bad']};
+  const size = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.ceil(b / 1024) + ' KB';
+  async function load() {
+    me = await loadMe();
+    if (!me.user) { location.href = '/entrar.html?next=' + encodeURIComponent(location.pathname + location.hash); return; }
+    $('#hello').textContent = 'Olá, ' + (me.user.name || me.user.email).split(' ')[0];
+    $('#hello-sub').textContent = me.user.email + (me.user.google ? ' • conta Google' : '');
+    $('#admin-link').classList.toggle('hidden', !me.admin);
+    $('#download-list').innerHTML = me.downloads.length ? me.downloads.map(d => `<a class="btn ghost" href="/download/${encodeURIComponent(d.file)}">⬇ ${esc(d.file)} <small style="opacity:.7">(${size(d.size)})</small></a>`).join('') : '<p class="note">Os instaladores estarão disponíveis aqui em breve.</p>';
+    $('#license-list').innerHTML = me.licenses.length ? `<div class="table"><table><thead><tr><th>Chave</th><th>Situação</th><th>Computador</th><th></th></tr></thead><tbody>${me.licenses.map(l => `<tr><td><span class="key">${esc(l.key)}</span><br><small class="note">Vitalícia • desde ${fmtDate(l.createdAt)}</small></td><td>${l.status !== 'active' ? '<span class="pill bad">Bloqueada</span>' : l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Pronta para ativar</span>'}</td><td>${l.active ? esc(l.machine || '—') + '<br><small class="note">' + fmtDate(l.activatedAt) + '</small>' : '—'}</td><td>${l.active ? `<button class="btn small ghost" data-release="${l.id}">Liberar</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Você ainda não tem licença. Está no teste grátis? Compre abaixo para continuar usando depois dos 30 dias.</p>';
+    $$('[data-release]').forEach(b => b.onclick = async () => {
+      if (!window.confirm('Liberar esta chave do computador atual? Depois ative-a no computador novo (Configuração › Licença).')) return;
+      await busy(b, () => api('/api/licenses/' + b.dataset.release + '/release', {})); load();
+    });
+    $('#order-list').innerHTML = me.orders.length ? `<table><thead><tr><th>Data</th><th>Valor</th><th>Situação</th><th>Chave</th></tr></thead><tbody>${me.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${money(o.amountCents)}</td><td><span class="pill ${(STATUS[o.status] || [])[1] || ''}">${(STATUS[o.status] || [o.status])[0]}</span></td><td>${o.licenseKey ? `<span class="key" style="font-size:14px">${esc(o.licenseKey)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Nenhum pedido ainda.</p>';
+    $('#ticket-list').innerHTML = me.tickets.length ? `<table><thead><tr><th>Chamado</th><th>Resposta</th></tr></thead><tbody>${me.tickets.map(t => `<tr><td><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Respondido'}</span><br><small class="note">${fmtDate(t.created_at)}</small><p style="white-space:pre-wrap;margin:6px 0 0">${esc(t.message)}</p></td><td style="white-space:pre-wrap">${t.reply ? esc(t.reply) : '<span class="note">Aguardando resposta</span>'}</td></tr>`).join('')}</tbody></table>` : '';
+    const pf = $('#profile-form'); pf.name.value = me.user.name || ''; pf.phone.value = me.user.phone || '';
+    const c = siteConfig || await api('/api/config').catch(() => ({}));
+    const contacts = [c.supportWhatsapp ? `WhatsApp: <a href="https://wa.me/${esc(c.supportWhatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.supportWhatsapp)}</a>` : '', c.supportEmail ? `E-mail: <a href="mailto:${esc(c.supportEmail)}">${esc(c.supportEmail)}</a>` : ''].filter(Boolean);
+    if (contacts.length) $('#support-contacts').innerHTML = 'Abra um chamado (respondemos pelo e-mail da sua conta) ou fale direto: ' + contacts.join(' • ');
+  }
+  function showOrder(o) {
+    const box = $('#checkout'); box.classList.remove('hidden');
+    if (o.status === 'paid') {
+      clearInterval(poll); poll = null;
+      box.innerHTML = `<div class="msg ok" style="display:block;margin-top:18px">Pagamento confirmado! Sua chave de licença vitalícia:<br><span class="key" style="font-size:22px">${esc(o.licenseKey || '')}</span><br>Ative no GameZoney Servidor em Configuração › Licença. Também enviamos por e-mail.</div>`;
+      load(); return;
+    }
+    if (o.status !== 'pending') { clearInterval(poll); poll = null; box.innerHTML = '<p class="msg err" style="display:block">Este PIX venceu. Clique em Pagar com PIX para gerar outro.</p>'; return; }
+    if (o.provider === 'manual') {
+      box.innerHTML = `<div style="margin-top:18px"><p>Faça um PIX de <b>${money(o.amountCents)}</b> para a chave abaixo e envie o comprovante pelo Suporte (informe o e-mail da conta). A licença aparece aqui assim que o pagamento for confirmado.</p>${o.pixKey ? `<p class="key">${esc(o.pixKey)}</p>` : ''}<p class="note">Pedido ${esc(o.id.slice(0, 8))}</p></div>`;
+      return;
+    }
+    box.innerHTML = `<div class="pix">${o.pixQr ? `<img alt="QR Code PIX" src="data:image/png;base64,${esc(o.pixQr)}">` : ''}<div><p>Abra o app do seu banco, escolha <b>PIX › Ler QR Code</b> ou <b>PIX Copia e Cola</b> e pague <b>${money(o.amountCents)}</b>.</p><label>PIX Copia e Cola<textarea readonly id="pix-code">${esc(o.pixCode)}</textarea></label><div class="row" style="margin-top:10px"><button class="btn small" id="copy-pix" type="button">Copiar código</button><span class="note">Vence às ${new Date(o.expiresAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} • a confirmação é automática</span></div></div></div>`;
+    $('#copy-pix').onclick = () => { navigator.clipboard?.writeText(o.pixCode).then(() => { $('#copy-pix').textContent = 'Copiado!'; }, () => { $('#pix-code').select(); }); };
+    if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order); } catch { } }, 5000);
+  }
+  $('#buy').onclick = () => busy($('#buy'), async () => { try { showOrder((await api('/api/checkout', {})).order); load(); } catch (e) { showMsg($('#buy-msg'), e.message); } });
+  $('#logout').onclick = async () => { await api('/api/auth/logout', {}).catch(() => {}); location.href = '/'; };
+  $('#support-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
+    try { await api('/api/support', {subject: f.subject.value, message: f.message.value}); f.reset(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load(); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
+  $('#profile-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
+    try { await api('/api/profile', {name: f.name.value, phone: f.phone.value}); showMsg($('#profile-msg'), 'Dados salvos.', true); load(); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
+  load();
+})();

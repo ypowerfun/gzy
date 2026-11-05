@@ -1,0 +1,6 @@
+node_modules/
+data/
+downloads/*
+!downloads/LEIA-ME.txt
+*.pem
+.env

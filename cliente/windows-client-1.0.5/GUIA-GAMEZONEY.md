@@ -47,7 +47,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 
 ## 2. Primeiro acesso
 
-1. Abra o **GameZoney Servidor**. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
+1. Abra o **GameZoney Servidor**. A primeira abertura inicia o **teste grátis de 30 dias** (Configuração › Licença, seção 15). Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
 2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. **Data e hora** são sempre as do computador onde o servidor está instalado (as mesmas do relógio do Windows; para mudar, ajuste o relógio do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
 3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um troca a própria senha em **Perfil > Alterar senha** (botão **Perfil**, ao lado de **Sair**). Só o administrador principal (primeira conta) ativa/desativa contas.
@@ -151,7 +151,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 Passo a passo (administrador e operador):
 
-1. **+ Criar Corujão/Viradão:** tipo (Corujão ou Viradão), nome, data e valor por participante (R$ 0,00 = gratuito).
+1. **+ Criar Corujão/Viradão:** nome (ex.: "Corujão Sexta 22h às 6h" — não há mais campo Tipo; o nome já diz se é Corujão ou Viradão), data e valor por participante (R$ 0,00 = gratuito).
 2. **+ Adicionar participantes:** busque por Usuário/Nick e marque os clientes (visitantes não participam).
 3. **Confirmar pagamento** de cada participante: escolha Dinheiro, Pix ou Cartão. O valor entra no caixa aberto como venda (aparece em **Caixa > Vendas**, nos itens do caixa e em Faturas). Com o caixa fechado, só o administrador principal registra (fora de caixa). Para desfazer antes de iniciar, cancele a venda; o participante volta a **Pendente**.
 4. **Iniciar ›:** cada participante **pago** recebe as medalhas definidas em **Fidelidade > Medalhas Corujão/Viradão** e a participação conta no **Ranking**. Quem não pagou fica de fora. Depois de iniciado não é possível adicionar participantes nem cancelar os pagamentos.
@@ -183,6 +183,11 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ## 15. Configuração (administrador)
 
+- **Licença** (primeiro quadro da Configuração): o GameZoney pode ser usado grátis, com todas as funções, por **30 dias** a partir da primeira vez que o Servidor abre. O quadro mostra a situação (**Teste grátis**, **Teste grátis encerrado** ou **Licença vitalícia ativa**), a data final do teste, os dias restantes e o **código desta instalação**.
+  - **Comprar licença** abre gamezoney.com: o dono da arena cria a conta (e-mail/senha ou Google), paga a **licença vitalícia** por PIX e recebe a **chave** (`GZ-XXXX-XXXX-XXXX-XXXX`) em **Minha conta › Licenças** e por e-mail.
+  - **Ativar licença**: digite a chave (precisa de internet só nesse momento). A licença **nunca expira** e continua valendo sem internet.
+  - Nos últimos 7 dias do teste aparece um aviso no topo de todas as telas. **Teste encerrado sem licença:** os dados continuam guardados e o painel abre normalmente, mas ficam bloqueados **recargas, iniciar sessão, visitantes, PDV, Corujão/Viradão, abrir caixa e cadastrar cliente** até ativar a licença. Sessões em andamento continuam até o fim.
+  - **Trocar o PC da recepção:** faça o backup completo, em gamezoney.com › Minha conta › Licenças clique em **Liberar** e ative a mesma chave no computador novo. Reinstalar o Servidor no mesmo computador não reinicia o teste.
 - **Configuração das máquinas** (vale para todos os PCs, nunca para TVs): **Bloquear Gerenciador de Tarefas** e **Bloquear Configurações** (fecha o app Configurações do Windows e o ajuste de data e hora durante a sessão). As antigas opções de Painel de Controle e da tela Ctrl+Alt+Del foram retiradas e ficam desligadas nos PCs. A coluna "Recebimento pelos clientes" mostra se cada PC aplicou. O modo administrador no PC suspende as restrições.
 - **Contas de acesso:** administradores e operadores (senha de 4 a 24 caracteres). O administrador principal ativa/desativa contas.
 - **Backup completo:** seção 16.

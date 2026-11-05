@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Administração | GameZoney</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<main class="page"><div class="wrap dash">
+  <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
+  <div class="stats" id="stats"></div>
+  <section class="card"><h3>Emitir licença (cortesia / venda fora do site)</h3>
+    <form id="issue-form" class="row" style="align-items:flex-end"><label style="flex:2;min-width:220px">E-mail da conta do cliente<input name="email" type="email" required></label><label style="flex:2;min-width:200px">Observação<input name="note" maxlength="200" placeholder="Ex.: venda no WhatsApp"></label><button class="btn">Emitir</button></form>
+    <p class="msg" id="issue-msg"></p></section>
+  <section class="card" id="pedidos"><h3>Pedidos</h3><div class="table" id="orders"></div></section>
+  <section class="card" id="licencas"><h3>Licenças</h3><div class="table" id="licenses"></div></section>
+  <section class="card" id="chamados"><h3>Chamados de suporte</h3><div class="table" id="tickets"></div></section>
+  <section class="card" id="clientes"><h3>Clientes</h3><div class="table" id="users"></div></section>
+  <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
+  <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>
+</div></main>
+<script src="/site.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

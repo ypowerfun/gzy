@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha conta | GameZoney</title>
+<link rel="icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a>
+  <nav class="nav"><a href="#downloads">Downloads</a><a href="#licencas">Licenças</a><a href="#suporte">Suporte</a><a href="/admin" id="admin-link" class="hidden">Admin</a><button class="btn small ghost" id="logout">Sair</button></nav></div></header>
+<main class="page"><div class="wrap dash">
+  <div><h1 id="hello" style="font-size:34px;text-transform:uppercase">Minha conta</h1><p class="note" id="hello-sub"></p></div>
+
+  <section class="card" id="downloads">
+    <h3>Downloads</h3>
+    <p class="note">Instale o <b>GameZoney Servidor</b> no PC da recepção e o <b>GameZoney Cliente</b> em cada PC gamer (ou use o instalador único). O teste grátis de 30 dias começa na primeira abertura do Servidor.</p>
+    <div id="download-list" class="row" style="margin-top:14px"></div>
+  </section>
+
+  <section class="card" id="licencas">
+    <h3><span>Licenças</span><a class="btn small" href="#comprar">Comprar licença</a></h3>
+    <div id="license-list"></div>
+    <p class="note" style="margin-top:12px">Para ativar: no GameZoney Servidor, abra <b>Configuração › Licença › Ativar licença</b> e digite a chave. Trocou o computador da recepção? Clique em <b>Liberar</b> e ative a chave no computador novo.</p>
+  </section>
+
+  <section class="card" id="comprar">
+    <h3>Comprar licença vitalícia</h3>
+    <div class="row"><div><span data-price style="font-family:Rajdhani,sans-serif;font-weight:700;color:var(--gold2);font-size:40px">R$ 89,90</span><br><span class="note"><span data-price-label>Preço de Black Friday</span> • pagamento único • nunca expira • suporte completo</span></div>
+      <button class="btn" id="buy" style="margin-left:auto">Pagar com PIX</button></div>
+    <div id="checkout" class="hidden"></div>
+    <p class="msg" id="buy-msg"></p>
+  </section>
+
+  <section class="card" id="pedidos"><h3>Pedidos</h3><div class="table" id="order-list"></div></section>
+
+  <section class="card" id="suporte">
+    <h3>Suporte</h3>
+    <p class="note" id="support-contacts">Abra um chamado e responderemos pelo e-mail da sua conta.</p>
+    <form id="support-form">
+      <label>Assunto<input name="subject" required maxlength="120"></label>
+      <label>Mensagem<textarea name="message" required maxlength="4000" placeholder="Conte o que aconteceu, o que esperava e, se possível, a versão do GameZoney."></textarea></label>
+      <button class="btn" style="margin-top:14px">Enviar chamado</button>
+    </form>
+    <p class="msg" id="support-msg"></p>
+    <div class="table" id="ticket-list" style="margin-top:18px"></div>
+  </section>
+
+  <section class="card" id="perfil">
+    <h3>Meus dados</h3>
+    <form id="profile-form" class="row" style="align-items:flex-end">
+      <label style="flex:1;min-width:220px">Nome<input name="name" required maxlength="100"></label>
+      <label style="flex:1;min-width:180px">WhatsApp / telefone<input name="phone" maxlength="30"></label>
+      <button class="btn">Salvar</button>
+    </form>
+    <p class="msg" id="profile-msg"></p>
+  </section>
+</div></main>
+<footer class="site"><div class="wrap"><span>© 2026 GameZoney. Todos os direitos reservados.</span><span><a href="/termos.html">Termos de uso</a> · <a href="/privacidade.html">Privacidade</a></span></div></footer>
+<script src="/site.js"></script>
+<script src="/conta.js"></script>
+</body>
+</html>

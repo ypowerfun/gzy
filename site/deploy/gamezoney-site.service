@@ -1,0 +1,22 @@
+[Unit]
+Description=GameZoney - site gamezoney.com
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gamezoney
+Group=gamezoney
+WorkingDirectory=/opt/gamezoney-site
+EnvironmentFile=/etc/gamezoney-site.env
+ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning /opt/gamezoney-site/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/gamezoney-site
+
+[Install]
+WantedBy=multi-user.target

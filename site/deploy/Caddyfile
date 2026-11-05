@@ -1,0 +1,16 @@
+# GameZoney — site gamezoney.com (VPS). Caddyfile COMPLETO: copie inteiro para /etc/caddy/Caddyfile.
+# O Caddy gera e renova sozinho o certificado HTTPS (Let's Encrypt) quando o DNS do domínio aponta para este VPS.
+gamezoney.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+	log {
+		output file /var/log/caddy/gamezoney.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
+www.gamezoney.com {
+	redir https://gamezoney.com{uri} permanent
+}

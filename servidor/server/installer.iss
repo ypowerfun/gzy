@@ -67,6 +67,7 @@ Source: "netinfo.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "events.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "payments.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "feedback.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "license.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion

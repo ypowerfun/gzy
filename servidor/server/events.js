@@ -11,7 +11,8 @@ const sale = (store, p) => p.saleId ? (store.state.shopSales || []).find(s => s.
 const isPaid = (store, p) => !!(p.free || sale(store, p));
 function find(store, eventId) { return store.state.events.find(e => e.id === String(eventId) && !e.removedAt) || fail('Corujão/Viradão não encontrado.'); }
 function participant(e, memberId) { return e.participants.find(p => p.memberId === String(memberId)) || fail('Participante não encontrado.'); }
-const title = e => KIND[e.kind] + ' ' + e.name;
+// 1.0.5: sem campo Tipo — o nome já diz se é Corujão ou Viradão; eventos antigos (corujao/viradao) mantêm o prefixo.
+const title = e => (KIND[e.kind] ? KIND[e.kind] + ' ' : '') + e.name;
 
 function list(store) {
   return {
@@ -20,10 +21,10 @@ function list(store) {
   };
 }
 function create(store, input, actor) {
-  const kind = input.kind === 'viradao' ? 'viradao' : 'corujao', name = text(input.name, 'Nome', 80), date = String(input.date || '');
+  const kind = KIND[input.kind] ? input.kind : 'evento', name = text(input.name, 'Nome', 80), date = String(input.date || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('Informe a data.');
   const priceCents = integer(input.priceCents, 0, 100000000, 'Valor por participante');
-  return store.change(actor, 'corujao', `${KIND[kind]} criado: ${name} (${date}) • R$ ${(priceCents / 100).toFixed(2)} por participante`, () => {
+  return store.change(actor, 'corujao', `Corujão/Viradão criado: ${name} (${date}) • R$ ${(priceCents / 100).toFixed(2)} por participante`, () => {
     const e = {id: id(), kind, name, date, priceCents, status: 'open', participants: [], createdAt: Date.now(), createdBy: actor};
     store.state.events.push(e); return e;
   });
