@@ -109,7 +109,7 @@ function createApp(options = {}) {
   }
 
   // ---------- configuração pública ----------
-  app.get('/api/config', (req, res) => res.json({priceCents: PRICE, listPriceCents: LIST_PRICE, priceLabel: PRICE_LABEL, trialDays: 30, google: gg.enabled, pix: pay.enabled,
+  app.get('/api/config', (req, res) => res.json({priceCents: PRICE, listPriceCents: LIST_PRICE, priceLabel: PRICE_LABEL, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled,
     supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}));
 
   // ---------- contas ----------
@@ -216,7 +216,7 @@ function createApp(options = {}) {
   }));
 
   // ---------- compra (PIX) ----------
-  const publicOrder = o => o && ({id: o.id, amountCents: o.amount_cents, status: o.status, provider: o.provider, pixCode: o.pix_code || '', pixQr: o.pix_qr || '', pixUrl: o.pix_url || '', expiresAt: o.expires_at, createdAt: o.created_at, paidAt: o.paid_at,
+  const publicOrder = o => o && ({id: o.id, amountCents: o.amount_cents, status: o.status, provider: o.provider, pixCode: o.pix_code || '', pixQr: o.pix_qr || '', pixUrl: o.pix_url || '', checkoutUrl: o.checkout_url || '', method: o.provider === 'mercadopago-card' ? 'card' : 'pix', expiresAt: o.expires_at, createdAt: o.created_at, paidAt: o.paid_at,
     licenseKey: o.license_id ? db.get('SELECT key FROM licenses WHERE id=?', o.license_id)?.key : null, pixKey: o.provider === 'manual' ? (env.PIX_KEY || '') : ''});
   function fulfill(orderId, providerNote = '') {
     const result = db.tx(() => {
@@ -230,29 +230,41 @@ function createApp(options = {}) {
     db.audit(user.email, 'compra', `${money(result.o.amount_cents)} • ${result.lic.key}`);
     mail.send(user.email, 'GameZoney: sua licença vitalícia', `Olá, ${user.name}!\n\nPagamento confirmado. Obrigado por escolher o GameZoney!\n\nSua chave de licença (vitalícia, nunca expira):\n\n    ${result.lic.key}\n\nComo ativar: no GameZoney Servidor, abra Configuração › Licença › Ativar licença e digite a chave.\nSuas chaves e downloads: ${SITE}/conta\n\nSuporte: ${SITE}/conta#suporte\n\nEquipe GameZoney`);
   }
+  const approved = (o, p) => p.status === 'approved' && p.orderId === o.id && p.amountCents >= o.amount_cents;
   async function refreshOrder(o) {
-    if (o.status !== 'pending' || o.provider !== 'mercadopago' || !o.provider_id || !pay.enabled) return o;
+    if (o.status !== 'pending' || !pay.enabled || !String(o.provider).startsWith('mercadopago')) return o;
     try {
-      const p = await pay.getPayment(o.provider_id);
-      if (p.status === 'approved' && p.orderId === o.id && p.amountCents >= o.amount_cents) fulfill(o.id, 'Mercado Pago ' + p.id);
-      else if (['cancelled', 'rejected', 'refunded', 'charged_back'].includes(p.status)) db.run("UPDATE orders SET status='canceled', note=? WHERE id=? AND status='pending'", 'Mercado Pago: ' + p.status, o.id);
+      if (o.provider === 'mercadopago-card') {
+        // cartão: o cliente pode tentar mais de um cartão no mesmo pedido; vale o primeiro aprovado
+        const ok = (await pay.findPayments(o.id)).find(p => approved(o, p));
+        if (ok) fulfill(o.id, 'Mercado Pago cartão ' + ok.id);
+      } else if (o.provider_id) {
+        const p = await pay.getPayment(o.provider_id);
+        if (approved(o, p)) fulfill(o.id, 'Mercado Pago ' + p.id);
+        else if (['cancelled', 'rejected', 'refunded', 'charged_back'].includes(p.status)) db.run("UPDATE orders SET status='canceled', note=? WHERE id=? AND status='pending'", 'Mercado Pago: ' + p.status, o.id);
+      }
     } catch (e) { log.error('Consulta do pagamento falhou:', e.message); }
     return db.get('SELECT * FROM orders WHERE id=?', o.id);
   }
   app.post('/api/checkout', jsonOnly, limit('checkout', 20, 3600000), api(async req => {
-    const u = needUser(req), now = Date.now();
-    let o = db.get("SELECT * FROM orders WHERE user_id=? AND status='pending' AND expires_at>? AND amount_cents=? ORDER BY created_at DESC LIMIT 1", u.id, now + 60000, PRICE);
+    const u = needUser(req), now = Date.now(), card = req.body?.method === 'card';
+    if (card && !pay.enabled) fail(400, 'Pagamento com cartão indisponível no momento. Use o PIX.');
+    const provider = card ? 'mercadopago-card' : (pay.enabled ? 'mercadopago' : 'manual');
+    let o = db.get("SELECT * FROM orders WHERE user_id=? AND status='pending' AND provider=? AND expires_at>? AND amount_cents=? ORDER BY created_at DESC LIMIT 1", u.id, provider, now + 60000, PRICE);
     if (o) return {order: publicOrder(await refreshOrder(o))};
     db.run("UPDATE orders SET status='expired' WHERE user_id=? AND status='pending' AND expires_at<=?", u.id, now);
     const id = uid(), expiresAt = now + 30 * 60000;
-    if (pay.enabled) {
+    if (card) {
+      const c = await pay.createCardCheckout({orderId: id, amountCents: PRICE, title: 'GameZoney - Licença vitalícia', email: u.email, notificationUrl: SITE + '/api/mp/webhook', backUrl: SITE + '/conta?pedido=' + id + '#comprar'});
+      db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,provider_id,checkout_url,expires_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'mercadopago-card', c.providerId, c.url, now + 2 * DAY, now);
+    } else if (pay.enabled) {
       const pix = await pay.createPix({orderId: id, amountCents: PRICE, description: 'GameZoney - Licença vitalícia', email: u.email, name: u.name, notificationUrl: SITE + '/api/mp/webhook', expiresAt});
       db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,provider_id,pix_code,pix_qr,pix_url,expires_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'mercadopago', pix.providerId, pix.pixCode, pix.pixQr, pix.pixUrl, expiresAt, now);
     } else {
       // sem Mercado Pago configurado: PIX manual (chave PIX_KEY); o administrador confirma o pagamento no painel /admin
       db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,expires_at,created_at) VALUES(?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'manual', now + 7 * DAY, now);
     }
-    db.audit(u.email, 'pedido', `${money(PRICE)} (${pay.enabled ? 'PIX Mercado Pago' : 'PIX manual'})`);
+    db.audit(u.email, 'pedido', `${money(PRICE)} (${card ? 'cartão Mercado Pago' : pay.enabled ? 'PIX Mercado Pago' : 'PIX manual'})`);
     return {order: publicOrder(db.get('SELECT * FROM orders WHERE id=?', id))};
   }));
   app.get('/api/orders/:id', api(async req => {
@@ -264,7 +276,11 @@ function createApp(options = {}) {
     res.json({ok: true});
     const id = String(req.body?.data?.id || req.query['data.id'] || req.query.id || '');
     if (!/^\d{1,30}$/.test(id) || !pay.enabled) return;
-    const o = db.get('SELECT * FROM orders WHERE provider_id=?', id); if (o) await refreshOrder(o);
+    let o = db.get('SELECT * FROM orders WHERE provider_id=?', id);
+    if (!o) { // cartão: o pagamento é criado no Mercado Pago; o pedido vem na referência do pagamento
+      try { const p = await pay.getPayment(id); o = p.orderId && db.get("SELECT * FROM orders WHERE id=? AND provider='mercadopago-card'", p.orderId); } catch (e) { log.error('Aviso do Mercado Pago:', e.message); }
+    }
+    if (o) await refreshOrder(o);
   });
 
   // ---------- conta ----------

@@ -27,7 +27,7 @@ test('site: conta por e-mail, compra por PIX manual confirmada pelo administrado
  // POST sem JSON é recusado (proteção contra formulário de outro site)
  await ana('/api/checkout',undefined,415,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'a=1'});
  // PIX manual (sem Mercado Pago configurado)
- const o=(await ana('/api/checkout',{})).order;assert.equal(o.provider,'manual');assert.equal(o.amountCents,8990);assert.equal(o.status,'pending');
+ await ana('/api/checkout',{method:'card'},400);const o=(await ana('/api/checkout',{})).order;assert.equal(o.provider,'manual');assert.equal(o.amountCents,8990);assert.equal(o.status,'pending');
  assert.equal((await ana('/api/checkout',{})).order.id,o.id,'reaproveita o pedido pendente');
  await ana('/api/admin/overview',undefined,403);
  await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
@@ -67,11 +67,13 @@ test('site: conta por e-mail, compra por PIX manual confirmada pelo administrado
  await ana('/api/auth/login',{email:'ana@arena.com',password:'nova-senha-123'});
 });
 
-test('site: PIX automático (Mercado Pago) — confirmação conferida na API e não pelo corpo do aviso',async t=>{
- const payments=new Map();let seq=1000;
+test('site: PIX automático e cartão (Mercado Pago) — confirmação conferida na API e não pelo corpo do aviso',async t=>{
+ const payments=new Map(),prefs=[];let seq=1000;
  const fakeFetch=async(url,opts={})=>{const u=new URL(url);const json=(code,body)=>({ok:code<300,status:code,json:async()=>body});
   if(u.pathname==='/v1/payments'&&opts.method==='POST'){const b=JSON.parse(opts.body);assert.equal(opts.headers.Authorization,'Bearer TESTE');assert.equal(b.payment_method_id,'pix');assert.equal(b.transaction_amount,89.9);assert.equal(b.notification_url,'http://site.test/api/mp/webhook');
    const id=String(++seq);payments.set(id,{id,status:'pending',transaction_amount:b.transaction_amount,external_reference:b.external_reference});return json(201,{id:Number(id),status:'pending',point_of_interaction:{transaction_data:{qr_code:'000201PIX',qr_code_base64:'iVBOR',ticket_url:'https://mp/t'}}})}
+  if(u.pathname==='/checkout/preferences'&&opts.method==='POST'){const b=JSON.parse(opts.body);assert.equal(b.items[0].unit_price,89.9);assert.equal(b.notification_url,'http://site.test/api/mp/webhook');assert.match(b.back_urls.success,/\/conta\?pedido=/);assert.ok(b.payment_methods.excluded_payment_types.some(t=>t.id==='ticket'));prefs.push(b);return json(201,{id:'pref-'+prefs.length,init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-'+prefs.length})}
+  if(u.pathname==='/v1/payments/search'){const ref=u.searchParams.get('external_reference');return json(200,{results:[...payments.values()].filter(p=>p.external_reference===ref)})}
   const m=u.pathname.match(/^\/v1\/payments\/(\d+)$/);if(m)return payments.has(m[1])?json(200,payments.get(m[1])):json(404,{message:'not found'});
   return json(404,{})};
  const s=await boot(t,{MP_ACCESS_TOKEN:'TESTE'},{fetch:fakeFetch});const ana=s.client(),anon=s.client();
@@ -86,7 +88,18 @@ test('site: PIX automático (Mercado Pago) — confirmação conferida na API e 
  const paid=(await ana('/api/orders/'+o.id)).order;assert.equal(paid.status,'paid');assert.ok(paid.licenseKey);
  // aviso repetido não gera outra licença
  await anon('/api/mp/webhook',{type:'payment',data:{id:'1001'}});await new Promise(r=>setTimeout(r,50));assert.equal((await ana('/api/me')).licenses.length,1);
- assert.equal((await anon('/api/config')).pix,true);
+ assert.equal((await anon('/api/config')).pix,true);assert.equal((await anon('/api/config')).card,true);
+ // cartão de crédito/débito (Checkout do Mercado Pago): pedido próprio, link de pagamento e confirmação pelo aviso
+ const c=(await ana('/api/checkout',{method:'card'})).order;assert.equal(c.method,'card');assert.match(c.checkoutUrl,/mercadopago\.com\.br/);assert.notEqual(c.id,o.id);
+ assert.equal((await ana('/api/checkout',{method:'card'})).order.id,c.id,'reaproveita o pedido de cartão pendente');
+ // cartão recusado não cancela o pedido (o cliente pode tentar outro cartão)
+ payments.set('2001',{id:'2001',status:'rejected',transaction_amount:89.9,external_reference:c.id});
+ await anon('/api/mp/webhook',{type:'payment',data:{id:'2001'}});await new Promise(r=>setTimeout(r,50));assert.equal((await ana('/api/orders/'+c.id)).order.status,'pending');
+ payments.set('2002',{id:'2002',status:'approved',transaction_amount:89.9,external_reference:c.id});
+ await anon('/api/mp/webhook',{type:'payment',data:{id:'2002'}});await new Promise(r=>setTimeout(r,50));
+ const cp=(await ana('/api/orders/'+c.id)).order;assert.equal(cp.status,'paid');assert.ok(cp.licenseKey);assert.equal((await ana('/api/me')).licenses.length,2);
+ // aviso de pagamento de outro pedido/desconhecido não libera nada
+ payments.set('2003',{id:'2003',status:'approved',transaction_amount:89.9,external_reference:'nao-existe'});await anon('/api/mp/webhook',{type:'payment',data:{id:'2003'}});await new Promise(r=>setTimeout(r,50));assert.equal((await ana('/api/me')).licenses.length,2);
 });
 
 test('site: login com Google cria ou liga a conta pelo e-mail verificado',async t=>{
@@ -117,7 +130,7 @@ test('site: feedback dos servidores, páginas e chaves',async t=>{
  await anon('/api/feedback',{id:'f2',comment:''},400);
  const dono=s.client();await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
  const fb=(await dono('/api/admin/overview')).feedback;assert.equal(fb.length,1);assert.equal(fb[0].comment,'Muito bom!');
- const home=await (await fetch(s.base+'/')).text();assert.match(home,/GameZoney \| O Sistema Completo de Gestão para Arena Gamer, PCs e Consoles/);assert.match(home,/receba via PIX automático/);
+ const home=await (await fetch(s.base+'/')).text();assert.match(home,/GameZoney \| O Sistema Completo de Gestão para Arena Gamer, PCs e Consoles/);assert.match(home,/gerencie a lanchonete e proteja seus PCs em uma única plataforma simples e com suporte completo/);assert.match(home,/10 anos de experiência/);assert.match(home,/Novas Atualizações/);assert.match(home,/data-lang="en"/);
  assert.equal((await fetch(s.base+'/nao-existe')).status,404);
  const cfg=await anon('/api/config');assert.equal(cfg.priceCents,8990);assert.equal(cfg.trialDays,30);assert.equal(cfg.google,false);
  for(let i=0;i<50;i++)assert.match(newKey(),/^GZ(-[A-HJ-NP-Z2-9]{4}){4}$/);

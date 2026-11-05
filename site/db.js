@@ -33,6 +33,8 @@ function open(dir) {
   const db = new DatabaseSync(path.join(dir, 'site.sqlite'));
   db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
   db.exec(SCHEMA);
+  // 1.1: link do pagamento com cartão (Checkout do Mercado Pago)
+  if (!db.prepare('PRAGMA table_info(orders)').all().some(c => c.name === 'checkout_url')) db.exec("ALTER TABLE orders ADD COLUMN checkout_url TEXT NOT NULL DEFAULT ''");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

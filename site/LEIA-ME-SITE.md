@@ -5,7 +5,7 @@ Software proprietário e confidencial da GameZoney. Não divulgar.
 O site roda no VPS da Oracle (Ubuntu 22.04 ARM, IP **137.131.177.64**) com banco de dados próprio (SQLite em `/var/lib/gamezoney-site/site.sqlite`, cópia automática diária em `/var/lib/gamezoney-site/backups`).
 
 **O que o site faz:**
-- **Página inicial:** título, subtítulo, recursos, preços (teste grátis de 30 dias e licença vitalícia de R$ 89,90 de Black Friday) e perguntas frequentes.
+- **Página inicial:** título, subtítulo, tela do sistema num monitor, recursos, galeria de telas (capturas reais do painel em `public/img/telas/<tela>-<pt|en|es>.jpg`), preços, dúvidas e **Novas Atualizações**. Rodapé com idioma do site: **Português (Brasil), English, Español** (`public/i18n-site.js` + dicionário `public/i18n-site-dict.js`; ao criar texto novo, incluir a tradução). Os e-mails enviados pelo site continuam em português.
 - **Contas:** criar conta com e-mail e senha ou **Entrar com Google**; também tem "esqueci a senha".
 - **Minha conta:** downloads dos instaladores, licenças (chave e botão **Liberar** para trocar de computador), compra por **PIX** e chamados de suporte.
 - **Compra:** com o Mercado Pago configurado, o cliente recebe o QR Code PIX e a licença sai sozinha quando o pagamento é aprovado. Sem Mercado Pago, o PIX é manual (chave `PIX_KEY`) e você confirma o pagamento em `/admin`.
@@ -91,6 +91,8 @@ sudo systemctl restart gamezoney-site
    - Isto é opcional: o site também informa a URL em cada pagamento e confere o status sozinho.
 
 Sem `MP_ACCESS_TOKEN`, o site mostra a chave `PIX_KEY` e você confirma o pagamento em `/admin` (botão **Confirmar pagamento**).
+
+**Cartão de crédito ou débito:** com o `MP_ACCESS_TOKEN` preenchido, Minha conta mostra também **Cartão de crédito ou débito**. O cliente paga no Checkout do Mercado Pago (o site nunca vê os dados do cartão), volta para `/conta?pedido=...` e a chave sai sozinha quando o pagamento é aprovado (crédito em até 12x com juros do Mercado Pago, ou débito). Boleto fica desativado.
 
 ### Entrar com Google
 

@@ -3,7 +3,7 @@
 // Integrações externas: Mercado Pago (PIX), login com Google e envio de e-mail (SMTP).
 // Todas são configuradas por variáveis de ambiente (/etc/gamezoney-site.env no VPS).
 
-// ---------- Mercado Pago: PIX ----------
+// ---------- Mercado Pago: PIX e cartão ----------
 // MP_ACCESS_TOKEN = Access Token de PRODUÇÃO (Mercado Pago > Suas integrações > Credenciais).
 const MP = 'https://api.mercadopago.com';
 function mercadoPago(env, fetchImpl = fetch) {
@@ -24,6 +24,21 @@ function mercadoPago(env, fetchImpl = fetch) {
       }, orderId);
       const t = p.point_of_interaction?.transaction_data || {};
       return {providerId: String(p.id), status: p.status, pixCode: t.qr_code || '', pixQr: t.qr_code_base64 || '', pixUrl: t.ticket_url || ''};
+    },
+    // cartão de crédito ou débito: Checkout do Mercado Pago (o cliente digita o cartão no Mercado Pago; o site nunca vê os dados do cartão)
+    async createCardCheckout({orderId, amountCents, title, email, notificationUrl, backUrl}) {
+      const p = await call('POST', '/checkout/preferences', {
+        items: [{id: 'gamezoney-licenca-vitalicia', title, quantity: 1, currency_id: 'BRL', unit_price: amountCents / 100}],
+        payer: {email}, external_reference: orderId, notification_url: notificationUrl, statement_descriptor: 'GAMEZONEY',
+        back_urls: {success: backUrl, pending: backUrl, failure: backUrl}, auto_return: 'approved',
+        payment_methods: {excluded_payment_types: [{id: 'ticket'}, {id: 'atm'}, {id: 'bank_transfer'}], installments: 12}
+      }, 'pref-' + orderId);
+      return {providerId: String(p.id), url: p.init_point};
+    },
+    // pagamentos de um pedido (procurados pela referência do pedido)
+    async findPayments(orderId) {
+      const r = await call('GET', '/v1/payments/search?' + new URLSearchParams({external_reference: orderId, sort: 'date_created', criteria: 'desc'}));
+      return (r.results || []).map(p => ({id: String(p.id), status: p.status, amountCents: Math.round(Number(p.transaction_amount) * 100), orderId: p.external_reference || ''}));
     },
     // nunca confiar no corpo do aviso: o pagamento é sempre consultado no Mercado Pago
     async getPayment(id) { const p = await call('GET', '/v1/payments/' + encodeURIComponent(id)); return {id: String(p.id), status: p.status, amountCents: Math.round(Number(p.transaction_amount) * 100), orderId: p.external_reference || ''}; }
