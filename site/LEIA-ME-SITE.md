@@ -26,14 +26,23 @@ O firewall interno do Ubuntu é liberado pelo script de instalação.
 
 ## 2. HostGator: apontar o domínio para o VPS
 
-No **cPanel da HostGator**, abra **Domínios › Editor de Zona** (Zone Editor) e, em **gamezoney.com**, clique em **Gerenciar**.
+Na **Zona de DNS** da HostGator (domínio gamezoney.com), o site vai para o VPS e o **e-mail e o FTP continuam na HostGator (162.240.81.81)**.
 
-- **Registro A `gamezoney.com.`:** edite para **137.131.177.64**.
-- **Registro `www.gamezoney.com.`:** use CNAME para `gamezoney.com.` ou um registro A para **137.131.177.64**.
-- **Registros AAAA:** se existir algum para `gamezoney.com` ou `www`, apague.
-- **Não mexa** nos registros **MX** nem em `mail.gamezoney.com`. Assim, o e-mail do domínio continua na HostGator.
+Na zona original, `mail`, `ftp` e o **MX** apontam para `gamezoney.com`. Por isso, ajuste-os **antes** de mudar o registro A; senão o e-mail para de funcionar. Faça nesta ordem:
 
-A propagação do DNS leva de minutos a algumas horas. Para conferir, rode no Windows `nslookup gamezoney.com`: a resposta deve mostrar 137.131.177.64.
+| # | Registro atual | O que fazer | Resultado |
+|---|---|---|---|
+| 1 | CNAME `mail.gamezoney.com.` → gamezoney.com | **Excluir** e **Adicionar Registro** tipo **A** | A `mail` → **162.240.81.81** |
+| 2 | CNAME `ftp.gamezoney.com.` → gamezoney.com | **Excluir** e **Adicionar Registro** tipo **A** | A `ftp` → **162.240.81.81** |
+| 3 | MX `gamezoney.com.` destino gamezoney.com | **Editar** o destino | MX prioridade 0 → **mail.gamezoney.com** |
+| 4 | A `gamezoney.com.` → 162.240.81.81 | **Editar** o valor | A `gamezoney.com` → **137.131.177.64** |
+| 5 | CNAME `www.gamezoney.com.` → gamezoney.com | **Manter** (segue o registro A) | www → VPS |
+
+- Se houver registros **AAAA** para `gamezoney.com` ou `www`, apague.
+- Se houver um **TXT** de SPF (`v=spf1 ...`), confira se ele tem `ip4:162.240.81.81` (ou `+mx`). Se tiver só `+a`, acrescente `ip4:162.240.81.81` antes do `~all`.
+- **SMTP do site:** use em `SMTP_HOST` o nome do servidor da HostGator que aparece no cPanel em **E-mail › Contas de e-mail › Conectar dispositivos** (ex.: `br123.hostgator.com.br`). Esse nome tem certificado válido mesmo com o domínio apontando para o VPS.
+
+A propagação do DNS leva até **4 horas** (TTL 14400). Para conferir, rode no Windows `nslookup gamezoney.com`: a resposta deve mostrar 137.131.177.64.
 
 ## 3. Enviar os arquivos e instalar
 
@@ -103,7 +112,7 @@ O site envia por e-mail as boas-vindas, a chave da licença, o link de "esqueci 
 1. No cPanel da HostGator, abra **E-mail › Contas de e-mail** e crie, por exemplo, `contato@gamezoney.com`.
 2. Preencha no arquivo de configuração:
    ```
-   SMTP_HOST=mail.gamezoney.com
+   SMTP_HOST=br123.hostgator.com.br   # nome do servidor mostrado no cPanel
    SMTP_PORT=465
    SMTP_USER=contato@gamezoney.com
    SMTP_PASS=<senha>

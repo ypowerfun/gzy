@@ -58,7 +58,7 @@ function google(env, fetchImpl = fetch) {
 
 // ---------- E-mail (SMTP) ----------
 // SMTP_HOST, SMTP_PORT (465 ou 587), SMTP_USER, SMTP_PASS, MAIL_FROM (ex.: "GameZoney <contato@gamezoney.com>").
-// A HostGator oferece contas de e-mail do domínio (servidor SMTP: mail.gamezoney.com). Sem SMTP o site funciona e grava o e-mail no log.
+// A HostGator oferece contas de e-mail do domínio (servidor SMTP: o nome do servidor mostrado no cPanel, ex.: br123.hostgator.com.br). Sem SMTP o site funciona e grava o e-mail no log.
 function mailer(env, log = console) {
   let transport = null;
   if (env.SMTP_HOST) {
