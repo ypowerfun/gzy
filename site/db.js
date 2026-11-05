@@ -47,6 +47,12 @@ CREATE TABLE IF NOT EXISTS chats(
 CREATE TABLE IF NOT EXISTS chat_messages(id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE, sender TEXT NOT NULL, text TEXT NOT NULL, at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
 `);
+  // 1.3: e-mail confirmado (obrigatório para administrador); contas ligadas ao Google já vêm confirmadas
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'email_verified')) {
+    db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0");
+    db.exec("UPDATE users SET email_verified=1 WHERE google_sub IS NOT NULL");
+  }
+  db.exec("CREATE TABLE IF NOT EXISTS verifications(token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL)");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

@@ -10,7 +10,7 @@ export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l
 
 echo "== 1/7 Pacotes básicos"
 apt-get update -y
-apt-get install -y curl ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https rsync nano unzip iptables-persistent netfilter-persistent
+apt-get install -y curl ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https rsync nano unzip iptables-persistent netfilter-persistent fail2ban unattended-upgrades
 
 echo "== 2/7 Node.js 24"
 if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 24 ]; then
@@ -47,12 +47,37 @@ install -m 755 "$APP/deploy/backup-site.sh" /etc/cron.daily/gamezoney-site-backu
 systemctl daemon-reload && systemctl enable gamezoney-site && systemctl restart gamezoney-site
 
 echo "== 6/7 Caddy (gamezoney.com e www)"
-cp "$APP/deploy/Caddyfile" /etc/caddy/Caddyfile
-caddy validate --config /etc/caddy/Caddyfile
+# 1.3: valida o Caddyfile novo ANTES de trocar; se tiver erro, o atual continua valendo
+if caddy validate --adapter caddyfile --config "$APP/deploy/Caddyfile"; then
+  cp "$APP/deploy/Caddyfile" /etc/caddy/Caddyfile
+else
+  echo "ATENÇÃO: Caddyfile novo com erro — mantido o atual (/etc/caddy/Caddyfile)."
+fi
 # o "caddy validate" (como root) cria o arquivo de log; o serviço roda como usuário caddy e precisa ser o dono
 chown -R caddy:caddy /var/log/caddy
 systemctl enable caddy && systemctl restart caddy
 sleep 2; systemctl is-active --quiet caddy || { echo "ATENÇÃO: o Caddy não iniciou. Veja: sudo journalctl -u caddy -n 30"; }
+
+echo "== Segurança do VPS"
+# atualizações de segurança automáticas
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
+systemctl enable --now unattended-upgrades >/dev/null 2>&1 || true
+# fail2ban: bloqueia por 1 hora quem erra o login do SSH 5 vezes
+cat > /etc/fail2ban/jail.d/gamezoney.conf <<'JAIL'
+[sshd]
+enabled = true
+maxretry = 5
+findtime = 10m
+bantime = 1h
+JAIL
+systemctl enable --now fail2ban >/dev/null 2>&1 && systemctl restart fail2ban || true
+# SSH só com chave (sem senha) e sem login direto do root
+cat > /etc/ssh/sshd_config.d/99-gamezoney.conf <<'SSHD'
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+SSHD
+if sshd -t 2>/dev/null; then systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true; else rm -f /etc/ssh/sshd_config.d/99-gamezoney.conf; echo "AVISO: configuração do SSH não aplicada (mantida a anterior)."; fi
 
 echo "== 7/7 Firewall do Ubuntu (portas 80 e 443)"
 iptables -C INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT

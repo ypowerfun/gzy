@@ -9,13 +9,31 @@ User=gamezoney
 Group=gamezoney
 WorkingDirectory=/opt/gamezoney-site
 EnvironmentFile=/etc/gamezoney-site.env
+Environment=NODE_ENV=production
 ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning /opt/gamezoney-site/server.js
 Restart=always
 RestartSec=3
+# 1.3: isolamento — o site só escreve em /var/lib/gamezoney-site e não ganha privilégios
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+UMask=0077
 ReadWritePaths=/var/lib/gamezoney-site
 
 [Install]

@@ -15,9 +15,10 @@ async function boot(t){
 const PNG='data:image/png;base64,'+Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),Buffer.alloc(40,1)]).toString('base64');
 const JPG='data:image/jpeg;base64,'+Buffer.concat([Buffer.from([0xff,0xd8,0xff,0xe0]),Buffer.alloc(40,2)]).toString('base64');
 
+async function confirm(s,email){const m=[...s.mails].reverse().find(x=>x.to===email&&/verify\?t=/.test(x.text));const t=m.text.match(/verify\?t=([a-f0-9]+)/)[1];const r=await fetch(s.base+'/api/auth/verify?t='+t,{redirect:'manual'});if(!/verificado=1/.test(r.headers.get('location')))throw new Error('confirmação falhou')}
 test('site: avaliações — 1 a 5 estrelas, até 2 imagens .jpg/.png, organização e as 3 da página inicial escolhidas pelo administrador',async t=>{
  const s=await boot(t);const anon=s.client(),dono=s.client();
- await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
+ await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');
  await anon('/api/reviews',{stars:5,text:'Muito bom mesmo'},401);
  const users=[];for(let i=1;i<=4;i++){const c=s.client();await c('/api/auth/register',{name:'Cliente '+i,email:`c${i}@arena.com`,password:'senha-forte-1'});users.push(c)}
  const [a,b,c,d]=users;
@@ -56,7 +57,7 @@ test('site: avaliações — 1 a 5 estrelas, até 2 imagens .jpg/.png, organiza�
 
 test('site: chat ao vivo — visitante conversa com o administrador; online enquanto o /admin está aberto; aviso por e-mail',async t=>{
  const s=await boot(t);const vis=s.client(),dono=s.client(),outro=s.client();
- await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
+ await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');
  let st=await vis('/api/chat');assert.equal(st.chat,null);assert.equal(st.online,false);
  await vis('/api/chat/start',{name:'',email:'x@y.com',message:'oi'},400);await vis('/api/chat/start',{name:'Rui',email:'invalido',message:'oi'},400);
  await vis('/api/chat/send',{text:'oi'},404);

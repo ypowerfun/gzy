@@ -10,6 +10,14 @@
     $('#hello').textContent = 'Olá, ' + (me.user.name || me.user.email).split(' ')[0];
     $('#hello-sub').textContent = me.user.email + (me.user.google ? ' • conta Google' : '');
     $('#admin-link').classList.toggle('hidden', !me.admin);
+    // 1.3: confirmação do e-mail
+    const vb = $('#verify-box'), vq = new URLSearchParams(location.search).get('verificado');
+    if (vq === '1') { vb.className = 'msg ok'; vb.style.display = 'block'; vb.textContent = 'E-mail confirmado. Obrigado!'; }
+    else if (!me.user.emailVerified) {
+      vb.className = 'msg err'; vb.style.display = 'block';
+      vb.innerHTML = `<span>${vq === '0' ? 'Link de confirmação inválido ou vencido.' : 'Confirme o seu e-mail pelo link que enviamos.'}</span> <button type="button" class="btn small ghost" id="verify-resend">Reenviar confirmação</button>`;
+      $('#verify-resend').onclick = () => busy($('#verify-resend'), async () => { try { const r = await api('/api/auth/verify/resend', {}); vb.firstElementChild.textContent = r.sent ? 'Enviamos um novo link. Confira a caixa de entrada e o spam.' : 'Não foi possível enviar agora. Fale com o suporte.'; } catch (e) { vb.firstElementChild.textContent = e.message; } });
+    } else vb.style.display = 'none';
     $('#download-list').innerHTML = me.downloads.length ? me.downloads.map(d => `<a class="btn ghost" href="/download/${encodeURIComponent(d.file)}">⬇ ${esc(d.file)} <small style="opacity:.7">(${size(d.size)})</small></a>`).join('') : '<p class="note">Os instaladores estarão disponíveis aqui em breve.</p>';
     $('#license-list').innerHTML = me.licenses.length ? `<div class="table"><table><thead><tr><th>Chave</th><th>Situação</th><th>Computador</th><th></th></tr></thead><tbody>${me.licenses.map(l => `<tr><td><span class="key">${esc(l.key)}</span><br><small class="note">Vitalícia • desde ${fmtDate(l.createdAt)}</small></td><td>${l.status !== 'active' ? '<span class="pill bad">Bloqueada</span>' : l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Pronta para ativar</span>'}</td><td>${l.active ? esc(l.machine || '—') + '<br><small class="note">' + fmtDate(l.activatedAt) + '</small>' : '—'}</td><td>${l.active ? `<button class="btn small ghost" data-release="${l.id}">Liberar</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Você ainda não tem licença. Está no teste grátis? Compre abaixo para continuar usando depois dos 30 dias.</p>';
     $$('[data-release]').forEach(b => b.onclick = async () => {

@@ -13,6 +13,7 @@ async function boot(t,env={},extra={}){
  return {base,client,mails,publicKey:publicKey.export({type:'spki',format:'pem'}),dir};
 }
 
+async function confirm(s,email){const m=[...s.mails].reverse().find(x=>x.to===email&&/verify\?t=/.test(x.text));const t=m.text.match(/verify\?t=([a-f0-9]+)/)[1];const r=await fetch(s.base+'/api/auth/verify?t='+t,{redirect:'manual'});if(!/verificado=1/.test(r.headers.get('location')))throw new Error('confirmação falhou')}
 test('site: conta por e-mail, compra por PIX manual confirmada pelo administrador, ativação e troca de computador',async t=>{
  const s=await boot(t);const ana=s.client(),dono=s.client(),anon=s.client();
  assert.equal((await anon('/api/me')).user,null);
@@ -30,7 +31,7 @@ test('site: conta por e-mail, compra por PIX manual confirmada pelo administrado
  await ana('/api/checkout',{method:'card'},400);const o=(await ana('/api/checkout',{})).order;assert.equal(o.provider,'manual');assert.equal(o.amountCents,8990);assert.equal(o.status,'pending');
  assert.equal((await ana('/api/checkout',{})).order.id,o.id,'reaproveita o pedido pendente');
  await ana('/api/admin/overview',undefined,403);
- await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
+ await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');
  const ov=await dono('/api/admin/overview');assert.equal(ov.stats.users,2);assert.equal(ov.orders[0].status,'pending');
  await dono(`/api/admin/orders/${o.id}/approve`,{});
  const paid=(await ana('/api/orders/'+o.id)).order;assert.equal(paid.status,'paid');assert.match(paid.licenseKey,/^GZ(-[A-Z0-9]{4}){4}$/);
@@ -128,7 +129,7 @@ test('site: feedback dos servidores, páginas e chaves',async t=>{
  await anon('/api/feedback',{id:'f1',name:'Ana',email:'ana@a.com',comment:'Muito bom!',at:new Date().toISOString(),serverVersion:'1.0.5',installId:'abc'});
  await anon('/api/feedback',{id:'f1',name:'Ana',email:'ana@a.com',comment:'Repetido',serverVersion:'1.0.5'});
  await anon('/api/feedback',{id:'f2',comment:''},400);
- const dono=s.client();await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});
+ const dono=s.client();await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');
  const fb=(await dono('/api/admin/overview')).feedback;assert.equal(fb.length,1);assert.equal(fb[0].comment,'Muito bom!');
  const home=await (await fetch(s.base+'/')).text();assert.match(home,/GameZoney \| O Sistema Completo de Gestão para Arena Gamer, PCs e Consoles/);assert.match(home,/gerencie a lanchonete e proteja seus PCs em uma única plataforma simples e com suporte completo/);assert.match(home,/10 anos de experiência/);assert.match(home,/Novas Atualizações/);assert.match(home,/data-lang="en"/);
  assert.equal((await fetch(s.base+'/nao-existe')).status,404);

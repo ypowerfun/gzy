@@ -5,7 +5,15 @@
   "description": "GameZoney — site gamezoney.com (contas, licenças, PIX, suporte). Software proprietário e confidencial.",
   "license": "UNLICENSED",
   "main": "server.js",
-  "engines": {"node": ">=22.13"},
-  "scripts": {"start": "node server.js", "test": "node --test test/*.test.js"},
-  "dependencies": {"express": "^4.22.1", "nodemailer": "^6.10.1"}
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1",
+    "nodemailer": "^10.3.1"
+  }
 }

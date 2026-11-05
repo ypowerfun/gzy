@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const params = new URLSearchParams(location.search), msg = $('#msg');
-  const next = /^\/[a-z0-9/._#-]*$/i.test(params.get('next') || '') ? params.get('next') : '/conta';
+  const next = /^\/(?!\/)[a-z0-9/._#-]*$/i.test(params.get('next') || '') ? params.get('next') : '/conta'; // 1.3: "//outro-site" não é caminho local
   $('#google').href = '/auth/google?next=' + encodeURIComponent(next.split('#')[0]);
   if (params.get('erro')) showMsg(msg, params.get('erro'));
   const tab = name => { $$('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === name)); $('#login-form').classList.toggle('hidden', name !== 'login'); $('#register-form').classList.toggle('hidden', name !== 'register'); msg.className = 'msg'; };

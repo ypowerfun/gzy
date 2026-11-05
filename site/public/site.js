@@ -55,12 +55,15 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   </section>`;
   document.body.appendChild(box);
   const panel = box.querySelector('.chat-panel'), log = box.querySelector('.chat-log'), start = box.querySelector('.chat-start'), room = box.querySelector('.chat-room');
-  let last = 0, timer = null, data = null;
+  let last = 0, timer = null, data = null, lastSender = '';
   const time = t => new Date(t).toLocaleTimeString(({en: 'en-US', es: 'es'})[window.gzSite && gzSite.lang] || 'pt-BR', {hour: '2-digit', minute: '2-digit'});
   function addMessages(list) {
     for (const m of list || []) { if (m.id <= last) continue; last = m.id;
       const d = document.createElement('div'); d.className = 'chat-bubble ' + (m.sender === 'admin' ? 'from-admin' : 'from-user');
-      d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'GameZoney' : ''} ${time(m.at)}</small>`; d.querySelector('p').textContent = m.text; log.appendChild(d); }
+      d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'GameZoney' : ''} ${time(m.at)}</small>`; d.querySelector('p').textContent = m.text; log.appendChild(d); lastSender = m.sender; }
+    // 1.3: abaixo da mensagem do cliente, até o atendente responder
+    log.querySelector('.chat-wait')?.remove();
+    if (lastSender === 'user') { const w = document.createElement('div'); w.className = 'chat-wait'; w.textContent = 'Mensagem recebida, aguarde um momento...'; log.appendChild(w); }
     log.scrollTop = log.scrollHeight;
   }
   const status = online => { box.querySelector('.chat-status').textContent = online ? '● Online agora' : 'Deixe sua mensagem: respondemos por e-mail'; box.querySelector('.chat-status').classList.toggle('on', online); };
@@ -74,21 +77,36 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   box.querySelector('.chat-open').onclick = () => { panel.classList.toggle('hidden'); if (!panel.classList.contains('hidden')) { refresh(); clearInterval(timer); timer = setInterval(refresh, 4000); } else clearInterval(timer); };
   box.querySelector('.chat-close').onclick = () => { panel.classList.add('hidden'); clearInterval(timer); };
   start.onsubmit = e => { e.preventDefault(); busy(start.querySelector('button'), async () => {
-    try { const r = await api('/api/chat/start', {name: start.name.value, email: start.email.value, phone: start.phone.value, message: start.message.value}); start.message.value = ''; last = 0; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); }
+    try { const r = await api('/api/chat/start', {name: start.name.value, email: start.email.value, phone: start.phone.value, message: start.message.value}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); }
     catch (err) { showMsg(box.querySelector('.chat-msg'), err.message); } }); };
   const send = room.querySelector('.chat-send');
   send.onsubmit = e => { e.preventDefault(); const text = send.text.value.trim(); if (!text) return; busy(send.querySelector('button'), async () => {
     try { const r = await api('/api/chat/send', {text, after: last}); send.text.value = ''; addMessages(r.messages); } catch (err) { alert(err.message); } }); };
   send.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send.requestSubmit(); } });
-  room.querySelector('.chat-new').onclick = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; log.innerHTML = ''; refresh(); };
+  room.querySelector('.chat-new').onclick = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; refresh(); };
 })();
 
 // ---------- 1.2: avaliações (página inicial: as 3 escolhidas pelo administrador, na ordem dele, sem data) ----------
 const starsHtml = n => '<span class="stars" aria-label="' + n + ' de 5">' + '★'.repeat(n) + '<span class="off">' + '★'.repeat(5 - n) + '</span></span>';
 function reviewCard(r) {
-  return `<article class="review">${starsHtml(r.stars)}<p data-no-i18n>${esc(r.text)}</p>${r.images.length ? `<div class="pics">${r.images.map(src => `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="" loading="lazy"></a>`).join('')}</div>` : ''}<div class="who" data-no-i18n><b>${esc(r.name)}</b>${r.organization ? `<span>${esc(r.organization)}</span>` : ''}</div></article>`;
+  return `<article class="review">${starsHtml(r.stars)}<p data-no-i18n>${esc(r.text)}</p>${r.images.length ? `<div class="pics protect">${r.images.map(src => `<div class="shot" data-zoom><img src="${esc(src)}" alt="" loading="lazy" draggable="false"></div>`).join('')}</div>` : ''}<div class="who" data-no-i18n><b>${esc(r.name)}</b>${r.organization ? `<span>${esc(r.organization)}</span>` : ''}</div></article>`;
 }
 (async () => {
   const box = $('#featured-reviews'); if (!box) return;
   try { const r = await api('/api/reviews/featured'); if (!r.reviews.length) return; box.innerHTML = r.reviews.map(reviewCard).join(''); $('#avaliacoes').classList.remove('hidden'); } catch { }
 })();
+
+// ---------- 1.3: imagens protegidas (sem clique direito/arrastar) e ampliação na própria página ----------
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.protect, .zoom-view')) e.preventDefault(); });
+document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('.protect, .zoom-view')) e.preventDefault(); });
+document.addEventListener('click', e => {
+  const z = e.target.closest && e.target.closest('[data-zoom]'); if (!z) return;
+  const img = z.querySelector('img'); if (!img) return;
+  const v = document.createElement('div'); v.className = 'zoom-view'; v.setAttribute('role', 'dialog');
+  v.innerHTML = '<button type="button" class="zoom-close" aria-label="Fechar">✕</button><div class="zoom-img"></div>';
+  const big = document.createElement('img'); big.src = img.currentSrc || img.src; big.alt = img.alt || ''; big.draggable = false; v.querySelector('.zoom-img').appendChild(big);
+  const close = () => { v.remove(); document.removeEventListener('keydown', esc); };
+  const esc = k => { if (k.key === 'Escape') close(); };
+  v.addEventListener('click', ev => { if (ev.target === v || ev.target.closest('.zoom-close')) close(); });
+  document.addEventListener('keydown', esc); document.body.appendChild(v);
+});

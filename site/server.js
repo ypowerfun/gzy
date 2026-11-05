@@ -35,6 +35,7 @@ function normalizeKey(v) {
   return body.length === 16 ? 'GZ-' + body.match(/.{4}/g).join('-') : '';
 }
 const money = c => 'R$ ' + (c / 100).toFixed(2).replace('.', ',');
+const DUMMY_HASH = hashPassword('gamezoney-tempo-constante'); // mesma demora quando o e-mail não existe
 
 function createApp(options = {}) {
   const env = {...process.env, ...(options.env || {})};
@@ -59,8 +60,10 @@ function createApp(options = {}) {
   app.set('trust proxy', 'loopback');
   app.use((req, res, next) => {
     res.set({'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
-    if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin',
+      'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
+    // 1.3: sem includeSubDomains (mail. e webmail. continuam na HostGator/Titan)
+    if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000');
     if (req.path.startsWith('/api')) res.set('Cache-Control', 'no-store');
     next();
   });
@@ -75,7 +78,18 @@ function createApp(options = {}) {
     if (++b.n > max) return res.status(429).json({error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.'});
     next();
   };
-  const sweep = setInterval(() => { const now = Date.now(); for (const [k, b] of buckets) if (b.until < now) buckets.delete(k); db.run('DELETE FROM sessions WHERE expires_at<?', now); db.run('DELETE FROM resets WHERE expires_at<?', now); }, 600000);
+  // 1.3: limite geral da API por IP (abuso/robôs)
+  app.use('/api', limit('api', 600, 60000));
+  // 1.3: POST que usa a sessão só vale vindo do próprio site (Origin/Referer); aviso do Mercado Pago, ativação e feedback dos servidores não usam sessão
+  const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback']);
+  const siteOrigin = new URL(SITE).origin;
+  app.use((req, res, next) => {
+    if (req.method !== 'POST' || MACHINE.has(req.path)) return next();
+    const from = req.headers.origin || (req.headers.referer ? (() => { try { return new URL(req.headers.referer).origin; } catch { return 'x'; } })() : '');
+    if (from && from !== siteOrigin && !(options.allowOrigin && options.allowOrigin(from))) return res.status(403).json({error: 'Origem não permitida.'});
+    next();
+  });
+  const sweep = setInterval(() => { const now = Date.now(); for (const [k, b] of buckets) if (b.until < now) buckets.delete(k); db.run('DELETE FROM sessions WHERE expires_at<?', now); db.run('DELETE FROM resets WHERE expires_at<?', now); db.run('DELETE FROM verifications WHERE expires_at<?', now); db.run('DELETE FROM feedback WHERE id IN (SELECT id FROM feedback ORDER BY received_at DESC LIMIT -1 OFFSET 5000)'); }, 600000);
   sweep.unref?.();
 
   // ---------- sessão ----------
@@ -91,23 +105,37 @@ function createApp(options = {}) {
   app.use((req, res, next) => {
     const token = cookieOf(req, COOKIE);
     req.user = token ? db.get('SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?', sha(token), Date.now()) : null;
-    req.admin = !!(req.user && ADMINS.has(req.user.email.toLowerCase()));
+    req.admin = !!(req.user && req.user.email_verified && ADMINS.has(req.user.email.toLowerCase())); // 1.3: admin só com e-mail confirmado
     next();
   });
   const needUser = req => req.user || fail(401, 'Entre na sua conta.');
-  const needAdmin = req => { needUser(req); if (!req.admin) fail(403, 'Acesso restrito ao administrador.'); };
+  const needAdmin = req => { needUser(req); if (!req.admin) fail(403, ADMINS.has(req.user.email.toLowerCase()) && !req.user.email_verified ? 'Confirme o seu e-mail para acessar a administração (Minha conta › Reenviar confirmação).' : 'Acesso restrito ao administrador.'); };
   // POST do navegador só com JSON (proteção contra envio de formulário de outro site)
   const jsonOnly = (req, res, next) => (req.method === 'POST' && !req.is('application/json')) ? res.status(415).json({error: 'Envie JSON.'}) : next();
   const api = fn => (req, res) => Promise.resolve().then(() => fn(req, res)).then(r => { if (!res.headersSent) res.json(r ?? {ok: true}); })
     .catch(e => { if (!(e instanceof HttpError)) log.error(e); if (!res.headersSent) res.status(e.status || 500).json({error: e instanceof HttpError ? e.message : 'Erro interno. Tente de novo.'}); });
 
-  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
+  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', emailVerified: !!u.email_verified, google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
   function createUser({email, name, password, googleSub}) {
     const u = {id: uid(), email, name, password_hash: password ? hashPassword(password) : null, google_sub: googleSub || null, created_at: Date.now()};
-    db.run('INSERT INTO users(id,email,name,password_hash,google_sub,created_at) VALUES(?,?,?,?,?,?)', u.id, u.email, u.name, u.password_hash, u.google_sub, u.created_at);
+    db.run('INSERT INTO users(id,email,name,password_hash,google_sub,created_at,email_verified) VALUES(?,?,?,?,?,?,?)', u.id, u.email, u.name, u.password_hash, u.google_sub, u.created_at, googleSub ? 1 : 0);
     db.audit(email, 'conta', googleSub ? 'conta criada com Google' : 'conta criada');
     return db.get('SELECT * FROM users WHERE id=?', u.id);
   }
+
+  // ---------- 1.3: confirmação de e-mail ----------
+  async function sendVerification(user) {
+    const token = crypto.randomBytes(32).toString('hex');
+    db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
+    return mail.send(user.email, 'GameZoney: confirme seu e-mail', `Olá, ${user.name}!\n\nConfirme o seu e-mail abrindo o link abaixo (vale por 7 dias):\n${SITE}/api/auth/verify?t=${token}\n\nSe não foi você, ignore este e-mail.`);
+  }
+  app.get('/api/auth/verify', (req, res) => {
+    const row = db.get('SELECT * FROM verifications WHERE token_hash=? AND expires_at>?', sha(String(req.query.t || '')), Date.now());
+    if (!row) return res.redirect('/conta?verificado=0');
+    db.run('UPDATE users SET email_verified=1 WHERE id=?', row.user_id); db.run('DELETE FROM verifications WHERE user_id=?', row.user_id);
+    db.audit(db.get('SELECT email FROM users WHERE id=?', row.user_id)?.email || '?', 'conta', 'e-mail confirmado');
+    res.redirect('/conta?verificado=1');
+  });
 
   // ---------- configuração pública ----------
   app.get('/api/config', (req, res) => res.json({priceCents: PRICE, listPriceCents: LIST_PRICE, priceLabel: PRICE_LABEL, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled,
@@ -122,12 +150,21 @@ function createApp(options = {}) {
     if (db.get('SELECT id FROM users WHERE email=?', email)) fail(409, 'Já existe uma conta com este e-mail. Use Entrar (ou Esqueci a senha).');
     const user = createUser({email, name, password});
     login(res, user);
-    mail.send(email, 'Bem-vindo ao GameZoney', `Olá, ${name}!\n\nSua conta no GameZoney foi criada. Baixe o sistema e use grátis por 30 dias:\n${SITE}/conta\n\nEquipe GameZoney`);
+    // 1.3: boas-vindas + link de confirmação do e-mail
+    const token = crypto.randomBytes(32).toString('hex');
+    db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
+    mail.send(email, 'Bem-vindo ao GameZoney', `Olá, ${name}!\n\nSua conta no GameZoney foi criada. Confirme o seu e-mail abrindo o link abaixo:\n${SITE}/api/auth/verify?t=${token}\n\nBaixe o sistema e use grátis por 30 dias: ${SITE}/conta\n\nEquipe GameZoney`);
     return {user: publicUser(user)};
   }));
   app.post('/api/auth/login', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
     const email = str(req.body.email, 200).toLowerCase(), user = db.get('SELECT * FROM users WHERE email=?', email);
-    if (!user || !checkPassword(String(req.body.password || ''), user.password_hash)) fail(400, user && !user.password_hash ? 'Esta conta usa o login do Google. Clique em "Entrar com Google" (ou Esqueci a senha para criar uma senha).' : 'E-mail ou senha incorretos.');
+    // 1.3: no máximo 10 senhas erradas por conta a cada 15 min (contra tentativa de adivinhar a senha de vários lugares)
+    const fk = 'fail:' + email, now = Date.now(); let fb = buckets.get(fk);
+    if (fb && fb.until > now && fb.n >= 10) fail(429, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
+    const ok = user ? checkPassword(String(req.body.password || ''), user.password_hash) : (checkPassword('x', DUMMY_HASH), false);
+    if (!ok) { if (!fb || fb.until < now) { fb = {n: 0, until: now + 15 * 60000}; buckets.set(fk, fb); } fb.n++; }
+    else buckets.delete(fk);
+    if (!user || !ok) fail(400, user && !user.password_hash ? 'Esta conta usa o login do Google. Clique em "Entrar com Google" (ou Esqueci a senha para criar uma senha).' : 'E-mail ou senha incorretos.');
     login(res, user); return {user: publicUser(user)};
   }));
   app.post('/api/auth/logout', jsonOnly, api((req, res) => {
@@ -143,14 +180,18 @@ function createApp(options = {}) {
     }
     return {ok: true, mail: mail.enabled};
   }));
-  app.post('/api/auth/reset', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
+  app.post('/api/auth/reset', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => { // 1.3: redefinir pelo link do e-mail também confirma o e-mail
     const token = String(req.body.token || ''), password = String(req.body.password || '');
     const row = db.get('SELECT * FROM resets WHERE token_hash=? AND expires_at>?', sha(token), Date.now()); if (!row) fail(400, 'Link inválido ou vencido. Peça outro em Esqueci a senha.');
     if (password.length < 8 || password.length > 100) fail(400, 'A senha precisa ter de 8 a 100 caracteres.');
-    db.run('UPDATE users SET password_hash=? WHERE id=?', hashPassword(password), row.user_id);
+    db.run('UPDATE users SET password_hash=?, email_verified=1 WHERE id=?', hashPassword(password), row.user_id);
     db.run('DELETE FROM resets WHERE user_id=?', row.user_id); db.run('DELETE FROM sessions WHERE user_id=?', row.user_id);
     const user = db.get('SELECT * FROM users WHERE id=?', row.user_id); login(res, user); db.audit(user.email, 'conta', 'senha redefinida');
     return {ok: true};
+  }));
+  app.post('/api/auth/verify/resend', jsonOnly, limit('verify', 5, 3600000), api(async req => {
+    const u = needUser(req); if (u.email_verified) return {ok: true, verified: true};
+    return {ok: true, sent: await sendVerification(u)};
   }));
   app.post('/api/profile', jsonOnly, api(req => {
     const u = needUser(req), name = str(req.body.name, 100), phone = str(req.body.phone, 30), organization = str(req.body.organization, 100);
@@ -162,7 +203,7 @@ function createApp(options = {}) {
   const redirectUri = SITE + '/auth/google/callback';
   app.get('/auth/google', (req, res) => {
     if (!gg.enabled) return res.redirect('/entrar.html?erro=' + encodeURIComponent('Login com Google ainda não configurado.'));
-    const state = crypto.randomBytes(16).toString('hex'), next = /^\/[a-z0-9/._-]*$/i.test(String(req.query.next || '')) ? String(req.query.next) : '/conta';
+    const state = crypto.randomBytes(16).toString('hex'), next = /^\/(?!\/)[a-z0-9/._-]*$/i.test(String(req.query.next || '')) ? String(req.query.next) : '/conta';
     setCookie(res, 'gzg', state + '.' + Buffer.from(next).toString('base64url'), 600000);
     res.redirect(gg.authUrl(redirectUri, state));
   });
@@ -173,11 +214,11 @@ function createApp(options = {}) {
       if (req.query.error) throw new Error('Login com Google cancelado.');
       const p = await gg.profile(String(req.query.code || ''), redirectUri);
       let user = db.get('SELECT * FROM users WHERE google_sub=?', p.sub) || db.get('SELECT * FROM users WHERE email=?', p.email);
-      if (user && !user.google_sub) db.run('UPDATE users SET google_sub=? WHERE id=?', p.sub, user.id);
+      if (user && !user.google_sub) db.run('UPDATE users SET google_sub=?, email_verified=1 WHERE id=?', p.sub, user.id);
       if (!user) user = createUser({email: p.email, name: p.name || p.email.split('@')[0], googleSub: p.sub});
       login(res, user);
       const next = nextB64 ? Buffer.from(nextB64, 'base64url').toString('utf8') : '/conta';
-      res.redirect(/^\/[a-z0-9/._-]*$/i.test(next) ? next : '/conta');
+      res.redirect(/^\/(?!\/)[a-z0-9/._-]*$/i.test(next) ? next : '/conta');
     } catch (e) { res.redirect('/entrar.html?erro=' + encodeURIComponent(e.message)); }
   });
 
@@ -295,7 +336,7 @@ function createApp(options = {}) {
       downloads: listDownloads()};
   }));
   app.post('/api/support', jsonOnly, limit('support', 10, 3600000), api(req => {
-    const u = needUser(req), subject = str(req.body.subject, 120), message = str(req.body.message, 4000);
+    const u = needUser(req), subject = str(req.body.subject, 120).replace(/[\r\n]+/g, ' '), message = str(req.body.message, 4000);
     if (subject.length < 3) fail(400, 'Informe o assunto.'); if (message.length < 5) fail(400, 'Descreva o que precisa.');
     const id = uid(); db.run('INSERT INTO tickets(id,user_id,subject,message,created_at) VALUES(?,?,?,?,?)', id, u.id, subject, message, Date.now());
     for (const a of ADMINS) mail.send(a, 'GameZoney suporte: ' + subject, `${u.name} <${u.email}> ${u.phone || ''}\n\n${message}\n\nResponder: ${SITE}/admin`);
@@ -315,7 +356,7 @@ function createApp(options = {}) {
   });
 
   // ---------- feedback enviado pelos servidores GameZoney (Perfil › Feedback) ----------
-  app.post('/api/feedback', limit('feedback', 120, 3600000), api(req => {
+  app.post('/api/feedback', limit('feedback', 30, 3600000), api(req => {
     const b = req.body || {}, id = str(b.id, 60), comment = str(b.comment, 2000);
     if (!id || comment.length < 3) fail(400, 'Feedback inválido.');
     db.run('INSERT OR IGNORE INTO feedback(id,name,email,comment,at,server_version,install_id,received_at,ip) VALUES(?,?,?,?,?,?,?,?,?)', id, str(b.name, 100), str(b.email, 120), comment, str(b.at, 40), str(b.serverVersion, 20), str(b.installId, 80), Date.now(), req.ip);
@@ -371,12 +412,26 @@ function createApp(options = {}) {
   // ---------- avaliações e chat ao vivo (community.js) ----------
   const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
 
+  // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
+  app.use('/img/telas', (req, res, next) => {
+    const dest = req.headers['sec-fetch-dest'], site = req.headers['sec-fetch-site'];
+    if ((dest && dest !== 'image') || site === 'cross-site') return res.status(403).send('Imagem protegida.'); // abrir em nova aba/baixar ou usar em outro site
+    res.set('Cache-Control', 'private, max-age=86400'); next();
+  });
   // ---------- páginas ----------
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
   app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
   app.get('/entrar', (req, res) => res.redirect('/entrar.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '')));
   app.use(express.static(path.join(__dirname, 'public'), {extensions: ['html'], maxAge: '1h'}));
   app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'public', '404.html')));
+  // 1.3: qualquer erro não tratado (JSON inválido, arquivo inexistente…) responde sem detalhes internos
+  app.use((err, req, res, next) => {
+    const status = err.status || err.statusCode || 500;
+    if (status >= 500) log.error(err);
+    if (res.headersSent) return next(err);
+    if (req.path.startsWith('/api')) return res.status(status).json({error: status === 413 ? 'Arquivo grande demais.' : status < 500 ? 'Requisição inválida.' : 'Erro interno. Tente de novo.'});
+    res.status(status === 404 ? 404 : status).sendFile(path.join(__dirname, 'public', '404.html'));
+  });
   app.locals.close = () => { clearInterval(sweep); db.close(); };
   return app;
 }

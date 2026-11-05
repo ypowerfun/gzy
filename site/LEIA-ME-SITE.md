@@ -161,6 +161,29 @@ sudo mv ~/*.exe /var/lib/gamezoney-site/downloads/ && sudo chown gamezoney:gamez
 
 Envie o zip novo, descompacte e rode de novo `sudo bash deploy/instalar-vps.sh`. Banco, configuração, chave e downloads são mantidos.
 
+## Segurança (1.3)
+
+- **Administrador só com e-mail confirmado.** Quem cria conta recebe um link de confirmação. Ninguém vira administrador só por cadastrar o e-mail do `ADMIN_EMAILS`: o `/admin` exige o e-mail confirmado. Para confirmar o seu e-mail direto no VPS (se o e-mail não chegar):
+  ```bash
+  sudo -u gamezoney node /opt/gamezoney-site/tools/confirmar-email.js seu-email@exemplo.com
+  ```
+- **Senha:** no máximo 10 senhas erradas por conta a cada 15 minutos, mais o limite por IP. As senhas são guardadas com scrypt, nunca em texto.
+- **Proteções do site:**
+  - Pedidos POST com sessão só valem vindos do próprio site (proteção contra CSRF), e o cookie de sessão é HttpOnly, Secure e SameSite.
+  - Cabeçalhos CSP, X-Frame-Options e Permissions-Policy ativos.
+  - Erros nunca mostram detalhes internos.
+  - O redirecionamento só aceita endereços do próprio site.
+  - Limite geral de requisições por IP.
+  - Biblioteca de e-mail atualizada (nodemailer 10, sem vulnerabilidades conhecidas: `npm audit` = 0).
+- **Capturas do sistema:** em alta resolução, sem clique direito/arrastar. Clicar amplia na própria página, e abrir o endereço da imagem direto ou usá-la em outro site é recusado. Nenhuma imagem exibida numa tela fica 100% protegida (print de tela continua possível), mas o download direto fica bloqueado.
+- **VPS (`instalar-vps.sh`):**
+  - O serviço do site roda isolado (systemd) e em modo produção.
+  - O Caddy limita o envio a 12 MB e esconde o cabeçalho Server.
+  - fail2ban bloqueia por 1 hora quem erra o SSH 5 vezes.
+  - Atualizações de segurança automáticas (unattended-upgrades).
+  - SSH só com chave, sem senha e sem login do root.
+- **Mantenha em segredo:** `license-private.pem`, `/etc/gamezoney-site.env` (tokens e senhas) e a chave SSH. Se algum vazar, troque: gere outro Access Token no Mercado Pago e troque a senha do e-mail.
+
 ## Comandos úteis
 
 ```bash
