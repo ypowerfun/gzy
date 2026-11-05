@@ -6,11 +6,17 @@
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="/site.css">
 </head>
-<body>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<body data-no-chat>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><nav class="nav"><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
 <main class="page"><div class="wrap dash">
   <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
   <div class="stats" id="stats"></div>
+  <section class="card" id="chat"><h3><span>Chat ao vivo</span><small class="note">Enquanto esta página está aberta, os visitantes veem você como <b style="color:var(--green)">online</b>.</small></h3>
+    <div class="admin-chat"><div class="chat-list" id="chat-list"></div>
+      <div class="chat-pane"><div class="chat-head" id="chat-head"><span class="note">Escolha uma conversa.</span></div><div class="chat-log" id="admin-log"></div>
+        <form id="admin-send" class="hidden"><textarea name="text" placeholder="Responder… (Enter envia, Shift+Enter quebra linha)"></textarea>
+          <div class="row"><label style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" name="email" style="width:auto"> enviar também por e-mail</label><button class="btn small" style="margin-left:auto">Enviar</button><button type="button" class="btn small ghost" id="chat-close">Encerrar conversa</button></div></form></div></div></section>
+  <section class="card" id="avaliacoes"><h3>Avaliações</h3><p class="note">Escolha a posição (1, 2 ou 3) das avaliações que aparecem na página inicial. "—" tira da página inicial. Ocultar esconde a avaliação.</p><div class="table" id="reviews"></div></section>
   <section class="card"><h3>Emitir licença (cortesia / venda fora do site)</h3>
     <form id="issue-form" class="row" style="align-items:flex-end"><label style="flex:2;min-width:220px">E-mail da conta do cliente<input name="email" type="email" required></label><label style="flex:2;min-width:200px">Observação<input name="note" maxlength="200" placeholder="Ex.: venda no WhatsApp"></label><button class="btn">Emitir</button></form>
     <p class="msg" id="issue-msg"></p></section>

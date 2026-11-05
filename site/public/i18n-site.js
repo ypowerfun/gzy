@@ -13,8 +13,8 @@
   let lang = 'pt', busy = false, cache = new Map();
   try {
     const saved = localStorage.getItem('gz-site-lang');
+    // padrão: Português (Brasil); muda só quando o visitante escolhe no rodapé (fica lembrado)
     if (LANGS.includes(saved)) lang = saved;
-    else { const n = (navigator.language || 'pt').toLowerCase(); lang = n.startsWith('pt') ? 'pt' : n.startsWith('es') ? 'es' : 'en'; }
   } catch { }
   function lookup(key) {
     const col = COL[lang], row = exact.get(key); if (row && row[col]) return row[col];

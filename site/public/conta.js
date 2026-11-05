@@ -18,7 +18,7 @@
     });
     $('#order-list').innerHTML = me.orders.length ? `<table><thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Situação</th><th>Chave</th></tr></thead><tbody>${me.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${money(o.amountCents)}</td><td>${METHOD(o)}</td><td><span class="pill ${(STATUS[o.status] || [])[1] || ''}">${(STATUS[o.status] || [o.status])[0]}</span></td><td>${o.licenseKey ? `<span class="key" style="font-size:14px">${esc(o.licenseKey)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Nenhum pedido ainda.</p>';
     $('#ticket-list').innerHTML = me.tickets.length ? `<table><thead><tr><th>Chamado</th><th>Resposta</th></tr></thead><tbody>${me.tickets.map(t => `<tr><td><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Respondido'}</span><br><small class="note">${fmtDate(t.created_at)}</small><p style="white-space:pre-wrap;margin:6px 0 0">${esc(t.message)}</p></td><td style="white-space:pre-wrap">${t.reply ? esc(t.reply) : '<span class="note">Aguardando resposta</span>'}</td></tr>`).join('')}</tbody></table>` : '';
-    const pf = $('#profile-form'); pf.name.value = me.user.name || ''; pf.phone.value = me.user.phone || '';
+    const pf = $('#profile-form'); pf.name.value = me.user.name || ''; pf.phone.value = me.user.phone || ''; pf.organization.value = me.user.organization || '';
     const c = siteConfig || await api('/api/config').catch(() => ({}));
     const contacts = [c.supportWhatsapp ? `WhatsApp: <a href="https://wa.me/${esc(c.supportWhatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.supportWhatsapp)}</a>` : '', c.supportEmail ? `E-mail: <a href="mailto:${esc(c.supportEmail)}">${esc(c.supportEmail)}</a>` : ''].filter(Boolean);
     if (contacts.length) $('#support-contacts').innerHTML = 'Abra um chamado (respondemos pelo e-mail da sua conta) ou fale direto: ' + contacts.join(' • ');
@@ -54,6 +54,34 @@
   $('#support-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
     try { await api('/api/support', {subject: f.subject.value, message: f.message.value}); f.reset(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load(); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
   $('#profile-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
-    try { await api('/api/profile', {name: f.name.value, phone: f.phone.value}); showMsg($('#profile-msg'), 'Dados salvos.', true); load(); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
+    try { await api('/api/profile', {name: f.name.value, phone: f.phone.value, organization: f.organization.value}); showMsg($('#profile-msg'), 'Dados salvos.', true); load(); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
+  // ---------- 1.2: avaliação (1 a 5 estrelas, texto e até 2 imagens .jpg/.png) ----------
+  let stars = 0, kept = [], added = [];
+  const pick = $('#star-pick');
+  const paintStars = () => { pick.innerHTML = [1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= stars ? 'on' : ''}" aria-label="${n}">★</button>`).join(''); $$('[data-star]').forEach(b => b.onclick = () => { stars = Number(b.dataset.star); paintStars(); }); };
+  const paintThumbs = () => {
+    $('#review-thumbs').innerHTML = [...kept.map((src, i) => `<div><img src="${esc(src)}" alt=""><button type="button" data-kept="${i}" aria-label="Remover">✕</button></div>`), ...added.map((src, i) => `<div><img src="${src}" alt=""><button type="button" data-added="${i}" aria-label="Remover">✕</button></div>`)].join('');
+    $$('[data-kept]').forEach(b => b.onclick = () => { kept.splice(Number(b.dataset.kept), 1); paintThumbs(); });
+    $$('[data-added]').forEach(b => b.onclick = () => { added.splice(Number(b.dataset.added), 1); paintThumbs(); });
+  };
+  const rf = $('#review-form'), rmsg = $('#review-msg');
+  rf.files.onchange = async () => {
+    for (const file of [...rf.files.files]) {
+      if (kept.length + added.length >= 2) { showMsg(rmsg, 'No máximo 2 imagens.'); break; }
+      if (!/^image\/(jpeg|png)$/.test(file.type)) { showMsg(rmsg, 'Envie imagens .jpg ou .png.'); continue; }
+      if (file.size > 2 * 1024 * 1024) { showMsg(rmsg, 'Cada imagem pode ter no máximo 2 MB.'); continue; }
+      added.push(await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); }));
+    }
+    rf.files.value = ''; paintThumbs();
+  };
+  rf.onsubmit = e => { e.preventDefault(); busy(rf.querySelector('button.btn'), async () => {
+    if (!stars) return showMsg(rmsg, 'Escolha de 1 a 5 estrelas.');
+    try { const r = await api('/api/reviews', {stars, text: rf.text.value, keepImages: kept, images: added}); kept = r.review.images; added = []; paintThumbs(); $('#review-remove').classList.remove('hidden'); showMsg(rmsg, 'Avaliação enviada. Obrigado!', true); }
+    catch (err) { showMsg(rmsg, err.message); } }); };
+  $('#review-remove').onclick = async () => {
+    const q = 'Excluir a sua avaliação?'; if (!window.confirm(window.gzSite ? gzSite.t(q) : q)) return;
+    await api('/api/reviews/remove', {}).catch(() => {}); stars = 0; kept = []; added = []; rf.text.value = ''; paintStars(); paintThumbs(); $('#review-remove').classList.add('hidden'); showMsg(rmsg, 'Avaliação excluída.', true);
+  };
+  api('/api/reviews/mine').then(r => { if (r.review) { stars = r.review.stars; rf.text.value = r.review.text; kept = r.review.images; $('#review-remove').classList.remove('hidden'); } paintStars(); paintThumbs(); }).catch(() => paintStars());
   load();
 })();

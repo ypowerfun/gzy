@@ -35,6 +35,18 @@ function open(dir) {
   db.exec(SCHEMA);
   // 1.1: link do pagamento com cartão (Checkout do Mercado Pago)
   if (!db.prepare('PRAGMA table_info(orders)').all().some(c => c.name === 'checkout_url')) db.exec("ALTER TABLE orders ADD COLUMN checkout_url TEXT NOT NULL DEFAULT ''");
+  // 1.2: organização no perfil, avaliações e chat ao vivo
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'organization')) db.exec("ALTER TABLE users ADD COLUMN organization TEXT NOT NULL DEFAULT ''");
+  db.exec(`
+CREATE TABLE IF NOT EXISTS reviews(
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE, stars INTEGER NOT NULL, text TEXT NOT NULL,
+  images TEXT NOT NULL DEFAULT '[]', featured INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS chats(
+  id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, user_id TEXT, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'open', created_at INTEGER NOT NULL, last_at INTEGER NOT NULL, unread_admin INTEGER NOT NULL DEFAULT 0, unread_user INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS chat_messages(id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE, sender TEXT NOT NULL, text TEXT NOT NULL, at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
+`);
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

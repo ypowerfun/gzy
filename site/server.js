@@ -64,7 +64,8 @@ function createApp(options = {}) {
     if (req.path.startsWith('/api')) res.set('Cache-Control', 'no-store');
     next();
   });
-  app.use(express.json({limit: '64kb'}));
+  const smallJson = express.json({limit: '64kb'});
+  app.use((req, res, next) => req.path === '/api/reviews' ? next() : smallJson(req, res, next)); // avaliações com imagens têm limite próprio (community.js)
 
   // ---------- limite de tentativas (por IP) ----------
   const buckets = new Map();
@@ -100,7 +101,7 @@ function createApp(options = {}) {
   const api = fn => (req, res) => Promise.resolve().then(() => fn(req, res)).then(r => { if (!res.headersSent) res.json(r ?? {ok: true}); })
     .catch(e => { if (!(e instanceof HttpError)) log.error(e); if (!res.headersSent) res.status(e.status || 500).json({error: e instanceof HttpError ? e.message : 'Erro interno. Tente de novo.'}); });
 
-  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
+  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
   function createUser({email, name, password, googleSub}) {
     const u = {id: uid(), email, name, password_hash: password ? hashPassword(password) : null, google_sub: googleSub || null, created_at: Date.now()};
     db.run('INSERT INTO users(id,email,name,password_hash,google_sub,created_at) VALUES(?,?,?,?,?,?)', u.id, u.email, u.name, u.password_hash, u.google_sub, u.created_at);
@@ -152,9 +153,9 @@ function createApp(options = {}) {
     return {ok: true};
   }));
   app.post('/api/profile', jsonOnly, api(req => {
-    const u = needUser(req), name = str(req.body.name, 100), phone = str(req.body.phone, 30);
+    const u = needUser(req), name = str(req.body.name, 100), phone = str(req.body.phone, 30), organization = str(req.body.organization, 100);
     if (!name) fail(400, 'Informe seu nome.');
-    db.run('UPDATE users SET name=?, phone=? WHERE id=?', name, phone, u.id); return {ok: true};
+    db.run('UPDATE users SET name=?, phone=?, organization=? WHERE id=?', name, phone, organization, u.id); return {ok: true};
   }));
 
   // ---------- Google ----------
@@ -334,7 +335,8 @@ function createApp(options = {}) {
       licenses: db.all('SELECT l.*,u.email FROM licenses l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 500').map(l => ({...publicLicense(l), email: l.email, note: l.note, installId: l.install_id || ''})),
       tickets: db.all('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id ORDER BY (t.status=\'open\') DESC, t.created_at DESC LIMIT 300'),
       feedback: db.all('SELECT * FROM feedback ORDER BY received_at DESC LIMIT 300'),
-      audit: db.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200')
+      audit: db.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200'),
+      reviews: extra.adminReviews(), unreadChats: extra.unreadChats()
     };
   }));
   app.post('/api/admin/orders/:id/approve', jsonOnly, api(req => {
@@ -365,6 +367,9 @@ function createApp(options = {}) {
     if (reply) mail.send(t.email, 'GameZoney suporte: ' + t.subject, `Olá, ${t.name}!\n\n${reply}\n\nSeus chamados: ${SITE}/conta#suporte`);
     return {ok: true};
   }));
+
+  // ---------- avaliações e chat ao vivo (community.js) ----------
+  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
 
   // ---------- páginas ----------
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
