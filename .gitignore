@@ -1,6 +1,7 @@
 # Gerado na hora de montar os instaladores (não vai para o repositório)
 node_modules/
 outputs/
+out/
 saida/
 servidor/build/
 servidor/stage/
