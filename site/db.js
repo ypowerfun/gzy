@@ -53,6 +53,9 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
     db.exec("UPDATE users SET email_verified=1 WHERE google_sub IS NOT NULL");
   }
   db.exec("CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL)"); // 1.4: oferta editável no /admin
+  // 1.6: histórico de trocas de computador das licenças (identificar revenda da chave)
+  db.exec("CREATE TABLE IF NOT EXISTS license_transfers(id INTEGER PRIMARY KEY AUTOINCREMENT, license_id TEXT NOT NULL, at INTEGER NOT NULL, how TEXT NOT NULL, from_install TEXT, from_machine TEXT, to_install TEXT, to_machine TEXT, ip TEXT)");
+  db.exec("CREATE INDEX IF NOT EXISTS license_transfers_lic ON license_transfers(license_id, at)");
   db.exec("CREATE TABLE IF NOT EXISTS verifications(token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL)");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };

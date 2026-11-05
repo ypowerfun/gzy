@@ -140,3 +140,21 @@ test('site: feedback dos servidores, páginas e chaves',async t=>{
  for(let i=0;i<50;i++)assert.match(newKey(),/^GZ(-[A-HJ-NP-Z2-9]{4}){4}$/);
  assert.equal(normalizeKey('gz abcd-efgh ijkl mnop'),'GZ-ABCD-EFGH-IJKL-MNOP');
 });
+
+test('1.6: trocar de computador pede e-mail e senha da conta dona da chave e registra a troca',async t=>{
+ const s=await boot(t);const anon=s.client(),ana=s.client(),bia=s.client();
+ await ana('/api/auth/register',{name:'Ana',email:'ana@arena.com',password:'senha-forte-1'});await bia('/api/auth/register',{name:'Bia',email:'bia@arena.com',password:'senha-forte-2'});
+ const dono=s.client();await dono('/api/auth/register',{name:'Dono',email:'dono@gamezoney.com',password:'senha-do-dono'});await confirm(s,'dono@gamezoney.com');const {key}=await dono('/api/admin/licenses',{email:'ana@arena.com',note:'teste'});
+ const i1=crypto.randomUUID(),i2=crypto.randomUUID(),i3=crypto.randomUUID();
+ await anon('/api/license/activate',{key,installId:i1,machine:'RECEPCAO'});
+ const busy=await anon('/api/license/activate',{key,installId:i2,machine:'PC-NOVO'},409);assert.equal(busy.needLogin,true);assert.equal(busy.machine,'RECEPCAO');
+ await anon('/api/license/activate',{key,installId:i2,email:'ana@arena.com',password:'errada'},400);
+ const other=await anon('/api/license/activate',{key,installId:i2,email:'bia@arena.com',password:'senha-forte-2'},403);assert.match(other.error,/outra conta/);
+ const ok=await anon('/api/license/activate',{key,installId:i2,machine:'PC-NOVO',email:'ANA@arena.com',password:'senha-forte-1'});
+ assert.ok(serverLicense.verifyToken(ok.token,i2,s.publicKey));
+ assert.ok(s.mails.some(m=>m.to==='ana@arena.com'&&/outro computador/.test(m.subject)),'aviso da troca por e-mail');
+ let l=(await dono('/api/admin/overview')).licenses.find(x=>x.key===key);assert.equal(l.machine,'PC-NOVO');assert.equal(l.recentTransfers,1);assert.equal(l.suspect,false);
+ // 3 trocas em 30 dias = suspeita de revenda
+ await anon('/api/license/activate',{key,installId:i3,email:'ana@arena.com',password:'senha-forte-1'});await anon('/api/license/activate',{key,installId:i1,email:'ana@arena.com',password:'senha-forte-1'});
+ l=(await dono('/api/admin/overview')).licenses.find(x=>x.key===key);assert.equal(l.recentTransfers,3);assert.equal(l.suspect,true);assert.equal(l.machines,3);
+});

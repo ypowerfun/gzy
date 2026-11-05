@@ -46,3 +46,23 @@ test('1.0.5: licença — início do teste guardado fora da pasta de dados (rein
  const store2={state:{runtime:{},license:{trialStartedAt:Date.now()-40*86400000}}};license(store2,{markerFile});
  assert.equal(JSON.parse(fs.readFileSync(markerFile,'utf8')).trialStartedAt,store2.state.license.trialStartedAt);
 });
+
+test('1.0.5 (troca de computador): chave ativada em outro computador — pede e-mail e senha da conta gamezoney.com e ativa neste',async t=>{
+ const {publicKey,privateKey}=crypto.generateKeyPairSync('ed25519');const pub=publicKey.export({type:'spki',format:'pem'});let lastBody=null;
+ const site=http.createServer((req,res)=>{let raw='';req.on('data',c=>raw+=c);req.on('end',()=>{lastBody=JSON.parse(raw);res.setHeader('Content-Type','application/json');
+  if(lastBody.email===undefined){res.statusCode=409;return res.end(JSON.stringify({error:'Esta chave já está ativada em outro computador (RECEPCAO).',needLogin:true,machine:'RECEPCAO'}))}
+  if(lastBody.email!=='dono@arena.com'||lastBody.password!=='senha-do-site'){res.statusCode=400;return res.end(JSON.stringify({error:'E-mail ou senha incorretos.'}))}
+  res.end(JSON.stringify({token:sign({v:1,key:lastBody.key,installId:lastBody.installId,email:'dono@arena.com',plan:'lifetime',issuedAt:Date.now()},privateKey)}))})});
+ await new Promise(r=>site.listen(0,'127.0.0.1',r));const old=process.env.GZ_SITE_URL;process.env.GZ_SITE_URL='http://127.0.0.1:'+site.address().port;
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-license-'));const instance=createServer({directory,noTimer:true,license:{publicKey:pub}});
+ await new Promise(r=>instance.server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+instance.server.address().port;let cookie='';
+ t.after(async()=>{await instance.close();site.close();fs.rmSync(directory,{recursive:true,force:true});if(old===undefined)delete process.env.GZ_SITE_URL;else process.env.GZ_SITE_URL=old});
+ async function call(url,body,status=200){const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body)});const text=await r.text();assert.equal(r.status,status,url+' '+text);if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return text?JSON.parse(text):null}
+ await call('/api/setup',{name:'Dono',username:'admin',password:'senha123'});await call('/api/login',{username:'admin',password:'senha123'});
+ const key='GZ-AAAA-BBBB-CCCC-DDDD';
+ const busy=await call('/api/license/activate',{key},400);assert.equal(busy.needLogin,true);assert.equal(busy.machine,'RECEPCAO');assert.equal(lastBody.password,undefined);
+ const bad=await call('/api/license/activate',{key,email:'dono@arena.com',password:'errada'},400);assert.match(bad.error,/incorretos/);assert.equal(bad.needLogin,undefined);
+ const L=await call('/api/license/activate',{key,email:' dono@arena.com ',password:'senha-do-site'});assert.equal(L.mode,'licensed');assert.equal(lastBody.email,'dono@arena.com');
+ // a senha da conta do site não fica guardada no servidor
+ assert.doesNotMatch(JSON.stringify(instance.store.state),/senha-do-site/);
+});

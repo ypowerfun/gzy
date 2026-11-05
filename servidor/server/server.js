@@ -42,7 +42,7 @@ function createServer(options={}){
  const lic=require('./license')(store,{version:'1.0.5',markerFile:(options.directory||process.env.GZ_DATA_DIR)?null:path.join(path.dirname(directory),'gz-license.json'),...options.license});store.persist();
  app.use('/api',lic.guard);
  app.get('/api/license',(req,res)=>res.json(lic.status()));
- app.post('/api/license/activate',(req,res)=>{if(req.operator.role!=='admin')return res.status(400).json({error:'Somente o administrador pode ativar a licença.'});lic.activate(req.body||{},actor(req)).then(r=>res.json(r),e=>res.status(400).json({error:e.message}))});
+ app.post('/api/license/activate',(req,res)=>{if(req.operator.role!=='admin')return res.status(400).json({error:'Somente o administrador pode ativar a licença.'});lic.activate(req.body||{},actor(req)).then(r=>res.json(r),e=>res.status(400).json({error:e.message,...(e.needLogin?{needLogin:true,machine:e.machine||''}:{})}))});
  const route=(method,url,fn)=>app[method](url,(req,res,next)=>serialized(async()=>{const result=await fn(req,res);if(!res.headersSent)res.json(result??{ok:true})}).catch(next));
  function report(stationId,message){status.set(stationId,{message,at:Date.now()});}
  function client(station){if(station.kind!=='tv')fail('Computador sem agente: controle remoto indisponível nesta versão.');if(!clients.has(station.id))clients.set(station.id,new (station.tvType==='android'?AndroidFactory:Factory)({id:station.id,ipTV:station.ip,brand:station.brand||undefined,hdmi:station.hdmi},report,path.join(directory,'pairing')));return clients.get(station.id)}

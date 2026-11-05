@@ -71,10 +71,12 @@ module.exports = function license(store, options = {}) {
     let r, data;
     try {
       r = await fetch(SITE() + '/api/license/activate', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({key, installId: s.runtime.installId, machine: os.hostname().slice(0, 60), version: options.version || ''})});
+        body: JSON.stringify({key, installId: s.runtime.installId, machine: os.hostname().slice(0, 60), version: options.version || '',
+          // 1.0.5 (troca de computador): chave já ativada em outro computador — o site só troca com o e-mail e a senha da conta gamezoney.com dona da chave
+          ...(input.email !== undefined || input.password !== undefined ? {email: String(input.email || '').trim().slice(0, 200), password: String(input.password || '').slice(0, 200)} : {})})});
       data = await r.json().catch(() => ({}));
     } catch { fail('Sem conexão com gamezoney.com. Confira a internet deste computador e tente de novo.'); }
-    if (!r.ok) fail(data.error || 'Não foi possível ativar (HTTP ' + r.status + ').');
+    if (!r.ok) throw Object.assign(new Error(data.error || 'Não foi possível ativar (HTTP ' + r.status + ').'), data.needLogin ? {needLogin: true, machine: String(data.machine || '').slice(0, 60)} : {});
     const lic = verifyToken(data.token, s.runtime.installId, publicKey); if (!lic || lic.key !== key) fail('Resposta de ativação inválida.');
     store.change(actor, 'licenca', `Licença ativada: ${key.slice(0, 7)}-****-****-${key.slice(-4)}`, () => { s.license.token = data.token; s.license.activatedAt = now(); });
     writeMarker({...readMarker(), trialStartedAt: s.license.trialStartedAt, token: data.token});

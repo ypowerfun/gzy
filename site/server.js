@@ -11,8 +11,8 @@ const KEY_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const uid = () => crypto.randomUUID();
 const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
-class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
-const fail = (status, message) => { throw new HttpError(status, message); };
+class HttpError extends Error { constructor(status, message, extra) { super(message); this.status = status; this.extra = extra; } }
+const fail = (status, message, extra) => { throw new HttpError(status, message, extra); };
 const str = (v, max) => String(v ?? '').trim().slice(0, max);
 
 function hashPassword(password) {
@@ -114,7 +114,7 @@ function createApp(options = {}) {
   // POST do navegador só com JSON (proteção contra envio de formulário de outro site)
   const jsonOnly = (req, res, next) => (req.method === 'POST' && !req.is('application/json')) ? res.status(415).json({error: 'Envie JSON.'}) : next();
   const api = fn => (req, res) => Promise.resolve().then(() => fn(req, res)).then(r => { if (!res.headersSent) res.json(r ?? {ok: true}); })
-    .catch(e => { if (!(e instanceof HttpError)) log.error(e); if (!res.headersSent) res.status(e.status || 500).json({error: e instanceof HttpError ? e.message : 'Erro interno. Tente de novo.'}); });
+    .catch(e => { if (!(e instanceof HttpError)) log.error(e); if (!res.headersSent) res.status(e.status || 500).json(e instanceof HttpError ? {...(e.extra || {}), error: e.message} : {error: 'Erro interno. Tente de novo.'}); });
 
   const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', emailVerified: !!u.email_verified, google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
   function createUser({email, name, password, googleSub}) {
@@ -157,15 +157,19 @@ function createApp(options = {}) {
     mail.send(email, 'Bem-vindo ao GameZoney', `Olá, ${name}!\n\nSua conta no GameZoney foi criada. Confirme o seu e-mail abrindo o link abaixo:\n${SITE}/api/auth/verify?t=${token}\n\nBaixe o sistema e use grátis por 30 dias: ${SITE}/conta\n\nEquipe GameZoney`);
     return {user: publicUser(user)};
   }));
-  app.post('/api/auth/login', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
-    const email = str(req.body.email, 200).toLowerCase(), user = db.get('SELECT * FROM users WHERE email=?', email);
-    // 1.3: no máximo 10 senhas erradas por conta a cada 15 min (contra tentativa de adivinhar a senha de vários lugares)
+  // 1.3: no máximo 10 senhas erradas por conta a cada 15 min (contra tentativa de adivinhar a senha de vários lugares)
+  function checkAccount(rawEmail, password) {
+    const email = str(rawEmail, 200).toLowerCase(), user = db.get('SELECT * FROM users WHERE email=?', email);
     const fk = 'fail:' + email, now = Date.now(); let fb = buckets.get(fk);
     if (fb && fb.until > now && fb.n >= 10) fail(429, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
-    const ok = user ? checkPassword(String(req.body.password || ''), user.password_hash) : (checkPassword('x', DUMMY_HASH), false);
+    const ok = user ? checkPassword(String(password || ''), user.password_hash) : (checkPassword('x', DUMMY_HASH), false);
     if (!ok) { if (!fb || fb.until < now) { fb = {n: 0, until: now + 15 * 60000}; buckets.set(fk, fb); } fb.n++; }
     else buckets.delete(fk);
-    if (!user || !ok) fail(400, user && !user.password_hash ? 'Esta conta usa o login do Google. Clique em "Entrar com Google" (ou Esqueci a senha para criar uma senha).' : 'E-mail ou senha incorretos.');
+    if (!user || !ok) fail(400, user && !user.password_hash ? 'Esta conta usa o login do Google. Crie uma senha em gamezoney.com › Entrar › Esqueci a senha e use o e-mail e essa senha aqui.' : 'E-mail ou senha incorretos.');
+    return user;
+  }
+  app.post('/api/auth/login', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
+    const user = checkAccount(req.body.email, req.body.password);
     login(res, user); return {user: publicUser(user)};
   }));
   app.post('/api/auth/logout', jsonOnly, api((req, res) => {
@@ -241,7 +245,18 @@ function createApp(options = {}) {
     if (!key || !/^[0-9a-f-]{20,80}$/i.test(installId)) fail(400, 'Chave inválida.');
     const lic = db.get('SELECT * FROM licenses WHERE key=?', key); if (!lic) fail(404, 'Chave não encontrada. Confira a chave em gamezoney.com › Minha conta.');
     if (lic.status !== 'active') fail(403, 'Esta chave está bloqueada. Fale com o suporte do GameZoney.');
-    if (lic.install_id && lic.install_id !== installId) fail(409, `Esta chave já está ativada em outro computador (${lic.machine || 'sem nome'}). Para trocar de computador, entre em gamezoney.com › Minha conta › Licenças e clique em Liberar.`);
+    // 1.6: chave já ativada em outro computador — só troca com o e-mail e a senha da conta dona da chave (a mesma do site)
+    if (lic.install_id && lic.install_id !== installId) {
+      if (req.body?.email === undefined && req.body?.password === undefined)
+        fail(409, `Esta chave já está ativada em outro computador (${lic.machine || 'sem nome'}). Para ativar neste computador, entre com o e-mail e a senha da sua conta gamezoney.com.`, {needLogin: true, machine: lic.machine || ''});
+      const owner = db.get('SELECT * FROM users WHERE id=?', lic.user_id), u = checkAccount(req.body.email, req.body.password);
+      if (u.id !== owner.id) fail(403, 'Esta chave pertence a outra conta. Entre com o e-mail e a senha da conta que comprou a licença.');
+      db.run('INSERT INTO license_transfers(license_id,at,how,from_install,from_machine,to_install,to_machine,ip) VALUES(?,?,?,?,?,?,?,?)', lic.id, Date.now(), 'servidor', lic.install_id, lic.machine || '', installId, machine, req.ip || '');
+      db.run('UPDATE licenses SET install_id=NULL, machine=NULL, activated_at=NULL, releases=releases+1 WHERE id=?', lic.id);
+      db.audit(owner.email, 'troca', `${key} trocada de ${lic.machine || '?'} para ${machine || '?'}`);
+      Promise.resolve(mail.send(owner.email, 'GameZoney: licença ativada em outro computador', `Olá, ${owner.name}!\n\nSua licença ${key.slice(0, 7)}-****-****-${key.slice(-4)} foi ativada no computador "${machine || 'sem nome'}" e deixou de valer no computador "${lic.machine || 'sem nome'}".\n\nSe não foi você, troque a senha da sua conta em ${SITE}/entrar.html e fale com o suporte.`)).catch(() => {});
+      lic.install_id = null;
+    }
     if (!lic.install_id) {
       db.run('UPDATE licenses SET install_id=?, machine=?, version=?, activated_at=? WHERE id=?', installId, machine, version, Date.now(), lic.id);
       db.audit(key, 'ativacao', `${machine} (${installId})`);
@@ -253,6 +268,7 @@ function createApp(options = {}) {
   app.post('/api/licenses/:id/release', jsonOnly, api(req => {
     const u = needUser(req), lic = db.get('SELECT * FROM licenses WHERE id=? AND user_id=?', req.params.id, u.id) || fail(404, 'Licença não encontrada.');
     if (!lic.install_id) return {ok: true};
+    db.run('INSERT INTO license_transfers(license_id,at,how,from_install,from_machine,ip) VALUES(?,?,?,?,?,?)', lic.id, Date.now(), 'site', lic.install_id, lic.machine || '', req.ip || '');
     db.run('UPDATE licenses SET install_id=NULL, machine=NULL, activated_at=NULL, releases=releases+1 WHERE id=?', lic.id);
     db.audit(u.email, 'liberar', `${lic.key} liberada de ${lic.machine || '?'}`);
     return {ok: true};
@@ -374,7 +390,7 @@ function createApp(options = {}) {
         openTickets: count("SELECT COUNT(*) n FROM tickets WHERE status='open'"), downloads: count('SELECT COUNT(*) n FROM downloads')},
       users: db.all('SELECT id,email,name,phone,google_sub IS NOT NULL google,created_at,last_login_at FROM users ORDER BY created_at DESC LIMIT 300'),
       orders: db.all('SELECT o.*,u.email FROM orders o JOIN users u ON u.id=o.user_id ORDER BY o.created_at DESC LIMIT 300').map(o => ({...publicOrder(o), pixQr: '', email: o.email, note: o.note})),
-      licenses: db.all('SELECT l.*,u.email FROM licenses l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 500').map(l => ({...publicLicense(l), email: l.email, note: l.note, installId: l.install_id || ''})),
+      licenses: db.all('SELECT l.*,u.email,(SELECT COUNT(*) FROM license_transfers t WHERE t.license_id=l.id AND t.at>?) recent,(SELECT COUNT(DISTINCT COALESCE(t.to_install,t.from_install)) FROM license_transfers t WHERE t.license_id=l.id) machines FROM licenses l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 500', Date.now() - 30 * DAY).map(l => ({...publicLicense(l), email: l.email, note: l.note, installId: l.install_id || '', recentTransfers: l.recent, machines: l.machines, suspect: l.recent >= 3})),
       tickets: db.all('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id ORDER BY (t.status=\'open\') DESC, t.created_at DESC LIMIT 300'),
       feedback: db.all('SELECT * FROM feedback ORDER BY received_at DESC LIMIT 300'),
       audit: db.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200'),
@@ -407,7 +423,7 @@ function createApp(options = {}) {
   }));
   app.post('/api/admin/licenses/:id', jsonOnly, api(req => {
     needAdmin(req); const lic = db.get('SELECT * FROM licenses WHERE id=?', req.params.id) || fail(404, 'Licença não encontrada.');
-    if (req.body.release) db.run('UPDATE licenses SET install_id=NULL, machine=NULL, activated_at=NULL, releases=releases+1 WHERE id=?', lic.id);
+    if (req.body.release && lic.install_id) { db.run('INSERT INTO license_transfers(license_id,at,how,from_install,from_machine,ip) VALUES(?,?,?,?,?,?)', lic.id, Date.now(), 'admin', lic.install_id, lic.machine || '', req.ip || ''); db.run('UPDATE licenses SET install_id=NULL, machine=NULL, activated_at=NULL, releases=releases+1 WHERE id=?', lic.id); }
     if (['active', 'blocked'].includes(req.body.status)) db.run('UPDATE licenses SET status=? WHERE id=?', req.body.status, lic.id);
     db.audit(req.user.email, 'licenca', `${lic.key}: ${req.body.release ? 'liberada ' : ''}${req.body.status || ''}`);
     return {ok: true};
