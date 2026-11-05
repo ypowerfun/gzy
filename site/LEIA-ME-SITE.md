@@ -191,6 +191,17 @@ Envie o zip novo, descompacte e rode de novo `sudo bash deploy/instalar-vps.sh`.
   ```bash
   sudo -u gamezoney node /opt/gamezoney-site/tools/confirmar-email.js seu-email@exemplo.com
   ```
+- **Passo a passo para liberar o `/admin`:**
+  1. O seu e-mail precisa estar em `ADMIN_EMAILS` no `/etc/gamezoney-site.env` (confira com `sudo grep ADMIN_EMAILS /etc/gamezoney-site.env`; se mudar, rode `sudo systemctl restart gamezoney-site`).
+  2. Crie a conta no site com esse mesmo e-mail.
+  3. Clique no link de confirmação do e-mail **ou**, se ele não chegar, confirme pelo VPS com o comando acima (aparece `OK: e-mail confirmado para ...`).
+  4. Saia da conta, entre de novo e abra `https://gamezoney.com/admin`.
+- **E-mail voltou ("Undelivered Mail Returned to Sender") ou não chega no Hotmail/Outlook:** a Microsoft recusa e-mails de domínios sem autenticação. Na HostGator (Zona DNS de gamezoney.com) confira os registros TXT:
+  - **SPF** (nome `@` / `gamezoney.com`): `v=spf1 include:spf.titan.email ~all`. Só pode existir **um** TXT começando com `v=spf1`; se já houver outro, junte os dois num só.
+  - **DKIM:** no painel do Titan (Configurações do domínio › DKIM) copie o nome e o valor TXT que ele mostra e crie na HostGator.
+  - **DMARC** (nome `_dmarc`): `v=DMARC1; p=none; rua=mailto:suporte@gamezoney.com`.
+  - Espere até algumas horas para o DNS atualizar e use **Reenviar confirmação** em Minha conta. Veja também a pasta **Lixo eletrônico** do Hotmail.
+  - Se continuar voltando, abra o anexo da mensagem devolvida (ForwardedMessage.eml): a linha com `550` ou `5.7.` diz o motivo. Se citar lista de bloqueio (block list / S3150), abra um chamado no suporte do Titan com essa mensagem.
 - **Senha:** no máximo 10 senhas erradas por conta a cada 15 minutos, mais o limite por IP. As senhas são guardadas com scrypt, nunca em texto.
 - **Proteções do site:**
   - Pedidos POST com sessão só valem vindos do próprio site (proteção contra CSRF), e o cookie de sessão é HttpOnly, Secure e SameSite.
