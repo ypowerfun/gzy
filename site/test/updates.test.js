@@ -13,9 +13,10 @@ test('2.3: atualização do Servidor — só o admin publica, manifesto assinado
   const ana = client(), dono = client(), id = crypto.randomUUID();
   await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'});
   await dono('/api/auth/register', {name: 'Dono', email: 'dono@gamezoney.com', password: 'senha-do-dono'}); await fetch(base + '/api/auth/verify?t=' + mails.find(m => m.to === 'dono@gamezoney.com').text.match(/verify\?t=([a-f0-9]+)/)[1], {redirect: 'manual'});
-  const bytes = crypto.randomBytes(5000); fs.writeFileSync(path.join(dl, 'GameZoney-Servidor-1.0.7-Setup.exe'), bytes); fs.writeFileSync(path.join(dl, 'leia.pdf'), 'x');
+  const bytes = crypto.randomBytes(5000); fs.writeFileSync(path.join(dl, 'GameZoney-Servidor-1.0.7-Setup.exe'), bytes); fs.writeFileSync(path.join(dl, 'leia.pdf'), 'x'); fs.writeFileSync(path.join(dl, 'GameZoney-Instalador-Servidor-1.0.8-Cliente-1.0.5.exe'), 'unico');
   await ana('/api/admin/updates/publish', {file: 'GameZoney-Servidor-1.0.7-Setup.exe'}, 403);
-  assert.deepEqual((await dono('/api/admin/updates')).files.map(f => f.file), ['GameZoney-Servidor-1.0.7-Setup.exe'], 'só instaladores do Servidor aparecem');
+  assert.deepEqual((await dono('/api/admin/updates')).files.map(f => f.file), ['GameZoney-Servidor-1.0.7-Setup.exe'], 'só o instalador do Servidor aparece (o único fica de fora: em modo silencioso poderia instalar o Cliente na recepção)');
+  await dono('/api/admin/updates/publish', {file: 'GameZoney-Instalador-Servidor-1.0.8-Cliente-1.0.5.exe'}, 404);
   assert.equal((await ana('/api/update/check', {installId: id, version: '1.0.6'})).available, false, 'nada publicado');
   await dono('/api/admin/updates/publish', {file: 'GameZoney-Servidor-1.0.7-Setup.exe', notes: 'Novidades'});
   await ana('/api/update/check', {installId: 'x', version: '1.0.6'}, 400);

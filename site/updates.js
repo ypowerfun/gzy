@@ -10,7 +10,8 @@
 //    No teste grátis, o Servidor mostra a versão nova e indica baixar em gamezoney.com › Minha conta › Downloads.
 const crypto = require('node:crypto'), fs = require('node:fs'), path = require('node:path');
 
-const NAME_RE = /^GameZoney-(?:Servidor-(\d+\.\d+\.\d+)-Setup|Instalador-Servidor-(\d+\.\d+\.\d+)-Cliente-\d+\.\d+\.\d+)\.exe$/;
+// só o instalador do SERVIDOR: o instalador único em modo silencioso poderia instalar também o Cliente (que trava o PC) na recepção
+const NAME_RE = /^GameZoney-Servidor-(\d+\.\d+\.\d+)-Setup\.exe$/;
 const versionOf = f => { const m = NAME_RE.exec(f); return m ? (m[1] || m[2]) : null; };
 const cmp = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
 
