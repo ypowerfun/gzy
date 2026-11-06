@@ -35,7 +35,9 @@ test('site: avaliações — 1 a 5 estrelas, até 2 imagens .jpg/.png, organiza�
  const ra2=(await a('/api/reviews',{stars:4,text:'Sistema excelente, recomendo!',keepImages:[ra.images[0]],images:[PNG]})).review;
  assert.equal(ra2.images.length,2);assert.equal(ra2.stars,4);assert.ok(!ra2.images.includes(ra.images[1]));
  assert.equal(fs.existsSync(path.join(s.dir,'media','reviews',path.basename(ra.images[1]))),false);
- await a('/api/reviews',{stars:4,text:'Sistema excelente, recomendo!',keepImages:ra2.images,images:[JPG]},400);
+ // 2.4: enviou + editou 1 vez = fechada (nem editar de novo, nem excluir e avaliar outra vez)
+ assert.equal((await a('/api/reviews/mine')).canWrite,false);
+ await a('/api/reviews',{stars:4,text:'Sistema excelente, recomendo!',keepImages:ra2.images,images:[JPG]},403);
  await b('/api/reviews',{stars:5,text:'Controle de tempo perfeito.'});await c('/api/reviews',{stars:3,text:'Bom, mas pode melhorar.'});await d('/api/reviews',{stars:5,text:'A lanchonete ficou organizada.'});
  // nada na página inicial até o administrador escolher
  assert.equal((await anon('/api/reviews/featured')).reviews.length,0);

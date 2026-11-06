@@ -30,7 +30,10 @@
       await busy(b, () => api('/api/licenses/' + b.dataset.release + '/release', {})); load();
     });
     $('#order-list').innerHTML = me.orders.length ? `<table><thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Situação</th><th>Chave</th></tr></thead><tbody>${me.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${money(o.amountCents)}</td><td>${METHOD(o)}</td><td><span class="pill ${(STATUS[o.status] || [])[1] || ''}">${(STATUS[o.status] || [o.status])[0]}</span></td><td>${o.licenseKey ? `<span class="key" style="font-size:14px">${esc(o.licenseKey)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Nenhum pedido ainda.</p>';
-    $('#ticket-list').innerHTML = me.tickets.length ? `<table><thead><tr><th>Chamado</th><th>Resposta</th></tr></thead><tbody>${me.tickets.map(t => `<tr><td><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Respondido'}</span><br><small class="note">${fmtDate(t.created_at)}</small><p style="white-space:pre-wrap;margin:6px 0 0">${esc(t.message)}</p></td><td style="white-space:pre-wrap">${t.reply ? esc(t.reply) : '<span class="note">Aguardando resposta</span>'}</td></tr>`).join('')}</tbody></table>` : '';
+    $('#ticket-list').innerHTML = me.tickets.length ? `<table><thead><tr><th>Chamado</th><th>Resposta</th></tr></thead><tbody>${me.tickets.map(t => `<tr><td><b>${esc(t.subject)}</b> <span class="pill ${t.status === 'open' ? 'wait' : 'ok'}">${t.status === 'open' ? 'Aberto' : 'Respondido'}</span><br><small class="note">${fmtDate(t.created_at)}</small><p style="white-space:pre-wrap;margin:6px 0 0">${esc(t.message)}</p>${(t.images || []).length ? `<div class="thumbs ticket-imgs">${t.images.map(src => `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="Imagem do chamado"></a>`).join('')}</div>` : ''}</td><td style="white-space:pre-wrap">${t.reply ? esc(t.reply) : '<span class="note">Aguardando resposta</span>'}</td></tr>`).join('')}</tbody></table>` : '';
+    // 2.4: um chamado por vez — enquanto houver chamado aguardando resposta, o formulário fica fechado
+    const waiting = me.tickets.some(t => t.status === 'open');
+    $('#support-form').classList.toggle('hidden', waiting); $('#support-wait').classList.toggle('hidden', !waiting);
     const pf = $('#profile-form'); pf.name.value = me.user.name || ''; pf.phone.value = me.user.phone || ''; pf.organization.value = me.user.organization || ''; pf.marketing.checked = me.user.marketing !== false;
     const c = siteConfig || await api('/api/config').catch(() => ({}));
     const contacts = [c.supportWhatsapp ? `WhatsApp: <a href="https://wa.me/${esc(c.supportWhatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.supportWhatsapp)}</a>` : '', c.supportEmail ? `E-mail: <a href="mailto:${esc(c.supportEmail)}">${esc(c.supportEmail)}</a>` : ''].filter(Boolean);
@@ -121,8 +124,27 @@
   const back = new URLSearchParams(location.search).get('pedido');
   if (back) api('/api/orders/' + encodeURIComponent(back)).then(r => showOrder(r.order)).catch(() => {});
   $('#logout').onclick = async () => { await api('/api/auth/logout', {}).catch(() => {}); location.href = '/'; };
-  $('#support-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
-    try { await api('/api/support', {subject: f.subject.value, message: f.message.value}); f.reset(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load(); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
+  // 2.4: até 2 imagens/prints .jpg ou .png de até 1 MB cada
+  const readFile = file => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); });
+  let ticketImgs = [];
+  const paintTicketThumbs = () => { $('#support-thumbs').innerHTML = ticketImgs.map((src, i) => `<div><img src="${src}" alt=""><button type="button" data-timg="${i}" aria-label="Remover">✕</button></div>`).join('');
+    $$('[data-timg]').forEach(b => b.onclick = () => { ticketImgs.splice(Number(b.dataset.timg), 1); paintTicketThumbs(); }); };
+  const sf = $('#support-form');
+  sf.files.onchange = async () => {
+    for (const file of [...sf.files.files]) {
+      if (ticketImgs.length >= 2) { showMsg($('#support-msg'), 'No máximo 2 imagens.'); break; }
+      if (!/^image\/(jpeg|png)$/.test(file.type)) { showMsg($('#support-msg'), 'Envie imagens .jpg ou .png.'); continue; }
+      if (file.size > 1024 * 1024) { showMsg($('#support-msg'), 'Cada imagem pode ter no máximo 1 MB.'); continue; }
+      ticketImgs.push(await readFile(file));
+    }
+    sf.files.value = ''; paintTicketThumbs();
+  };
+  sf.onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button.btn'), async () => {
+    try { await api('/api/support', {subject: f.subject.value, message: f.message.value, images: ticketImgs}); f.reset(); ticketImgs = []; paintTicketThumbs(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load(); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
+  // 2.4: redefinir a senha pelo link enviado ao e-mail da conta (também serve para criar senha numa conta Google)
+  $('#password-reset').onclick = () => busy($('#password-reset'), async () => {
+    try { const r = await api('/api/auth/forgot', {email: me.user.email}); showMsg($('#profile-msg'), r.mail === false ? 'O envio de e-mails está indisponível agora. Fale com o suporte.' : 'Enviamos para ' + me.user.email + ' um link para criar uma nova senha (vale 1 hora). Confira também o spam.', r.mail !== false); }
+    catch (err) { showMsg($('#profile-msg'), err.message); } });
   $('#profile-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
     try { await api('/api/profile', {name: f.name.value, phone: f.phone.value, organization: f.organization.value, marketing: f.marketing.checked}); showMsg($('#profile-msg'), 'Dados salvos.', true); load(); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
   // ---------- 1.2: avaliação (1 a 5 estrelas, texto e até 2 imagens .jpg/.png) ----------
@@ -144,14 +166,36 @@
     }
     rf.files.value = ''; paintThumbs();
   };
-  rf.onsubmit = e => { e.preventDefault(); busy(rf.querySelector('button.btn'), async () => {
+  // 2.4: depois de enviada, a avaliação aparece em modo lista; pode ser editada 1 vez e depois fica fechada
+  let mine = null, canWrite = true, editing = false;
+  const showReview = () => {
+    const view = $('#review-view'), note = $('#review-view-note');
+    $('#review-remove').classList.toggle('hidden', !mine);
+    if (mine && !editing) {
+      $('#review-view-stars').innerHTML = [1, 2, 3, 4, 5].map(n => `<span class="${n <= mine.stars ? '' : 'off'}">★</span>`).join('');
+      $('#review-view-stars').setAttribute('aria-label', mine.stars + ' / 5');
+      $('#review-view-text').textContent = mine.text;
+      $('#review-view-imgs').innerHTML = mine.images.map(src => `<div><img src="${esc(src)}" alt=""></div>`).join('');
+      $('#review-edit').classList.toggle('hidden', !canWrite);
+      note.textContent = canWrite ? 'Você pode editar a sua avaliação uma vez.' : 'Avaliação já editada: não pode mais ser alterada.';
+      view.classList.remove('hidden'); rf.classList.add('hidden'); return;
+    }
+    view.classList.add('hidden');
+    if (!mine && !canWrite) { rf.classList.add('hidden'); view.classList.remove('hidden'); $('#review-view-stars').innerHTML = ''; $('#review-view-text').textContent = 'Você já avaliou o GameZoney. Obrigado!'; $('#review-view-imgs').innerHTML = ''; $('#review-edit').classList.add('hidden'); note.textContent = ''; return; }
+    rf.classList.remove('hidden');
+    $('#review-submit').textContent = editing ? 'Salvar edição' : 'Enviar avaliação';
+    $('#review-cancel').classList.toggle('hidden', !editing); $('#review-edit-note').classList.toggle('hidden', !editing);
+  };
+  $('#review-edit').onclick = () => { editing = true; stars = mine.stars; rf.text.value = mine.text; kept = [...mine.images]; added = []; paintStars(); paintThumbs(); showReview(); rf.text.focus(); };
+  $('#review-cancel').onclick = () => { editing = false; showReview(); };
+  rf.onsubmit = e => { e.preventDefault(); busy($('#review-submit'), async () => {
     if (!stars) return showMsg(rmsg, 'Escolha de 1 a 5 estrelas.');
-    try { const r = await api('/api/reviews', {stars, text: rf.text.value, keepImages: kept, images: added}); kept = r.review.images; added = []; paintThumbs(); $('#review-remove').classList.remove('hidden'); showMsg(rmsg, 'Avaliação enviada. Obrigado!', true); }
+    try { const r = await api('/api/reviews', {stars, text: rf.text.value, keepImages: kept, images: added}); mine = r.review; canWrite = r.canWrite; const was = editing; editing = false; added = []; showReview(); showMsg(rmsg, was ? 'Avaliação editada. Obrigado!' : 'Avaliação enviada. Obrigado!', true); }
     catch (err) { showMsg(rmsg, err.message); } }); };
   $('#review-remove').onclick = async () => {
-    const q = 'Excluir a sua avaliação?'; if (!window.confirm(window.gzSite ? gzSite.t(q) : q)) return;
-    await api('/api/reviews/remove', {}).catch(() => {}); stars = 0; kept = []; added = []; rf.text.value = ''; paintStars(); paintThumbs(); $('#review-remove').classList.add('hidden'); showMsg(rmsg, 'Avaliação excluída.', true);
+    const q = canWrite ? 'Excluir a sua avaliação?' : 'Excluir a sua avaliação? Ela já foi editada: depois de excluir, não será possível avaliar de novo.'; if (!window.confirm(window.gzSite ? gzSite.t(q) : q)) return;
+    await api('/api/reviews/remove', {}).catch(() => {}); mine = null; stars = 0; kept = []; added = []; rf.text.value = ''; editing = false; paintStars(); paintThumbs(); showReview(); showMsg(rmsg, 'Avaliação excluída.', true);
   };
-  api('/api/reviews/mine').then(r => { if (r.review) { stars = r.review.stars; rf.text.value = r.review.text; kept = r.review.images; $('#review-remove').classList.remove('hidden'); } paintStars(); paintThumbs(); }).catch(() => paintStars());
+  api('/api/reviews/mine').then(r => { mine = r.review; canWrite = r.canWrite !== false; paintStars(); paintThumbs(); showReview(); }).catch(() => { paintStars(); showReview(); });
   load();
 })();

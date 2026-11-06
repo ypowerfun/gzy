@@ -67,6 +67,12 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
   db.exec("CREATE INDEX IF NOT EXISTS subscriptions_user ON subscriptions(user_id)");
   // 2.2: em qual computador (installId) cada conta usa o plano no GameZoney Servidor (1 por conta)
   db.exec("CREATE TABLE IF NOT EXISTS plan_installs(user_id TEXT PRIMARY KEY REFERENCES users(id), install_id TEXT NOT NULL, machine TEXT NOT NULL DEFAULT '', version TEXT NOT NULL DEFAULT '', activated_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL, ip TEXT NOT NULL DEFAULT '')");
+  // 2.4: imagens nos chamados de suporte e limite de avaliação (enviar + 1 edição; excluir não zera)
+  if (!db.prepare('PRAGMA table_info(tickets)').all().some(c => c.name === 'images')) db.exec("ALTER TABLE tickets ADD COLUMN images TEXT NOT NULL DEFAULT '[]'");
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'review_writes')) {
+    db.exec("ALTER TABLE users ADD COLUMN review_writes INTEGER NOT NULL DEFAULT 0");
+    db.exec("UPDATE users SET review_writes=1 WHERE id IN (SELECT user_id FROM reviews)"); // quem já avaliou ainda pode editar 1 vez
+  }
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

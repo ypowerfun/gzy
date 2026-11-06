@@ -86,6 +86,7 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
       <details><summary>Adicionar telefone (opcional)</summary><label for="chat-phone">WhatsApp / telefone</label><input id="chat-phone" name="phone" type="tel" maxlength="30" autocomplete="tel"></details>
       <button type="submit" class="btn">Enviar mensagem</button><p class="chat-note">Usamos seus dados para responder ao atendimento. <a href="/privacidade.html">Privacidade</a></p><p class="msg chat-msg" role="status" aria-live="polite"></p></form>
     <div class="chat-room hidden"><div class="chat-log" role="log" aria-live="polite" aria-label="Mensagens"></div><form class="chat-send"><textarea name="text" required maxlength="2000" aria-label="Sua mensagem" placeholder="Escreva sua mensagem…"></textarea><button class="btn small">Enviar</button></form>
+      <div class="chat-ended hidden" role="status"><p>Esta conversa foi encerrada pela equipe GameZoney.</p><button type="button" class="btn small chat-new-ended">Abrir nova conversa</button></div>
       <button type="button" class="chat-new">Iniciar nova conversa</button></div>
   </section>`;
   document.body.appendChild(box);
@@ -104,10 +105,13 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
     log.scrollTop = log.scrollHeight;
   }
   const status = online => { box.querySelector('.chat-status').textContent = online ? '● Online agora' : 'Deixe sua mensagem: respondemos por e-mail'; box.querySelector('.chat-status').classList.toggle('on', online); };
+  // 2.4: conversa encerrada pelo administrador: some o campo de resposta e aparece o botão para abrir outra
+  const ended = closed => { room.querySelector('.chat-ended').classList.toggle('hidden', !closed); room.querySelector('.chat-send').classList.toggle('hidden', closed); room.querySelector('.chat-new').classList.toggle('hidden', closed);
+    if (closed) log.querySelector('.chat-wait')?.remove(); };
   async function refresh() {
     try { data = await api('/api/chat' + (last ? '?after=' + last : '')); } catch { return; }
     status(data.online);
-    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); }
+    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); ended(data.chat.status === 'closed'); }
     else { start.classList.remove('hidden'); room.classList.add('hidden');
       if (data.user) { start.elements.namedItem('name').value ||= data.user.name || ''; start.email.value ||= data.user.email || ''; start.phone.value ||= data.user.phone || ''; } }
   }
@@ -124,13 +128,14 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.classList.contains('hidden')) closeChat(); });
   document.addEventListener('click', e => { const trigger = e.target.closest('[data-open-chat]'); if (trigger) openChat(trigger.dataset.openChat); });
   start.onsubmit = e => { e.preventDefault(); busy(start.querySelector('[type=submit]'), async () => {
-    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); }
+    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); ended(false); }
     catch (err) { showMsg(box.querySelector('.chat-msg'), err.message); } }); };
   const send = room.querySelector('.chat-send');
   send.onsubmit = e => { e.preventDefault(); const text = send.text.value.trim(); if (!text) return; busy(send.querySelector('button'), async () => {
-    try { const r = await api('/api/chat/send', {text, after: last}); send.text.value = ''; addMessages(r.messages); } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; } }); };
+    try { const r = await api('/api/chat/send', {text, after: last}); send.text.value = ''; addMessages(r.messages); } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; refresh(); } }); };
   send.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send.requestSubmit(); } });
-  room.querySelector('.chat-new').onclick = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; refresh(); };
+  const newChat = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; room.querySelector('.chat-send-error')?.remove(); ended(false); await refresh(); start.message?.focus(); };
+  room.querySelector('.chat-new').onclick = newChat; room.querySelector('.chat-new-ended').onclick = newChat;
 })();
 
 // ---------- 1.2: avaliações (página inicial: as 3 escolhidas pelo administrador, na ordem dele, sem data) ----------

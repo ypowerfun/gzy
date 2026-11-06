@@ -1,6 +1,35 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "O GameZoney recebe melhorias constantes. Confira as novidades mais recentes.":["GameZoney gets constant improvements. See the latest news.", "GameZoney recibe mejoras constantes. Vea las novedades más recientes."],
+  "Imagens / prints (opcional, até 2, .jpg ou .png, máximo 1 MB cada)":["Images / screenshots (optional, up to 2, .jpg or .png, max 1 MB each)", "Imágenes / capturas (opcional, hasta 2, .jpg o .png, máximo 1 MB cada una)"],
+  "Você já tem um chamado aguardando resposta. Assim que respondermos, você poderá abrir outro.":["You already have a ticket waiting for a reply. As soon as we answer, you can open another one.", "Ya tiene un ticket esperando respuesta. Cuando respondamos, podrá abrir otro."],
+  "Cada imagem pode ter no máximo 1 MB.":["Each image can be at most 1 MB.", "Cada imagen puede tener como máximo 1 MB."],
+  "Cada imagem pode ter no máximo 2 MB.":["Each image can be at most 2 MB.", "Cada imagen puede tener como máximo 2 MB."],
+  "No máximo 2 imagens.":["At most 2 images.", "Como máximo 2 imágenes."],
+  "Envie imagens .jpg ou .png.":["Send .jpg or .png images.", "Envíe imágenes .jpg o .png."],
+  "Imagem do chamado":["Ticket image", "Imagen del ticket"],
+  "Editar avaliação":["Edit review", "Editar reseña"],
+  "Excluir avaliação":["Delete review", "Eliminar reseña"],
+  "Salvar edição":["Save changes", "Guardar cambios"],
+  "Cancelar":["Cancel", "Cancelar"],
+  "Enviar avaliação":["Send review", "Enviar reseña"],
+  "Atenção: a avaliação pode ser editada só uma vez. Depois de salvar, não poderá mais ser alterada.":["Note: the review can be edited only once. After saving, it can no longer be changed.", "Atención: la reseña se puede editar una sola vez. Después de guardar, ya no se podrá cambiar."],
+  "Você pode editar a sua avaliação uma vez.":["You can edit your review once.", "Puede editar su reseña una vez."],
+  "Avaliação já editada: não pode mais ser alterada.":["Review already edited: it can no longer be changed.", "Reseña ya editada: ya no se puede cambiar."],
+  "Você já avaliou o GameZoney. Obrigado!":["You have already reviewed GameZoney. Thank you!", "Ya evaluó GameZoney. ¡Gracias!"],
+  "Avaliação enviada. Obrigado!":["Review sent. Thank you!", "Reseña enviada. ¡Gracias!"],
+  "Avaliação editada. Obrigado!":["Review edited. Thank you!", "Reseña editada. ¡Gracias!"],
+  "Avaliação excluída.":["Review deleted.", "Reseña eliminada."],
+  "Excluir a sua avaliação?":["Delete your review?", "¿Eliminar su reseña?"],
+  "Excluir a sua avaliação? Ela já foi editada: depois de excluir, não será possível avaliar de novo.":["Delete your review? It has already been edited: after deleting, you will not be able to review again.", "¿Eliminar su reseña? Ya fue editada: después de eliminarla, no podrá evaluar de nuevo."],
+  "Sua avaliação já foi editada e não pode mais ser alterada.":["Your review has already been edited and can no longer be changed.", "Su reseña ya fue editada y no se puede cambiar."],
+  "Você já avaliou o GameZoney. Não é possível avaliar de novo.":["You have already reviewed GameZoney. You cannot review again.", "Ya evaluó GameZoney. No es posible evaluar de nuevo."],
+  "Redefinir senha":["Reset password", "Restablecer contraseña"],
+  "O envio de e-mails está indisponível agora. Fale com o suporte.":["Email sending is unavailable right now. Contact support.", "El envío de correos no está disponible ahora. Contacte al soporte."],
+  "Esta conversa foi encerrada pela equipe GameZoney.":["This conversation was closed by the GameZoney team.", "Esta conversación fue cerrada por el equipo GameZoney."],
+  "Abrir nova conversa":["Start a new conversation", "Abrir nueva conversación"],
+  "Esta conversa foi encerrada pela equipe GameZoney. Inicie uma nova conversa.":["This conversation was closed by the GameZoney team. Start a new conversation.", "Esta conversación fue cerrada por el equipo GameZoney. Inicie una nueva conversación."],
   "Atualização pelo próprio sistema":["Updates from inside the system", "Actualización desde el propio sistema"],
   "Em Configuração, Verificar atualização baixa e instala a versão nova com backup antes. Só é aceito o instalador assinado pela GameZoney.":["In Settings, Check for updates downloads and installs the new version with a backup first. Only the installer signed by GameZoney is accepted.", "En Configuración, Buscar actualización descarga e instala la versión nueva con copia antes. Solo se acepta el instalador firmado por GameZoney."],
   "O GameZoney recebe melhorias constantes. Confira o que chegou nas versões 1.0.6 e 1.0.5.":["GameZoney gets constant improvements. See what arrived in versions 1.0.6 and 1.0.5.", "GameZoney recibe mejoras constantes. Vea lo que llegó en las versiones 1.0.6 y 1.0.5."],
@@ -256,3 +285,5 @@ window.GZ_SITE_DICT.patterns.push(
 
 // 2.0: frases com valores (planos e carrinho)
 window.GZ_SITE_DICT.patterns.push(["Pague {0} por ano no cartão de crédito. Renovação automática. Cancele quando quiser.", "Pay {0} per year by credit card. Automatic renewal. Cancel anytime.", "Pague {0} por año con tarjeta de crédito. Renovación automática. Cancele cuando quiera."],["Cobrado {0} todo mês no cartão de crédito. Renovação automática. Cancele quando quiser.", "Charged {0} every month on your credit card. Automatic renewal. Cancel anytime.", "Se cobra {0} cada mes en la tarjeta de crédito. Renovación automática. Cancele cuando quiera."],["{0}% de desconto", "{0}% off", "{0}% de descuento"],["Economize {0}%", "Save {0}%", "Ahorre {0}%"],["Plano {0}", "{0} plan", "Plan {0}"],["Cobrado {0} a cada 12 meses no cartão. Cancele quando quiser.", "Charged {0} every 12 months on your card. Cancel anytime.", "Se cobra {0} cada 12 meses en la tarjeta. Cancele cuando quiera."],["Cobrado {0} a cada mês no cartão. Cancele quando quiser.", "Charged {0} every month on your card. Cancel anytime.", "Se cobra {0} cada mes en la tarjeta. Cancele cuando quiera."],["Economize {0} por ano com a assinatura de 12 meses.", "Save {0} per year with the 12-month subscription.", "Ahorre {0} por año con la suscripción de 12 meses."],["Renovação automática: {0} a cada 12 meses. Cancele quando quiser.", "Automatic renewal: {0} every 12 months. Cancel anytime.", "Renovación automática: {0} cada 12 meses. Cancele cuando quiera."],["Renovação automática: {0} a cada mês. Cancele quando quiser.", "Automatic renewal: {0} every month. Cancel anytime.", "Renovación automática: {0} cada mes. Cancele cuando quiera."],["🎉 Você está economizando {0} hoje", "🎉 You're saving {0} today", "🎉 Está ahorrando {0} hoy"],["{0}/mês", "{0}/month", "{0}/mes"]);
+
+window.GZ_SITE_DICT.patterns.push(["Enviamos para {0} um link para criar uma nova senha (vale 1 hora). Confira também o spam.", "We sent {0} a link to create a new password (valid for 1 hour). Also check your spam folder.", "Enviamos a {0} un enlace para crear una nueva contraseña (válido por 1 hora). Revise también el spam."]);

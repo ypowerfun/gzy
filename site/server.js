@@ -74,7 +74,7 @@ function createApp(options = {}) {
     next();
   });
   const smallJson = express.json({limit: '64kb'});
-  app.use((req, res, next) => (req.path === '/api/reviews' || req.path === '/api/admin/design/image') ? next() : smallJson(req, res, next)); // avaliações e imagens do design têm limite próprio
+  app.use((req, res, next) => (req.path === '/api/reviews' || req.path === '/api/support' || req.path === '/api/admin/design/image') ? next() : smallJson(req, res, next)); // avaliações, chamados com imagens e imagens do design têm limite próprio
 
   // ---------- limite de tentativas (por IP) ----------
   const buckets = new Map();
@@ -395,16 +395,33 @@ function createApp(options = {}) {
     return {user: publicUser(u), admin: req.admin, ...(await plans.forUser(u.id)),
       licenses: db.all('SELECT * FROM licenses WHERE user_id=? ORDER BY created_at DESC', u.id).map(publicLicense),
       orders: db.all('SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 20', u.id).map(o => ({...publicOrder(o), pixQr: ''})),
-      tickets: db.all('SELECT id,subject,message,status,reply,created_at,replied_at FROM tickets WHERE user_id=? ORDER BY created_at DESC LIMIT 50', u.id),
+      tickets: db.all('SELECT id,subject,message,status,reply,created_at,replied_at,images FROM tickets WHERE user_id=? ORDER BY created_at DESC LIMIT 50', u.id).map(ticketOut),
       downloads: listDownloads()};
   }));
-  app.post('/api/support', jsonOnly, limit('support', 10, 3600000), api(req => {
+  // 2.4: até 2 imagens (.jpg/.png, até 1 MB cada) por chamado, guardadas fora da pasta pública (só o dono do chamado e o admin veem);
+  // um chamado por vez: enquanto houver chamado aguardando resposta, não abre outro
+  const ticketDir = path.join(dataDir, 'media', 'tickets'); fs.mkdirSync(ticketDir, {recursive: true});
+  const TICKET_IMAGE = 1024 * 1024;
+  function ticketOut(t) { return {...t, images: JSON.parse(t.images || '[]').map((f, i) => `/api/tickets/${t.id}/image/${i}`)}; }
+  app.post('/api/support', (req, res, next) => req.user ? next() : res.status(401).json({error: 'Entre na sua conta.'}), express.json({limit: '3mb'}), jsonOnly, limit('support', 10, 3600000), api(req => {
     const u = needUser(req), subject = str(req.body.subject, 120).replace(/[\r\n]+/g, ' '), message = str(req.body.message, 4000);
+    if (db.get("SELECT 1 FROM tickets WHERE user_id=? AND status='open'", u.id)) fail(409, 'Você já tem um chamado aguardando resposta. Assim que respondermos, você poderá abrir outro.');
     if (subject.length < 3) fail(400, 'Informe o assunto.'); if (message.length < 5) fail(400, 'Descreva o que precisa.');
-    const id = uid(); db.run('INSERT INTO tickets(id,user_id,subject,message,created_at) VALUES(?,?,?,?,?)', id, u.id, subject, message, Date.now());
-    for (const a of ADMINS) mail.send(a, 'GameZoney suporte: ' + subject, `${u.name} <${u.email}> ${u.phone || ''}\n\n${message}\n\nResponder: ${SITE}/admin`);
+    const imgs = Array.isArray(req.body.images) ? req.body.images : [];
+    if (imgs.length > 2) fail(400, 'No máximo 2 imagens.');
+    const decoded = imgs.map(d => require('./image-util').decodeImage(d, TICKET_IMAGE, fail));
+    const id = uid(), files = decoded.map((d, i) => { const f = `${id}-${i}-${crypto.randomBytes(6).toString('hex')}.${d.ext}`; fs.writeFileSync(path.join(ticketDir, f), d.buf); return f; });
+    db.run('INSERT INTO tickets(id,user_id,subject,message,created_at,images) VALUES(?,?,?,?,?,?)', id, u.id, subject, message, Date.now(), JSON.stringify(files));
+    for (const a of ADMINS) mail.send(a, 'GameZoney suporte: ' + subject, `${u.name} <${u.email}> ${u.phone || ''}\n\n${message}${files.length ? `\n\n(${files.length} imagem(ns) anexada(s): veja no /admin)` : ''}\n\nResponder: ${SITE}/admin`);
     return {ok: true, id};
   }));
+  app.get('/api/tickets/:id/image/:n', (req, res) => {
+    const t = req.user && db.get('SELECT user_id, images FROM tickets WHERE id=?', String(req.params.id));
+    if (!t || (t.user_id !== req.user.id && !req.admin)) return res.status(404).json({error: 'Imagem não encontrada.'});
+    const f = JSON.parse(t.images || '[]')[Number(req.params.n)];
+    if (!f || !/^[\w-]+\.(png|jpg)$/.test(f)) return res.status(404).json({error: 'Imagem não encontrada.'});
+    res.set('Cache-Control', 'private, no-store'); res.type(f.endsWith('.png') ? 'png' : 'jpeg'); res.sendFile(path.join(ticketDir, f));
+  });
 
   // ---------- downloads (instaladores na pasta downloads/) ----------
   function listDownloads() {
@@ -437,14 +454,16 @@ function createApp(options = {}) {
       users: db.all('SELECT id,email,name,phone,google_sub IS NOT NULL google,created_at,last_login_at FROM users ORDER BY created_at DESC LIMIT 300'),
       orders: db.all('SELECT o.*,u.email FROM orders o JOIN users u ON u.id=o.user_id ORDER BY o.created_at DESC LIMIT 300').map(o => ({...publicOrder(o), pixQr: '', email: o.email, note: o.note})),
       licenses: db.all('SELECT l.*,u.email,(SELECT COUNT(*) FROM license_transfers t WHERE t.license_id=l.id AND t.at>?) recent,(SELECT COUNT(DISTINCT COALESCE(t.to_install,t.from_install)) FROM license_transfers t WHERE t.license_id=l.id) machines FROM licenses l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 500', Date.now() - 30 * DAY).map(l => ({...publicLicense(l), email: l.email, note: l.note, installId: l.install_id || '', recentTransfers: l.recent, machines: l.machines, suspect: l.recent >= 3})),
-      tickets: db.all('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id ORDER BY (t.status=\'open\') DESC, t.created_at DESC LIMIT 300'),
+      tickets: db.all('SELECT t.*,u.email,u.name FROM tickets t JOIN users u ON u.id=t.user_id ORDER BY (t.status=\'open\') DESC, t.created_at DESC LIMIT 300').map(ticketOut),
       feedback: db.all('SELECT * FROM feedback ORDER BY received_at DESC LIMIT 300'),
       audit: db.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200'),
       reviews: extra.adminReviews(), unreadChats: extra.unreadChats(), offer: offer()
     };
   }));
   app.post('/api/admin/offer', jsonOnly, api(req => {
-    needAdmin(req); const b = req.body || {};
+    needAdmin(req); const b = req.body || {}, cur = offer();
+    // 2.4: o /admin edita só a faixa do topo; os preços da venda antiga (vitalícia) ficam como estão
+    if (b.priceCents === undefined) { b.priceCents = cur.priceCents; b.listPriceCents = cur.listPriceCents; b.priceLabel = cur.priceLabel; }
     const priceCents = Math.round(Number(b.priceCents)), listPriceCents = Math.round(Number(b.listPriceCents || 0));
     if (!Number.isFinite(priceCents) || priceCents < 100 || priceCents > 10000000) fail(400, 'Preço inválido (mínimo R$ 1,00).');
     if (!Number.isFinite(listPriceCents) || listPriceCents < 0 || (listPriceCents && listPriceCents <= priceCents)) fail(400, 'O preço "de" precisa ser maior que o preço "por" (ou 0 para não mostrar).');

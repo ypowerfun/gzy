@@ -13,16 +13,7 @@ module.exports = function community(app, ctx) {
   fs.mkdirSync(mediaDir, {recursive: true});
 
   // ---------- Avaliações ----------
-  function imageFile(dataUrl) {
-    const m = /^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
-    if (!m) fail(400, 'Envie imagens .jpg ou .png.');
-    const buf = Buffer.from(m[2], 'base64');
-    if (buf.length > MAX_IMAGE) fail(400, 'Cada imagem pode ter no máximo 2 MB.');
-    const png = buf.length > 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-    const jpg = buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
-    if (!png && !jpg) fail(400, 'Envie imagens .jpg ou .png.');
-    return {buf, ext: png ? 'png' : 'jpg'};
-  }
+  const imageFile = d => require('./image-util').decodeImage(d, MAX_IMAGE, fail);
   const publicReview = (r, withAdmin) => r && ({
     id: r.id, stars: r.stars, text: r.text, name: r.name || '', organization: r.organization || '',
     images: JSON.parse(r.images || '[]').map(f => '/media/reviews/' + f),
@@ -33,9 +24,11 @@ module.exports = function community(app, ctx) {
   app.get('/api/reviews/featured', api(() => ({
     reviews: db.all('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.featured>0 AND r.hidden=0 ORDER BY r.featured LIMIT 3').map(r => publicReview(r))
   })));
+  // 2.4: cada conta envia a avaliação 1 vez e pode editar 1 vez; depois fica fechada (excluir não libera de novo)
+  const MAX_WRITES = 2, writesOf = id => db.get('SELECT review_writes n FROM users WHERE id=?', id)?.n || 0;
   app.get('/api/reviews/mine', api(req => {
     const u = needUser(req);
-    return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.user_id=?', u.id)) || null};
+    return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.user_id=?', u.id)) || null, canWrite: writesOf(u.id) < MAX_WRITES};
   }));
   // cada usuário tem 1 avaliação (enviar de novo atualiza a mesma)
   app.post('/api/reviews', (req, res, next) => req.user ? next() : res.status(401).json({error: 'Entre na sua conta.'}), express.json({limit: '6mb'}), jsonOnly, limit('review', 20, 3600000), api(req => {
@@ -43,6 +36,7 @@ module.exports = function community(app, ctx) {
     if (!Number.isInteger(stars) || stars < 1 || stars > 5) fail(400, 'Escolha de 1 a 5 estrelas.');
     if (text.length < 10) fail(400, 'Escreva sua avaliação (mínimo 10 caracteres).');
     const old = db.get('SELECT * FROM reviews WHERE user_id=?', u.id);
+    if (writesOf(u.id) >= MAX_WRITES) fail(403, old ? 'Sua avaliação já foi editada e não pode mais ser alterada.' : 'Você já avaliou o GameZoney. Não é possível avaliar de novo.');
     const keep = Array.isArray(req.body.keepImages) ? req.body.keepImages.map(String) : [];
     const oldFiles = old ? JSON.parse(old.images || '[]') : [];
     const kept = oldFiles.filter(f => keep.includes('/media/reviews/' + f));
@@ -55,9 +49,10 @@ module.exports = function community(app, ctx) {
     const now = Date.now();
     if (old) db.run('UPDATE reviews SET stars=?, text=?, images=?, updated_at=? WHERE id=?', stars, text, JSON.stringify(files), now, id);
     else db.run('INSERT INTO reviews(id,user_id,stars,text,images,created_at,updated_at) VALUES(?,?,?,?,?,?,?)', id, u.id, stars, text, JSON.stringify(files), now, now);
-    db.audit(u.email, 'avaliacao', `${stars} estrela(s)`);
+    db.run('UPDATE users SET review_writes=review_writes+1 WHERE id=?', u.id);
+    db.audit(u.email, 'avaliacao', `${stars} estrela(s)${old ? ' (editada)' : ''}`);
     if (!old) for (const a of ADMINS) mail.send(a, `GameZoney: nova avaliação (${stars} estrelas)`, `${u.name} <${u.email}>\n\n${text}\n\nEscolha as avaliações da página inicial em ${SITE}/admin`);
-    return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.id=?', id))};
+    return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.id=?', id)), canWrite: writesOf(u.id) < MAX_WRITES};
   }));
   app.post('/api/reviews/remove', jsonOnly, api(req => {
     const u = needUser(req), r = db.get('SELECT * FROM reviews WHERE user_id=?', u.id); if (!r) return {ok: true};
@@ -103,10 +98,11 @@ module.exports = function community(app, ctx) {
   }));
   app.post('/api/chat/send', jsonOnly, limit('chat-send', 60, 600000), api(req => {
     const c = chatOf(req) || fail(404, 'Conversa não encontrada. Inicie uma nova conversa.'), text = str(req.body.text, 2000);
+    if (c.status === 'closed') fail(409, 'Esta conversa foi encerrada pela equipe GameZoney. Inicie uma nova conversa.');
     if (!text) fail(400, 'Escreva sua mensagem.');
     const now = Date.now();
     db.run('INSERT INTO chat_messages(chat_id,sender,text,at) VALUES(?,?,?,?)', c.id, 'user', text, now);
-    db.run("UPDATE chats SET last_at=?, unread_admin=unread_admin+1, status='open' WHERE id=?", now, c.id);
+    db.run('UPDATE chats SET last_at=?, unread_admin=unread_admin+1 WHERE id=?', now, c.id);
     return {messages: messages(c.id, req.body.after)};
   }));
   app.post('/api/chat/end', jsonOnly, api((req, res) => { res.append('Set-Cookie', `${CHAT}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`); return {ok: true}; }));
