@@ -75,6 +75,13 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
   }
   // 1.0.7: primeira data do teste grátis de cada computador (identificação anônima = SHA-256 do MachineGuid)
   db.exec("CREATE TABLE IF NOT EXISTS trial_machines(machine TEXT PRIMARY KEY, started_at INTEGER NOT NULL, first_install TEXT NOT NULL, last_install TEXT NOT NULL, last_seen_at INTEGER NOT NULL, installs INTEGER NOT NULL DEFAULT 1, ip TEXT NOT NULL DEFAULT '')");
+  // 2.5: verificação em duas etapas do /admin (código por e-mail; vale 12 h por sessão)
+  if (!db.prepare('PRAGMA table_info(sessions)').all().some(c => c.name === 'admin_until')) {
+    db.exec("ALTER TABLE sessions ADD COLUMN admin_until INTEGER NOT NULL DEFAULT 0");
+    db.exec("ALTER TABLE sessions ADD COLUMN mfa_hash TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE sessions ADD COLUMN mfa_expires INTEGER NOT NULL DEFAULT 0");
+    db.exec("ALTER TABLE sessions ADD COLUMN mfa_tries INTEGER NOT NULL DEFAULT 0");
+  }
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

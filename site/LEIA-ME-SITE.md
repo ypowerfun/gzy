@@ -206,6 +206,7 @@ Envie o zip novo, descompacte e rode de novo `sudo bash deploy/instalar-vps.sh`.
   - chamada final com o preço.
 
   A foto fica em `public/img/hero-arena.jpg`: troque por uma foto em alta resolução quando tiver.
+- **Verificação em duas etapas do /admin (2.5):** depois de entrar com a senha (ou Google), o `/admin` pede um **código de 6 dígitos** enviado ao e-mail da conta de administrador. O código vale 10 minutos e 5 tentativas, só funciona no navegador onde foi pedido e libera o `/admin` por 12 horas (sair da conta, trocar ou redefinir a senha pede de novo). Se o e-mail estiver fora do ar, o código vai para o registro do site na VPS: `sudo journalctl -u gamezoney-site -n 50 | grep "Código de acesso"`. O registro (`/admin › Registro`) mostra cada código pedido e cada entrada.
 - **Faixa do topo (2.4):** edite em `/admin › Faixa do topo` (vazio = sem faixa). Os preços da venda vitalícia antiga continuam guardados como estavam (só valem com `LEGACY_SALES=1`); os planos têm preço em `/admin › Planos`.
 - **Minha conta (2.4):** Meus dados tem **Redefinir senha** (manda o link de nova senha para o e-mail da conta; também cria senha numa conta Google). No **Fale conosco**, conversa encerrada pelo admin não aceita mais resposta: aparece "Esta conversa foi encerrada" e o botão **Abrir nova conversa**. A página **Atualizações** mostra só os 3 cards mais recentes (o mais novo vai no topo; os antigos ficam no HTML, escondidos).
   - O que for salvo vale na hora no site e nas próximas compras.

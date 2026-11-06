@@ -7,7 +7,7 @@ let createApp; try { ({createApp} = require('../../../site/server')); } catch { 
 test('1.0.7: o site guarda a primeira data do teste de cada computador; reinstalação continua a contagem', {skip: !createApp && 'site não encontrado'}, async t => {
   const {publicKey, privateKey} = crypto.generateKeyPairSync('ed25519'), pub = publicKey.export({type: 'spki', format: 'pem'});
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-trial-site-'));
-  const site = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: dir, DOWNLOADS_DIR: path.join(dir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com',
+  const site = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: dir, DOWNLOADS_DIR: path.join(dir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
     LICENSE_PRIVATE_KEY: privateKey.export({type: 'pkcs8', format: 'pem'}), MP_ACCESS_TOKEN: '', GOOGLE_CLIENT_ID: '', SMTP_HOST: ''}, mail: {enabled: false, send: async () => true}, log: {log() {}, error() {}}});
   const srv = await new Promise(r => { const s = site.listen(0, '127.0.0.1', () => r(s)); });
   const old = process.env.GZ_SITE_URL; process.env.GZ_SITE_URL = 'http://127.0.0.1:' + srv.address().port;

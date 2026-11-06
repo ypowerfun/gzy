@@ -102,6 +102,7 @@ function createApp(options = {}) {
   const COOKIE = 'gzs';
   const cookieOf = (req, name) => String(req.headers.cookie || '').split(/;\s*/).map(c => c.split('=')).find(([k]) => k === name)?.[1];
   const setCookie = (res, name, value, maxAge) => res.append('Set-Cookie', `${name}=${value}; Path=/; HttpOnly; SameSite=Lax${secureCookie ? '; Secure' : ''}; Max-Age=${Math.floor(maxAge / 1000)}`);
+  const ADMIN_MFA = env.ADMIN_MFA !== '0'; // 2.5: verificação em duas etapas do /admin (ADMIN_MFA=0 desliga, só para testes)
   function login(res, user) {
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)', sha(token), user.id, Date.now() + 30 * DAY, Date.now());
@@ -110,12 +111,15 @@ function createApp(options = {}) {
   }
   app.use((req, res, next) => {
     const token = cookieOf(req, COOKIE);
-    req.user = token ? db.get('SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?', sha(token), Date.now()) : null;
-    req.admin = !!(req.user && req.user.email_verified && ADMINS.has(req.user.email.toLowerCase())); // 1.3: admin só com e-mail confirmado
+    req.sessionHash = token ? sha(token) : '';
+    req.user = token ? db.get('SELECT u.*, s.admin_until AS session_admin_until FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?', req.sessionHash, Date.now()) : null;
+    req.adminAccount = !!(req.user && req.user.email_verified && ADMINS.has(req.user.email.toLowerCase())); // 1.3: admin só com e-mail confirmado
+    // 2.5: e, além da senha (ou Google), o código de 6 dígitos enviado ao e-mail nesta sessão (vale 12 h)
+    req.admin = req.adminAccount && (!ADMIN_MFA || req.user.session_admin_until > Date.now());
     next();
   });
   const needUser = req => req.user || fail(401, 'Entre na sua conta.');
-  const needAdmin = req => { needUser(req); if (!req.admin) fail(403, ADMINS.has(req.user.email.toLowerCase()) && !req.user.email_verified ? 'Confirme o seu e-mail para acessar a administração (Minha conta › Reenviar confirmação).' : 'Acesso restrito ao administrador.'); };
+  const needAdmin = req => { needUser(req); if (!req.admin && req.adminAccount) fail(403, 'Digite o código enviado ao seu e-mail para entrar na administração.', {needCode: true}); if (!req.admin) fail(403, ADMINS.has(req.user.email.toLowerCase()) && !req.user.email_verified ? 'Confirme o seu e-mail para acessar a administração (Minha conta › Reenviar confirmação).' : 'Acesso restrito ao administrador.'); };
   // POST do navegador só com JSON (proteção contra envio de formulário de outro site)
   const jsonOnly = (req, res, next) => (req.method === 'POST' && !req.is('application/json')) ? res.status(415).json({error: 'Envie JSON.'}) : next();
   const api = fn => (req, res) => Promise.resolve().then(() => fn(req, res)).then(r => { if (!res.headersSent) res.json(r ?? {ok: true}); })
@@ -203,6 +207,38 @@ function createApp(options = {}) {
     db.run('UPDATE users SET password_hash=?, email_verified=1 WHERE id=?', hashPassword(password), row.user_id);
     db.run('DELETE FROM resets WHERE user_id=?', row.user_id); db.run('DELETE FROM sessions WHERE user_id=?', row.user_id);
     const user = db.get('SELECT * FROM users WHERE id=?', row.user_id); login(res, user); db.audit(user.email, 'conta', 'senha redefinida');
+    return {ok: true};
+  }));
+  // ---------- 2.5: verificação em duas etapas do /admin ----------
+  // Depois de entrar (senha ou Google), o administrador pede um código de 6 dígitos que vai para o e-mail da conta.
+  // O código vale 10 minutos e 5 tentativas, fica guardado só como resumo (hash) preso a ESTA sessão e libera o /admin
+  // por 12 horas. Sair da conta, trocar ou redefinir a senha encerra a sessão e pede código de novo.
+  const mfaHash = (session, code) => sha('gz-admin-code:' + session + ':' + code);
+  app.post('/api/auth/admin-code/send', jsonOnly, limit('admincode', 5, 15 * 60000), api(async req => {
+    needUser(req); if (!req.adminAccount) fail(403, 'Acesso restrito ao administrador.');
+    if (req.admin) return {ok: true, already: true};
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0'), u = req.user;
+    db.run('UPDATE sessions SET mfa_hash=?, mfa_expires=?, mfa_tries=0 WHERE token_hash=?', mfaHash(req.sessionHash, code), Date.now() + 10 * 60000, req.sessionHash);
+    const sent = await Promise.resolve(notify(u.email, 'GameZoney: código de acesso à administração', {preheader: 'Seu código para entrar na administração do GameZoney.', lines: [`Olá, ${u.name}!`, 'Use o código abaixo para entrar na administração do site GameZoney.'],
+      title: 'Código de acesso', code, codeNote: 'O código vale por 10 minutos e só funciona no navegador onde foi pedido.', after: ['Se não foi você, troque a sua senha em Minha conta › Meus dados › Redefinir senha: alguém pode ter a sua senha.']})).then(r => r !== false, () => false);
+    // sem e-mail funcionando, o dono não fica trancado para fora: o código vai para o registro do serviço na VPS
+    if (!sent || !mail.enabled) log.log(`Código de acesso à administração para ${u.email}: ${code} (e-mail indisponível; vale 10 minutos)`);
+    db.audit(u.email, 'admin', 'código de acesso pedido');
+    return {ok: true, sent: sent && mail.enabled, to: u.email.replace(/^(.{2}).*(@.*)$/, '$1***$2')};
+  }));
+  app.post('/api/auth/admin-code/verify', jsonOnly, limit('admincodev', 20, 15 * 60000), api(req => {
+    needUser(req); if (!req.adminAccount) fail(403, 'Acesso restrito ao administrador.');
+    const code = String(req.body?.code || '').replace(/\D/g, ''), s = db.get('SELECT mfa_hash, mfa_expires, mfa_tries FROM sessions WHERE token_hash=?', req.sessionHash);
+    if (!s || !s.mfa_hash || s.mfa_expires < Date.now()) fail(400, 'Código vencido. Peça um novo código.');
+    if (s.mfa_tries >= 5) fail(429, 'Muitas tentativas erradas. Peça um novo código.');
+    const want = Buffer.from(s.mfa_hash), got = Buffer.from(mfaHash(req.sessionHash, code));
+    if (code.length !== 6 || !crypto.timingSafeEqual(want, got)) {
+      db.run('UPDATE sessions SET mfa_tries=mfa_tries+1 WHERE token_hash=?', req.sessionHash);
+      if (s.mfa_tries + 1 >= 5) { db.run("UPDATE sessions SET mfa_hash='' WHERE token_hash=?", req.sessionHash); db.audit(req.user.email, 'admin', 'código de acesso: 5 tentativas erradas'); fail(429, 'Muitas tentativas erradas. Peça um novo código.'); }
+      fail(400, 'Código incorreto.');
+    }
+    db.run("UPDATE sessions SET admin_until=?, mfa_hash='', mfa_expires=0, mfa_tries=0 WHERE token_hash=?", Date.now() + 12 * 3600000, req.sessionHash);
+    db.audit(req.user.email, 'admin', 'entrou na administração (código por e-mail)');
     return {ok: true};
   }));
   app.post('/api/auth/verify/resend', jsonOnly, limit('verify', 5, 3600000), api(async req => {
@@ -392,7 +428,7 @@ function createApp(options = {}) {
   app.get('/api/me', api(async req => {
     if (!req.user) return {user: null};
     const u = req.user;
-    return {user: publicUser(u), admin: req.admin, ...(await plans.forUser(u.id)),
+    return {user: publicUser(u), admin: req.adminAccount, adminVerified: req.admin, ...(await plans.forUser(u.id)),
       licenses: db.all('SELECT * FROM licenses WHERE user_id=? ORDER BY created_at DESC', u.id).map(publicLicense),
       orders: db.all('SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 20', u.id).map(o => ({...publicOrder(o), pixQr: ''})),
       tickets: db.all('SELECT id,subject,message,status,reply,created_at,replied_at,images FROM tickets WHERE user_id=? ORDER BY created_at DESC LIMIT 50', u.id).map(ticketOut),

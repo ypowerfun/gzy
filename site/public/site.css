@@ -308,3 +308,4 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .ticket-imgs{margin:8px 0}.ticket-imgs img{cursor:zoom-in}
 .chat-ended{padding:14px;text-align:center;font-size:13px;color:#d9c791;border-top:1px solid #2b313c}.chat-ended .btn{margin-top:10px}
 .grid.updates>.card:nth-child(n+4){display:none} /* 2.4: Atualizações mostra só os 3 cards mais recentes (o mais novo vai no topo da lista) */
+.mfa-card{max-width:560px;margin:10px auto}.mfa-card input[name=code]{font-size:28px;letter-spacing:10px;text-align:center;max-width:260px} /* 2.5: código do /admin */

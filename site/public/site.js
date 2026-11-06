@@ -7,7 +7,7 @@ const fmtDate = t => t ? new Date(t).toLocaleString('pt-BR', {dateStyle: 'short'
 async function api(url, body) {
   const r = await fetch(url, body === undefined ? {credentials: 'same-origin'} : {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error(data.error || 'Erro ' + r.status); e.status = r.status; throw e; }
+  if (!r.ok) { const e = new Error(data.error || 'Erro ' + r.status); e.status = r.status; e.data = data; throw e; }
   return data;
 }
 function showMsg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); el.setAttribute('role', ok ? 'status' : 'alert'); }

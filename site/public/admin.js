@@ -2,8 +2,24 @@
 (() => {
   const ST = {paid: ['Pago', 'ok'], pending: ['Pendente', 'wait'], expired: ['Vencido', 'bad'], canceled: ['Cancelado', 'bad']};
   const table = (head, rows) => rows.length ? `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>` : '<p class="note">Nada por aqui ainda.</p>';
+  // 2.5: verificação em duas etapas — código de 6 dígitos enviado ao e-mail do administrador (vale 12 h nesta sessão)
+  function askCode() {
+    const wrap = document.querySelector('main .wrap');
+    wrap.innerHTML = `<section class="card mfa-card"><p class="eyebrow">Verificação em duas etapas</p><h2>Código de acesso</h2>
+      <p class="note">Para entrar na administração, enviamos um código de 6 dígitos para o e-mail da sua conta. Ele vale por 10 minutos.</p>
+      <div class="row" style="gap:10px;align-items:center"><button type="button" class="btn" id="mfa-send">Enviar código para o meu e-mail</button></div>
+      <form id="mfa-form" class="hidden" autocomplete="off"><label>Código recebido<input name="code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code" placeholder="000000"></label>
+        <div class="row" style="gap:10px;margin-top:12px"><button class="btn">Entrar na administração</button><button type="button" class="btn ghost small" id="mfa-resend">Enviar outro código</button></div></form>
+      <p role="status" aria-live="polite" class="msg" id="mfa-msg"></p></section>`;
+    const msg = $('#mfa-msg'), form = $('#mfa-form');
+    const send = btn => busy(btn, async () => { try { const r = await api('/api/auth/admin-code/send', {}); if (r.already) return load();
+      showMsg(msg, r.sent ? 'Código enviado para ' + r.to + '. Confira também o spam.' : 'O e-mail não pôde ser enviado agora. O código foi gravado no registro do site na VPS (journalctl -u gamezoney-site).', !!r.sent);
+      $('#mfa-send').classList.add('hidden'); form.classList.remove('hidden'); form.code.focus(); } catch (err) { showMsg(msg, err.message); } });
+    $('#mfa-send').onclick = () => send($('#mfa-send')); $('#mfa-resend').onclick = () => send($('#mfa-resend'));
+    form.onsubmit = e => { e.preventDefault(); busy(form.querySelector('button.btn:not(.ghost)'), async () => { try { await api('/api/auth/admin-code/verify', {code: form.code.value}); location.reload(); } catch (err) { showMsg(msg, err.message); form.code.select(); } }); };
+  }
   async function load() {
-    let d; try { d = await api('/api/admin/overview'); } catch (e) { if (e.status === 401) location.href = '/entrar.html?next=/admin'; else document.querySelector('main .wrap').innerHTML = `<p class="msg err" style="display:block">${esc(e.message)}</p>`; return; }
+    let d; try { d = await api('/api/admin/overview'); } catch (e) { if (e.status === 401) location.href = '/entrar.html?next=/admin'; else if (e.data && e.data.needCode) askCode(); else document.querySelector('main .wrap').innerHTML = `<p class="msg err" style="display:block">${esc(e.message)}</p>`; return; }
     // 1.4: preço e promoção
     const of = $('#offer-form');
     if (of && !of.dataset.loaded) { of.banner.value = d.offer.banner; of.dataset.loaded = '1'; }
