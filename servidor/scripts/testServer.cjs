@@ -27,9 +27,14 @@ const files = requested.length ? requested.map(name => {
   if (!/^[a-z0-9.-]+\.test\.js$/i.test(name)) throw Error('Nome de teste inválido.');
   return path.join('test', name);
 }) : fs.readdirSync(path.join(server, 'test')).filter(name => name.endsWith('.test.js')).map(name => path.join('test', name));
+// 1.0.7: os testes rodam com o ambiente limpo, como o GameZoney.exe abre o servidor: variáveis NODE_*/UV_* deste PC
+// (ex.: NODE_OPTIONS=--require ... do VS Code ou de um proxy) ativariam a proteção contra alteração e reprovariam os testes.
+const cleanEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(NODE_|UV_)/i.test(k)));
+const dropped = Object.keys(process.env).filter(k => /^(NODE_|UV_)/i.test(k));
+if (dropped.length) console.log('Testes sem as variáveis deste PC: ' + dropped.join(', ') + ' (o GameZoney instalado também não usa).');
 const child = cp.spawn(process.execPath, ['--test', '--test-concurrency=1', ...files], {
   cwd: server,
-  env: {...process.env, TEMP: temporary, TMP: temporary, GZ_CLIENT_TEST_EXE: executable},
+  env: {...cleanEnv, TEMP: temporary, TMP: temporary, GZ_CLIENT_TEST_EXE: executable},
   stdio: 'inherit', windowsHide: true
 });
 child.on('error', error => { console.error(error.message); process.exitCode = 1; });

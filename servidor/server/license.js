@@ -30,7 +30,7 @@ const dangerousArgs = list => list.some(a => DANGER.test(String(a)));
 let tamperReason = '';
 function checkTamper() {
   if (tamperReason) return tamperReason;
-  try { if (dangerousArgs(process.execArgv) || dangerousArgs(String(process.env.NODE_OPTIONS || '').split(/\s+/))) tamperReason = 'opções de inicialização do Node alteradas'; } catch { }
+  try { if (dangerousArgs(process.execArgv) || dangerousArgs(String(process.env.NODE_OPTIONS || '').split(/\s+/))) tamperReason = dangerousArgs(process.execArgv) ? 'código injetado na linha de comando do Node' : 'código injetado pela variável NODE_OPTIONS do Windows'; } catch { }
   try { const ins = require('node:inspector'); if (ins.url()) { tamperReason = 'depurador ligado'; ins.close(); } } catch { }
   return tamperReason;
 }
@@ -110,13 +110,14 @@ module.exports = function license(store, options = {}) {
   // licença vitalícia antiga: vale como Standard por 12 meses a partir da primeira abertura desta versão
   if (licensed() && !s.license.legacyUntil) s.license.legacyUntil = Date.now() + LEGACY_DAYS * DAY;
   const mask = k => k.slice(0, 7) + '-****-****-' + k.slice(-4);
-  checkTamper(); if (!options.noTimer) setInterval(() => { const before = tamperReason; if (checkTamper() && !before) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.'); }, 3000).unref();
+  if (checkTamper()) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.');
+  if (!options.noTimer) setInterval(() => { const before = tamperReason; if (checkTamper() && !before) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.'); }, 3000).unref();
 
   function status() {
     const t = now(), endsAt = s.license.trialStartedAt + TRIAL_DAYS * DAY, left = Math.max(0, Math.ceil((endsAt - t) / DAY));
     const base = {installId: s.runtime.installId, trialDays: TRIAL_DAYS, trialStartedAt: s.license.trialStartedAt, trialEndsAt: endsAt, buyUrl: SITE() + '/#precos', accountUrl: SITE() + '/conta',
       checkedAt: s.license.planCheckedAt || 0, lastError: s.license.planError || ''};
-    if (checkTamper()) return {...base, mode: 'expired', daysLeft: 0, tamper: true};
+    if (checkTamper()) return {...base, mode: 'expired', daysLeft: 0, tamper: true, tamperReason};
     const p = planCert();
     if (p && t <= p.graceUntil) {
       const info = {...base, email: p.email, plan: p.plan, planName: p.planName || p.plan, period: p.period || '', paidUntil: p.paidUntil, graceUntil: p.graceUntil};

@@ -18,7 +18,7 @@ function licenseBar() {
   const expired = L.mode === 'expired';
   bar.className = 'gz-license-bar' + (expired || L.mode === 'plan-grace' ? ' expired' : '');
   let text;
-  if (expired && L.tamper) text = '<strong>Proteção do GameZoney ativada.</strong> <span>Foi detectada uma tentativa de alterar o sistema em funcionamento. Feche o GameZoney pelo ícone perto do relógio e abra de novo.</span>';
+  if (expired && L.tamper) text = '<strong>Proteção do GameZoney ativada.</strong> <span>Foi detectada uma tentativa de alterar o sistema em funcionamento. Feche o GameZoney pelo ícone perto do relógio e abra de novo.</span>' + (L.tamperReason ? ` <small class="gz-tamper-reason">${esc(L.tamperReason)}</small>` : '');
   else if (expired) text = L.planEnded ? `<strong>O plano ${esc(L.planEnded)} venceu.</strong> <span>Recargas, sessões novas e vendas estão bloqueadas. Seus dados continuam guardados.</span>` : `<strong>Teste grátis encerrado.</strong> <span>Recargas, sessões novas e vendas estão bloqueadas. Seus dados continuam guardados.</span>`;
   else if (L.mode === 'plan-grace') text = `<strong>Renovação do plano pendente: ${L.daysLeft} dia(s) para regularizar.</strong> <span>Depois disso, recargas, sessões novas e vendas ficam bloqueadas.</span>`;
   else if (legacySoon) text = `<strong>A licença antiga vale até ${licDate(L.legacyUntil)}.</strong> <span>Entre com a sua conta gamezoney.com com plano ativo para continuar.</span>`;
