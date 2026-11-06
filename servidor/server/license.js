@@ -25,7 +25,9 @@ const KEY_RE = /^GZ(-[A-Z0-9]{4}){4}$/;
 // 1.0.7: proteção contra alteração em funcionamento. Depurador (inspector) ligado ou código injetado no Node
 // (--require/--import/--loader, inclusive por NODE_OPTIONS) poderiam trocar a conferência da licença: nesse caso o
 // GameZoney funciona como teste vencido até ser aberto de novo do jeito normal. O GameZoney.exe já limpa NODE_* ao abrir.
-const DANGER = /^(-r|--require|--import|--loader|--experimental-loader|--inspect(-brk|-wait|-port)?|--debug(-brk|-port)?)(=|$)/;
+// Só o que injeta código ou LIGA o depurador. --inspect-port/--inspect-publish-uid sozinhos só escolhem a porta (o Node 24
+// repassa esses padrões aos processos dos testes); depurador realmente ligado é pego por inspector.url().
+const DANGER = /^(-r|--require|--import|--loader|--experimental-loader|--inspect|--inspect-brk|--inspect-wait|--debug|--debug-brk)(=|$)/;
 const dangerousArgs = list => list.some(a => DANGER.test(String(a)));
 let tamperReason = '';
 function checkTamper() {
@@ -110,7 +112,7 @@ module.exports = function license(store, options = {}) {
   // licença vitalícia antiga: vale como Standard por 12 meses a partir da primeira abertura desta versão
   if (licensed() && !s.license.legacyUntil) s.license.legacyUntil = Date.now() + LEGACY_DAYS * DAY;
   const mask = k => k.slice(0, 7) + '-****-****-' + k.slice(-4);
-  if (checkTamper()) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.');
+  if (checkTamper() && typeof store.log === 'function') store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.');
   if (!options.noTimer) setInterval(() => { const before = tamperReason; if (checkTamper() && !before) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.'); }, 3000).unref();
 
   function status() {

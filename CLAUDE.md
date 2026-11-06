@@ -52,4 +52,5 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 ## Testes
 - `cd servidor/server && npm ci && node --test test/*.test.js` — 2 testes só passam no Windows (backup completo e PC HTTPS: precisam de BackupTool.exe/cliente compilado).
 - C#: compila com o csc do .NET Framework 4 (no Linux: `mcs -langversion:5`).
-- `scripts/testServer.cjs` (gerador no Windows) roda os testes **sem** as variáveis `NODE_*`/`UV_*` do PC (igual ao GameZoney.exe): um `NODE_OPTIONS=--require …` no PC (VS Code, proxy) ativava a proteção 1.0.7 e reprovava os testes com 402.
+- `scripts/testServer.cjs` (gerador no Windows) roda os testes **sem** as variáveis `NODE_*`/`UV_*` do PC (igual ao GameZoney.exe).
+- Proteção 1.0.7 (`license.js` `DANGER`): só `--require/-r/--import/--loader/--experimental-loader/--inspect/--inspect-brk/--inspect-wait/--debug*`; **não** `--inspect-port`/`--inspect-publish-uid` (o Node 24 repassa esses padrões aos processos de `node --test`; isso reprovou 15 testes no rcti2). Testar também com Node 24 antes de entregar.
