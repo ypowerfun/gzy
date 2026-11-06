@@ -87,7 +87,7 @@ function createApp(options = {}) {
   // 1.3: limite geral da API por IP (abuso/robôs)
   app.use('/api', limit('api', 600, 60000));
   // 1.3: POST que usa a sessão só vale vindo do próprio site (Origin/Referer); aviso do Mercado Pago, ativação e feedback dos servidores não usam sessão
-  const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback', '/api/unsubscribe', '/api/plan/login', '/api/plan/refresh', '/api/plan/logout', '/api/plan/from-license', '/api/update/check']);
+  const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback', '/api/unsubscribe', '/api/plan/login', '/api/plan/refresh', '/api/plan/logout', '/api/plan/from-license', '/api/update/check', '/api/trial/anchor']);
   const siteOrigin = new URL(SITE).origin;
   app.use((req, res, next) => {
     if (req.method !== 'POST' || MACHINE.has(req.path)) return next();

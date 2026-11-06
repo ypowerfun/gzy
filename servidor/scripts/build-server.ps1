@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$InnoCompiler = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
     [switch]$SkipTests,
     [switch]$SkipDependencies
@@ -25,7 +25,7 @@ try {
     & $csc /nologo /target:winexe /out:ClearAll.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll ClearAll.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no ClearAll.' }
     # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
-    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs
+    & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.dev.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador.' }
     if (!$SkipTests) {
         & $node (Join-Path $PSScriptRoot 'testServer.cjs')
@@ -43,6 +43,21 @@ try {
         foreach ($folder in @('runtime','runtimes','public','certs','node_modules')) {
             Copy-Item -LiteralPath (Join-Path $serverRoot $folder) -Destination $stage -Recurse
         }
+        # 1.0.7: proteção — embaralha o código na pasta temporária (o repositório não muda), gera a lista de SHA-256 e
+        # compila de novo o GameZoney.exe com a lista embutida (arquivo alterado = o GameZoney não abre).
+        $protect = Join-Path $projectRoot 'tools\protect'
+        Push-Location $protect
+        try {
+            & npm.cmd ci --ignore-scripts --no-audit --no-fund --cache (Join-Path $projectRoot 'tools\npm-cache')
+            if ($LASTEXITCODE -ne 0) { throw 'Falha ao instalar a ferramenta de proteção (tools\protect).' }
+        } finally { Pop-Location }
+        & $node (Join-Path $protect 'protect.cjs') $stage
+        if ($LASTEXITCODE -ne 0) { throw 'Falha na proteção do código.' }
+        Push-Location $stage
+        try {
+            & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.cs
+            if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador protegido.' }
+        } finally { Pop-Location }
         & $InnoCompiler "/O$outputRoot" (Join-Path $stage 'installer.iss')
         if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar instalador do servidor.' }
     } finally {

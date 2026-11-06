@@ -3,7 +3,7 @@
 // Confere se TODAS as declarações de versão estão iguais (VERSION) antes de gerar o instalador.
 // Acerta package.json/package-lock.json e confere o resto.
 const fs=require('node:fs'),path=require('node:path');
-const VERSION='1.0.6';
+const VERSION='1.0.7';
 const root=path.resolve(__dirname,'..','server');
 for(const name of ['package.json','package-lock.json']){
   const file=path.join(root,name),data=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -13,7 +13,7 @@ for(const name of ['package.json','package-lock.json']){
 }
 const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
-  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
+  'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'CheckIntegrity();','--disable-sigusr1','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
   'INSTALACAO-en.txt':[`SERVER ${VERSION}`],
@@ -30,7 +30,7 @@ for(const [name,needles] of Object.entries(required)){
   const text=fs.readFileSync(path.join(root,name),'utf8');
   for(const needle of needles)if(!text.includes(needle))missing.push(`${name}: ${needle}`);
 }
-for(const file of ['Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','runtimes/win-x64/native/WebView2Loader.dll','runtimes/win-x86/native/WebView2Loader.dll','LICENSE-webview2.txt','network-guard.js'])
+for(const file of ['GzIntegrity.dev.cs','../tools/protect/protect.cjs','../tools/protect/package-lock.json','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','runtimes/win-x64/native/WebView2Loader.dll','runtimes/win-x86/native/WebView2Loader.dll','LICENSE-webview2.txt','network-guard.js'])
   if(!fs.existsSync(path.join(root,file)))missing.push('arquivo faltando: '+file);
 if(missing.length){console.error('Versão inconsistente:\n - '+missing.join('\n - '));process.exit(1);}
 console.log(`Servidor ${VERSION} preparado e conferido.`);

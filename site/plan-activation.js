@@ -88,6 +88,19 @@ module.exports = function planActivation(app, ctx) {
     db.audit(user.email, 'plano', `licença vitalícia ${lic.key.slice(0, 7)}… passou para o plano ${plan.name} em ${machine || '?'}`);
     return reply(user, plan, installId);
   }));
+  // 1.0.7: teste grátis preso ao computador. O Servidor manda uma identificação anônima (SHA-256 do MachineGuid do
+  // Windows) e a data local do início do teste; o site guarda a PRIMEIRA data de cada computador e devolve assinada.
+  // Reinstalar o GameZoney e apagar os dados não reinicia os 30 dias.
+  app.post('/api/trial/anchor', limit('trialanchor', 60, 3600000), api(req => {
+    const {installId} = input(req), machine = String(req.body?.machineId || ''), local = Number(req.body?.trialStartedAt), now = Date.now();
+    if (!/^[a-f0-9]{64}$/.test(machine) || !ID_RE.test(installId)) fail(400, 'Pedido inválido.');
+    const sent = Number.isFinite(local) && local > 1.7e12 && local <= now ? local : now;
+    const row = db.get('SELECT * FROM trial_machines WHERE machine=?', machine);
+    if (row) db.run('UPDATE trial_machines SET started_at=MIN(started_at,?), last_install=?, last_seen_at=?, installs=installs+(CASE WHEN last_install<>? THEN 1 ELSE 0 END), ip=? WHERE machine=?', sent, installId, now, installId, req.ip || '', machine);
+    else db.run('INSERT INTO trial_machines(machine,started_at,first_install,last_install,last_seen_at,installs,ip) VALUES(?,?,?,?,?,1,?)', machine, sent, installId, installId, now, req.ip || '');
+    const startedAt = db.get('SELECT started_at FROM trial_machines WHERE machine=?', machine).started_at;
+    return {token: sign({v: 1, kind: 'trial', machine, startedAt, issuedAt: now})};
+  }));
   // /admin: em qual computador cada conta está usando o plano
   const machineOf = uid => { const b = binding(uid); return b ? {machine: b.machine, version: b.version, lastSeenAt: b.last_seen_at} : null; };
   if (!publicKey) log.error('Planos: chave de assinatura ausente; o GameZoney Servidor não consegue entrar com a conta.');

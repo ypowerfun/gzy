@@ -1,0 +1,8 @@
+{
+  "name": "gamezoney-protect",
+  "private": true,
+  "description": "Ferramenta de build: embaralha o código do Servidor antes de gerar o instalador (não vai no instalador)",
+  "dependencies": {
+    "javascript-obfuscator": "4.1.1"
+  }
+}

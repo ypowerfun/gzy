@@ -16,3 +16,4 @@ pairing/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+servidor/tools/npm-cache/

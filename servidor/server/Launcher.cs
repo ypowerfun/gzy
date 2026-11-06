@@ -14,7 +14,7 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.0.6.0")]
+[assembly: AssemblyVersion("1.0.7.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -23,6 +23,19 @@ class Launcher : ApplicationContext {
     PanelHost panel; bool panelHintShown;
     static string root=AppDomain.CurrentDomain.BaseDirectory;
     static int MainCode=0;
+    // 1.0.7: confere o SHA-256 de cada arquivo que o Node carrega (lista gerada e compilada junto na hora de montar o
+    // instalador, em GzIntegrity.cs). Arquivo alterado, trocado ou faltando = o GameZoney não abre. Na versão de
+    // desenvolvimento a lista vem vazia (GzIntegrity.dev.cs) e nada é conferido.
+    static void CheckIntegrity(){
+        var list=GzIntegrity.Files;if(list==null||list.Length==0)return;
+        using(var sha=System.Security.Cryptography.SHA256.Create()){
+            for(int i=0;i+1<list.Length;i+=2){
+                string file=Path.Combine(root,list[i]),hex="";
+                try{using(var f=File.OpenRead(file))foreach(byte b in sha.ComputeHash(f))hex+=b.ToString("x2");}catch{}
+                if(!String.Equals(hex,list[i+1],StringComparison.OrdinalIgnoreCase))throw new Exception("Os arquivos do GameZoney Servidor foram alterados ou estão corrompidos ("+list[i]+").\n\nReinstale o GameZoney Servidor pelo instalador baixado em gamezoney.com (Minha conta › Downloads). Seus dados são mantidos.");
+            }
+        }
+    }
     static void Open(string target) { Process.Start(new ProcessStartInfo(target){UseShellExecute=true}); }
     static void OpenPanel(string address) {
         string edge=FindEdge();
@@ -61,8 +74,12 @@ class Launcher : ApplicationContext {
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.Copy(log,log+".previous",true);
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.WriteAllText(log,"");
         using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);if(result.AsyncWaitHandle.WaitOne(400)&&probe.Connected)throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");}
-        var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning server.js");
+        CheckIntegrity();
+        var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning --disable-sigusr1 server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
+        // 1.0.7: nada de fora entra no Node (NODE_OPTIONS=--require..., NODE_PATH etc. permitiriam trocar a conferência da licença)
+        var drop=new System.Collections.Generic.List<string>();foreach(string k in info.EnvironmentVariables.Keys)if(k.StartsWith("NODE_",StringComparison.OrdinalIgnoreCase)||k.StartsWith("UV_",StringComparison.OrdinalIgnoreCase))drop.Add(k);
+        foreach(var k in drop)info.EnvironmentVariables.Remove(k);
         Environment.SetEnvironmentVariable("GZ_DATA_DIR",data);Environment.SetEnvironmentVariable("GZ_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
         Environment.SetEnvironmentVariable("GZ_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}

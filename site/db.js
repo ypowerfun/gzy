@@ -73,6 +73,8 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
     db.exec("ALTER TABLE users ADD COLUMN review_writes INTEGER NOT NULL DEFAULT 0");
     db.exec("UPDATE users SET review_writes=1 WHERE id IN (SELECT user_id FROM reviews)"); // quem já avaliou ainda pode editar 1 vez
   }
+  // 1.0.7: primeira data do teste grátis de cada computador (identificação anônima = SHA-256 do MachineGuid)
+  db.exec("CREATE TABLE IF NOT EXISTS trial_machines(machine TEXT PRIMARY KEY, started_at INTEGER NOT NULL, first_install TEXT NOT NULL, last_install TEXT NOT NULL, last_seen_at INTEGER NOT NULL, installs INTEGER NOT NULL DEFAULT 1, ip TEXT NOT NULL DEFAULT '')");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

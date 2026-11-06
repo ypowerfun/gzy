@@ -22,6 +22,18 @@ const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAMFrzAwdfdPAGS2NkTlKe29nnB0en88wSERUzJeOcqwM=
 -----END PUBLIC KEY-----`;
 const KEY_RE = /^GZ(-[A-Z0-9]{4}){4}$/;
+// 1.0.7: proteção contra alteração em funcionamento. Depurador (inspector) ligado ou código injetado no Node
+// (--require/--import/--loader, inclusive por NODE_OPTIONS) poderiam trocar a conferência da licença: nesse caso o
+// GameZoney funciona como teste vencido até ser aberto de novo do jeito normal. O GameZoney.exe já limpa NODE_* ao abrir.
+const DANGER = /^(-r|--require|--import|--loader|--experimental-loader|--inspect(-brk|-wait|-port)?|--debug(-brk|-port)?)(=|$)/;
+const dangerousArgs = list => list.some(a => DANGER.test(String(a)));
+let tamperReason = '';
+function checkTamper() {
+  if (tamperReason) return tamperReason;
+  try { if (dangerousArgs(process.execArgv) || dangerousArgs(String(process.env.NODE_OPTIONS || '').split(/\s+/))) tamperReason = 'opções de inicialização do Node alteradas'; } catch { }
+  try { const ins = require('node:inspector'); if (ins.url()) { tamperReason = 'depurador ligado'; ins.close(); } } catch { }
+  return tamperReason;
+}
 const BLOCKED = new Set(['/api/credit', '/api/start', '/api/guest-start', '/api/guest-start-batch', '/api/shop/sale', '/api/events', '/api/events/pay', '/api/events/start', '/api/cash/open', '/api/members', '/api/members/import', '/api/loyalty/redeem']);
 const fail = (m, extra) => { throw Object.assign(new Error(m), extra || {}); };
 const b64 = s => Buffer.from(s, 'base64url');
@@ -52,6 +64,23 @@ function verifyPlan(token, installId, publicKey = PUBLIC_KEY) {
   return d;
 }
 
+// 1.0.7: teste grátis preso ao COMPUTADOR. Identificação anônima = SHA-256 do MachineGuid do Windows (não dá para
+// voltar ao valor original). Uma cópia do início do teste fica também no registro do Windows (HKCU\Software\GameZoney)
+// e, com internet, o gamezoney.com guarda a primeira data deste computador: desinstalar, apagar a pasta de dados e
+// reinstalar não reinicia os 30 dias.
+const REG_KEY = 'HKCU\\Software\\GameZoney';
+function winMachineId() {
+  try {
+    const out = require('node:child_process').execFileSync('reg', ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid', '/reg:64'], {encoding: 'utf8', timeout: 5000, windowsHide: true});
+    const g = /MachineGuid\s+REG_SZ\s+([0-9a-f-]{20,})/i.exec(out)?.[1]; return g ? crypto.createHash('sha256').update('gz-machine:' + g.toLowerCase()).digest('hex') : null;
+  } catch { return null; }
+}
+const winRegistry = {
+  get() { try { const out = require('node:child_process').execFileSync('reg', ['query', REG_KEY, '/v', 'TrialStart'], {encoding: 'utf8', timeout: 5000, windowsHide: true}); return Number(/TrialStart\s+REG_SZ\s+(\d+)/.exec(out)?.[1]) || 0; } catch { return 0; } },
+  set(v) { try { require('node:child_process').execFile('reg', ['add', REG_KEY, '/v', 'TrialStart', '/t', 'REG_SZ', '/d', String(v), '/f'], {timeout: 5000, windowsHide: true}, () => {}); } catch { } }
+};
+const noRegistry = {get: () => 0, set() {}};
+
 module.exports = function license(store, options = {}) {
   const s = store.state; s.license ??= {}; s.runtime.installId ??= crypto.randomUUID();
   const publicKey = options.publicKey || PUBLIC_KEY;
@@ -63,10 +92,14 @@ module.exports = function license(store, options = {}) {
   function writeMarker(data) { try { if (markerFile) { fs.mkdirSync(path.dirname(markerFile), {recursive: true}); fs.writeFileSync(markerFile, JSON.stringify(data)); } } catch {} }
   // início do teste: o mais antigo entre o banco e a cópia fora da pasta de dados
   const marker = readMarker();
-  const starts = [s.license.trialStartedAt, marker.trialStartedAt].map(Number).filter(t => t > 0 && t <= Date.now() + DAY);
+  const win = process.platform === 'win32' && options.machineBound === true; // só no uso real (os testes não tocam no registro do PC)
+  const registry = options.registry || (win ? winRegistry : noRegistry);
+  const machineId = options.machineId !== undefined ? options.machineId : (win ? winMachineId() : null);
+  const starts = [s.license.trialStartedAt, marker.trialStartedAt, registry.get()].map(Number).filter(t => t > 0 && t <= Date.now() + DAY);
   s.license.trialStartedAt = starts.length ? Math.min(...starts) : Date.now();
   s.license.lastSeenAt = Math.max(Number(s.license.lastSeenAt) || 0, Number(marker.lastSeenAt) || 0);
   if (Number(marker.trialStartedAt) !== s.license.trialStartedAt) writeMarker({...marker, trialStartedAt: s.license.trialStartedAt});
+  registry.set(s.license.trialStartedAt);
   // certificados guardados também fora da pasta de dados (restaurar backup antigo não perde a ativação)
   if (!s.license.token && marker.token && verifyToken(marker.token, s.runtime.installId, publicKey)) s.license.token = marker.token;
   if (!s.license.planToken && marker.planToken && verifyPlan(marker.planToken, s.runtime.installId, publicKey)) s.license.planToken = marker.planToken;
@@ -77,11 +110,13 @@ module.exports = function license(store, options = {}) {
   // licença vitalícia antiga: vale como Standard por 12 meses a partir da primeira abertura desta versão
   if (licensed() && !s.license.legacyUntil) s.license.legacyUntil = Date.now() + LEGACY_DAYS * DAY;
   const mask = k => k.slice(0, 7) + '-****-****-' + k.slice(-4);
+  checkTamper(); if (!options.noTimer) setInterval(() => { const before = tamperReason; if (checkTamper() && !before) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.'); }, 3000).unref();
 
   function status() {
     const t = now(), endsAt = s.license.trialStartedAt + TRIAL_DAYS * DAY, left = Math.max(0, Math.ceil((endsAt - t) / DAY));
     const base = {installId: s.runtime.installId, trialDays: TRIAL_DAYS, trialStartedAt: s.license.trialStartedAt, trialEndsAt: endsAt, buyUrl: SITE() + '/#precos', accountUrl: SITE() + '/conta',
       checkedAt: s.license.planCheckedAt || 0, lastError: s.license.planError || ''};
+    if (checkTamper()) return {...base, mode: 'expired', daysLeft: 0, tamper: true};
     const p = planCert();
     if (p && t <= p.graceUntil) {
       const info = {...base, email: p.email, plan: p.plan, planName: p.planName || p.plan, period: p.period || '', paidUntil: p.paidUntil, graceUntil: p.graceUntil};
@@ -97,7 +132,7 @@ module.exports = function license(store, options = {}) {
   function guard(req, res, next) {
     if (req.method === 'POST' && BLOCKED.has((req.baseUrl + req.path).replace(/\/+$/, '')) && expired()) {
       const st = status();
-      const error = st.planEnded ? `O plano ${st.planEnded} venceu. Renove em gamezoney.com e clique em Atualizar plano em Configuração › Licença. Seus dados continuam guardados.`
+      const error = st.tamper ? 'Foi detectada uma tentativa de alterar o GameZoney em funcionamento. Feche o GameZoney pelo ícone perto do relógio e abra de novo. Seus dados continuam guardados.' : st.planEnded ? `O plano ${st.planEnded} venceu. Renove em gamezoney.com e clique em Atualizar plano em Configuração › Licença. Seus dados continuam guardados.`
         : 'O teste grátis de 30 dias terminou. Entre com a sua conta gamezoney.com (com plano ativo) em Configuração › Licença. Seus dados continuam guardados.';
       return res.status(402).json({error, license: 'expired'});
     }
@@ -145,7 +180,7 @@ module.exports = function license(store, options = {}) {
         } else if (licensed()) {
           const data = await call('/api/plan/from-license', {token: s.license.token});
           savePlan(data.token, actor, `Licença vitalícia passou para o plano ${data.planName || data.plan} da conta ${p0(data)}`);
-        }
+        } else await anchorTrial(actor);
       } catch (e) {
         if (!e.offline) { s.license.planError = e.message; s.license.planCheckedAt = now(); store.persist(); }
         if (e.status === 401 && s.license.planToken) { s.license.planToken = null; store.persist(); saveMarker(); }
@@ -153,6 +188,17 @@ module.exports = function license(store, options = {}) {
       return status();
     })();
     return refreshing;
+  }
+  // 1.0.7: o gamezoney.com devolve (assinada) a primeira data de teste deste computador; vale a mais antiga
+  async function anchorTrial(actor) {
+    if (!machineId) return;
+    let data; try { data = await call('/api/trial/anchor', {machineId, trialStartedAt: s.license.trialStartedAt}); } catch { return; } // sem site: vale a data local e a do registro
+    const c = readCert(data.token, publicKey);
+    if (!c || c.v !== 1 || c.kind !== 'trial' || c.machine !== machineId || !(c.startedAt > 0)) return;
+    if (c.startedAt < s.license.trialStartedAt - 60000) {
+      store.change(actor, 'licenca', `Teste grátis: este computador já usava o GameZoney desde ${new Date(c.startedAt).toLocaleDateString('pt-BR')} (a contagem de 30 dias continua dessa data)`, () => { s.license.trialStartedAt = c.startedAt; });
+      saveMarker(); registry.set(c.startedAt);
+    }
   }
   async function logout(actor) {
     const token = s.license.planToken;
