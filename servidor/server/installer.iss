@@ -68,6 +68,9 @@ Source: "events.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "payments.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "feedback.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "license.js"; DestDir: "{app}"; Flags: ignoreversion
+; 1.0.6: Verificar atualização (manifesto assinado + instalação com backup antes)
+Source: "updater.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "update-helper.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion

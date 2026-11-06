@@ -318,3 +318,5 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
 .gz-license-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
 .gz-license-bar .primary-link,#license-section .button-link{display:inline-flex;align-items:center;padding:8px 14px;background:linear-gradient(180deg,var(--red2),var(--red));color:#111;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-size:12px}
 #license-section .subtext{display:block;margin-top:10px;word-break:break-all}
+/* 1.0.6: barra de progresso do download da atualização */
+.gz-upd-bar{height:8px;background:#1c222c;border-radius:4px;overflow:hidden;margin:6px 0 10px}.gz-upd-bar i{display:block;height:100%;background:linear-gradient(90deg,#FDD034,#F0B11E);transition:width .4s}

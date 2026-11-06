@@ -4,11 +4,11 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>Administração | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/site.css?v=20261106-22"><link rel="stylesheet" href="/premium.css?v=20261106-22">
+<link rel="stylesheet" href="/site.css?v=20261106-23"><link rel="stylesheet" href="/premium.css?v=20261106-23">
 </head>
 <body data-no-chat>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#planos">Planos</a><a href="#oferta">Preço</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#planos">Planos</a><a href="#atualizacao">Atualização</a><a href="#oferta">Preço</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
 <main id="conteudo" class="page"><div class="wrap dash">
   <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
   <div class="stats" id="stats"></div>
@@ -19,6 +19,11 @@
     <h4 style="margin:22px 0 6px">Dar plano de cortesia</h4>
     <form id="grant-form" class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="flex:2;min-width:200px">E-mail da conta<input name="email" type="email" required></label><label style="flex:1;min-width:120px">Plano<select name="plan"><option value="standard">Standard</option><option value="pro">Pro</option></select></label><label style="flex:1;min-width:100px">Meses<input name="months" type="number" min="1" max="60" value="1" required></label><label style="flex:2;min-width:180px">Observação<input name="note" maxlength="200" placeholder="Ex.: parceiro, troca, teste"></label><button class="btn">Dar plano</button></form>
     <h4 style="margin:22px 0 6px">Assinaturas</h4><div id="subs-list"></div></section>
+  <section class="card" id="atualizacao"><h3><span>Atualização do GameZoney Servidor</span><small class="note">O botão Verificar atualização do Servidor usa o que for publicado aqui.</small></h3>
+    <p class="note">1) Coloque o instalador na pasta de downloads do site (como hoje), com o nome <b>GameZoney-Servidor-X.Y.Z-Setup.exe</b>. 2) Escolha o arquivo abaixo e clique em <b>Publicar</b>: o site calcula a impressão digital (SHA-256) e assina. O Servidor só instala se a assinatura e a impressão digital baterem. Se trocar o arquivo na pasta, publique de novo.</p>
+    <div id="upd-current"></div>
+    <form id="upd-form" class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="flex:2;min-width:260px">Instalador<select name="file" required></select></label><label style="flex:3;min-width:260px">O que mudou (aparece no Servidor)<textarea name="notes" rows="2" maxlength="1500" placeholder="Ex.: Plano na sua conta, correções no caixa…"></textarea></label><button class="btn">Publicar</button></form>
+    <p role="status" aria-live="polite" class="msg" id="upd-msg"></p></section>
   <section class="card" id="oferta"><h3>Preço e promoção</h3>
     <p class="note">O que você salvar aqui aparece na hora no site (página inicial, pacotes, Minha conta) e vale para as próximas compras. Pedidos já criados mantêm o valor deles.</p>
     <form id="offer-form" class="row" style="align-items:flex-end">
@@ -74,8 +79,8 @@
   <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
   <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>
 </div></main>
-<script src="/site.js?v=20261106-22"></script>
-<script src="/premium.js?v=20261106-22"></script>
-<script src="/admin.js?v=20261106-22"></script>
+<script src="/site.js?v=20261106-23"></script>
+<script src="/premium.js?v=20261106-23"></script>
+<script src="/admin.js?v=20261106-23"></script>
 </body>
 </html>

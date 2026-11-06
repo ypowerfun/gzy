@@ -1,6 +1,8 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "Atualização pelo próprio sistema":["Updates from inside the system", "Actualización desde el propio sistema"],
+  "Em Configuração, Verificar atualização baixa e instala a versão nova com backup antes. Só é aceito o instalador assinado pela GameZoney.":["In Settings, Check for updates downloads and installs the new version with a backup first. Only the installer signed by GameZoney is accepted.", "En Configuración, Buscar actualización descarga e instala la versión nueva con copia antes. Solo se acepta el instalador firmado por GameZoney."],
   "O GameZoney recebe melhorias constantes. Confira o que chegou nas versões 1.0.6 e 1.0.5.":["GameZoney gets constant improvements. See what arrived in versions 1.0.6 and 1.0.5.", "GameZoney recibe mejoras constantes. Vea lo que llegó en las versiones 1.0.6 y 1.0.5."],
   "Plano na sua conta":["Plan in your account", "Plan en su cuenta"],
   "Entre no GameZoney Servidor com o e-mail e a senha do site: o plano Standard ou Pro vale na hora e é conferido sozinho, mesmo depois de renovado.":["Sign in to GameZoney Server with your website email and password: the Standard or Pro plan works right away and is checked automatically, even after renewal.", "Ingrese a GameZoney Servidor con el correo y la contraseña del sitio: el plan Standard o Pro vale al instante y se verifica solo, incluso después de renovado."],

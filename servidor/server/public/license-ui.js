@@ -106,3 +106,45 @@ function licenseSection() {
   document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-view]')) setTimeout(tick, 50); });
   setTimeout(tick, 1500);
 })();
+// 1.0.6: Configuração › Atualização do sistema (Verificar atualização → Baixar → Instalar). O instalador só é aceito se a
+// assinatura da GameZoney e a impressão digital (SHA-256) baterem; antes de instalar é feito um backup completo.
+let gzUpdate = null, gzUpdatePoll = null;
+function updateSection() {
+  const U = gzUpdate || {status: 'idle'};
+  const sec = document.createElement('section'); sec.id = 'update-section'; sec.className = 'panel';
+  const row = (k, v, color) => `<div class="balance"><span>${k}</span><strong${color ? ` style="color:${color}"` : ''}>${v}</strong></div>`;
+  const mb = b => (b / 1048576).toFixed(1) + ' MB', a = U.available;
+  let body = row('Versão instalada', esc(U.current || '')), actions = '<button class="primary" data-upd="check" style="flex:0 0 auto">Verificar atualização</button>';
+  if (U.status === 'checking') { body += '<p class="hint">Verificando em gamezoney.com…</p>'; actions = ''; }
+  else if (U.status === 'latest') body += row('Situação', 'Você já está na versão mais nova', 'var(--green)');
+  else if (U.status === 'error') body += `<p class="hint" style="color:#ff8793">${esc(U.error)}</p>`;
+  if (a && ['available', 'downloading', 'ready', 'installing', 'error'].includes(U.status)) {
+    body += row('Nova versão', esc(a.version), 'var(--gold2, #FDD034)') + row('Tamanho', mb(a.size)) + (a.notes ? `<p class="hint" style="white-space:pre-wrap">${esc(a.notes)}</p>` : '');
+    if (U.status === 'available') actions = a.canDownload ? '<button class="primary" data-upd="download" style="flex:0 0 auto">Baixar atualização</button><button class="ghost" data-upd="check" style="flex:0 0 auto">Verificar de novo</button>'
+      : `<a class="button-link" href="${esc(a.downloadsUrl)}" target="_blank" rel="noopener">Baixar em gamezoney.com</a><button class="ghost" data-upd="check" style="flex:0 0 auto">Verificar de novo</button>`;
+    if (U.status === 'available' && !a.canDownload) body += '<p class="hint">A atualização automática faz parte do plano (Standard ou Pro). Entre com a sua conta em Licença, ou baixe o instalador em gamezoney.com › Minha conta › Downloads.</p>';
+    if (U.status === 'downloading') { body += `<p class="hint">Baixando e conferindo… ${U.progress || 0}%</p><div class="gz-upd-bar"><i style="width:${U.progress || 0}%"></i></div>`; actions = ''; }
+    if (U.status === 'ready') { body += '<p class="hint">Atualização baixada e conferida (assinatura da GameZoney). Ao instalar: é feito um backup completo, o servidor fecha por alguns minutos, o Windows pede a permissão de administrador e o GameZoney abre de novo sozinho. As sessões em andamento continuam nos PCs e os dados são mantidos.</p>'; actions = '<button class="primary" data-upd="install" style="flex:0 0 auto">Instalar agora</button>'; }
+    if (U.status === 'installing') { body += `<p class="hint">${U.step === 'closing' ? 'Fechando o servidor para instalar… Aceite a permissão de administrador do Windows. O GameZoney abre de novo sozinho.' : 'Fazendo o backup completo antes de instalar…'}</p>`; actions = ''; }
+  }
+  if (U.checkedAt) body += `<small class="subtext">Última verificação: ${new Date(U.checkedAt).toLocaleString()}</small>`;
+  sec.innerHTML = `<h2>Atualização do sistema</h2>${body}${actions ? `<div class="dialog-actions" style="justify-content:flex-start;gap:10px">${actions}</div>` : ''}`;
+  sec.querySelectorAll('[data-upd]').forEach(b => b.onclick = async () => {
+    const act = b.dataset.upd;
+    if (act === 'install' && !await ask('Instalar a atualização agora? É feito um backup completo, o servidor fecha por alguns minutos (as sessões continuam nos PCs) e abre de novo sozinho.', {ok: 'Instalar agora'})) return;
+    b.disabled = true;
+    try { gzUpdate = await api('/update/' + act, {}); } catch (e) { toast(e.message); }
+    finally { b.disabled = false; updateRefreshView(); }
+  });
+  return sec;
+}
+function updateRefreshView() {
+  if (view !== 'settings') return;
+  const old = $('#update-section'), sec = updateSection(); if (old) old.replaceWith(sec); else { const lic = $('#license-section'); if (lic) lic.after(sec); else $('#view').prepend(sec); }
+  clearTimeout(gzUpdatePoll);
+  if (gzUpdate && ['checking', 'downloading', 'installing'].includes(gzUpdate.status)) gzUpdatePoll = setTimeout(async () => { try { gzUpdate = await api('/update'); } catch { } updateRefreshView(); }, 1500);
+}
+(function () {
+  const original = renderSettings;
+  renderSettings = function () { original.apply(this, arguments); if (!isAdmin()) return; api('/update').then(u => { gzUpdate = u; setTimeout(updateRefreshView, 50); }).catch(() => {}); };
+})();

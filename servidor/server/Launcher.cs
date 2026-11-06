@@ -78,7 +78,7 @@ class Launcher : ApplicationContext {
         panel=new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel);panel.Listen();
         panel.Hidden=()=>{if(panelHintShown||tray==null)return;panelHintShown=true;tray.ShowBalloonTip(6000,"GameZoney","O servidor continua ativo. Para abrir o painel de novo, use o ícone perto do relógio.",ToolTipIcon.Info);};
         SystemEvents.SessionEnding+=OnSessionEnding;
-        monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Start();
+        monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();/* 1.0.6: código 75 = o servidor fechou para instalar a atualização (Configuração › Verificar atualização): fecha sem aviso de erro */if(child.ExitCode==75){Log("Servidor fechado para instalar a atualização.");ExitThread();return;}MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Start();
         if(!silent)ShowPanel();
     }
     void OnSessionEnding(object sender,SessionEndingEventArgs e){Stop();}

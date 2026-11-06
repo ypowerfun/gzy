@@ -169,7 +169,7 @@ module.exports = function license(store, options = {}) {
     saveMarker();
     return status();
   }
-  return {status, guard, activate, login, logout, refresh, expired, REFRESH_EVERY, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
+  return {status, guard, activate, login, logout, refresh, expired, REFRESH_EVERY, publicKey, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
 };
 module.exports.normalizeKey = normalizeKey;
 module.exports.verifyToken = verifyToken;
