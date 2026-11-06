@@ -5,12 +5,12 @@
 <title>Minha conta | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/site.css?v=20261106-19"><link rel="stylesheet" href="/premium.css?v=20261106-19">
+<link rel="stylesheet" href="/site.css?v=20261106-20"><link rel="stylesheet" href="/premium.css?v=20261106-20">
 </head>
 <body class="account account-pending">
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Oferta</a><a href="/atendimento.html">Atendimento</a><a href="/entrar.html" data-guest>Entrar</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav></div></header>
-<p class="account-loading wrap" role="status">Carregando sua conta…</p><main class="page account-page" id="conteudo"><div class="wrap account-layout"><aside class="account-sidebar"><p class="eyebrow">Central da arena</p><nav aria-label="Minha conta"><a href="#visao-geral" data-account-link>Visão geral</a><a href="#downloads" data-account-link>Downloads</a><a href="#licencas" data-account-link>Licenças</a><a href="#comprar" data-account-link>Comprar licença</a><a href="#pedidos" data-account-link>Pedidos</a><a href="#suporte" data-account-link>Suporte</a><a href="#avaliar" data-account-link>Avaliar</a><a href="#perfil" data-account-link>Meus dados</a><a href="/guia">Guia de instalação ↗</a></nav><div class="sidebar-end"><a href="/admin" id="admin-link" class="hidden">Admin</a><button class="btn small ghost" id="logout">Sair da conta</button></div></aside><div class="dash account-content">
+<header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Planos</a><a href="/atendimento.html">Atendimento</a><a href="/entrar.html" data-guest>Entrar</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav></div></header>
+<p class="account-loading wrap" role="status">Carregando sua conta…</p><main class="page account-page" id="conteudo"><div class="wrap account-layout"><aside class="account-sidebar"><p class="eyebrow">Central da arena</p><nav aria-label="Minha conta"><a href="#visao-geral" data-account-link>Visão geral</a><a href="#downloads" data-account-link>Downloads</a><a href="#licencas" data-account-link>Licenças</a><a href="#comprar" data-account-link>Meu plano</a><a href="#pedidos" data-account-link>Pedidos</a><a href="#suporte" data-account-link>Suporte</a><a href="#avaliar" data-account-link>Avaliar</a><a href="#perfil" data-account-link>Meus dados</a><a href="/guia">Guia de instalação ↗</a></nav><div class="sidebar-end"><a href="/admin" id="admin-link" class="hidden">Admin</a><button class="btn small ghost" id="logout">Sair da conta</button></div></aside><div class="dash account-content">
   <div class="msg" id="verify-box" style="display:none"></div>
   <div><h1 id="hello" >Minha conta</h1><p class="note" id="hello-sub"></p></div>
 
@@ -21,17 +21,20 @@
   </section>
 
   <section class="card" id="licencas">
-    <h3><span>Licenças</span><a class="btn small" href="#comprar">Comprar licença</a></h3>
+    <h3><span>Licenças</span><a class="btn small" href="#comprar">Meu plano</a></h3>
     <div id="license-list"></div>
     <p class="note" style="margin-top:12px">Para ativar: no GameZoney Servidor, abra <b>Configuração › Licença › Ativar licença</b> e digite a chave. Trocou o computador da recepção? Clique em <b>Liberar</b> e ative a chave no computador novo.</p>
   </section>
 
   <section class="card" id="comprar">
+    <div id="plan-box" aria-live="polite"><p class="eyebrow">Seu plano</p><h3>Meu plano</h3><p class="note">Carregando…</p></div>
+    <div id="legacy-buy" class="hidden">
     <p class="eyebrow">Sua próxima conquista</p><h3>Comprar licença vitalícia</h3><p class="purchase-terms">Pagamento único para 1 servidor da recepção. PCs e consoles sem limite. A chave é liberada após a confirmação do pagamento.</p>
     <div class="row"><div><span data-price style="font-family:Rajdhani,sans-serif;font-weight:700;color:var(--gold2);font-size:40px">R$ 89,90</span><br><span class="note"><span data-price-label>Preço de Black Friday</span> • pagamento único • nunca expira • suporte completo</span></div>
       <div class="pay-buttons"><button class="btn" id="buy">Pagar com PIX</button><button class="btn ghost hidden" id="buy-card">Cartão de crédito ou débito</button></div></div>
     <div class="secure-seal big"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5.1 3.4 9.7 8 11 4.6-1.3 8-5.9 8-11V5l-8-3zm-1.2 14.2-3.6-3.6 1.4-1.4 2.2 2.2 5-5 1.4 1.4-6.4 6.4z"/></svg><span><b>Compra 100% segura</b><small>Pagamento pelo Mercado Pago • Site protegido (HTTPS)</small></span></div>
     <p class="note hidden" id="card-note" style="margin-top:10px">No cartão, você digita os dados com segurança no Mercado Pago e volta para cá. Crédito em até 12x (juros do Mercado Pago) ou débito.</p>
+    </div>
     <div id="checkout" class="hidden" aria-live="polite"></div>
     <p role="status" aria-live="polite" class="msg" id="buy-msg"></p>
   </section>
@@ -75,12 +78,12 @@
     <p role="status" aria-live="polite" class="msg" id="profile-msg"></p>
   </section>
 </div></div></main>
-<footer class="site premium-footer"><div class="wrap footer-grid"><div class="footer-brand"><a href="/"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253" loading="lazy"></a><p>Gestão profissional.<br>Essência gamer.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Licença vitalícia</a><a href="/atualizacoes.html">Atualizações</a></nav><nav aria-label="Ajuda"><h2>Precisa de ajuda?</h2><a href="/guia">Guia de instalação</a><a href="/atendimento.html">Atendimento</a><a href="/conta#suporte">Meus chamados</a><a href="/#duvidas">Dúvidas frequentes</a></nav><nav aria-label="Institucional"><h2>GameZoney</h2><a href="/termos.html">Termos de uso</a><a href="/privacidade.html">Privacidade</a><a href="https://www.instagram.com/gamezoney_" class="ig-link" target="_blank" rel="noopener">Instagram ↗</a></nav></div><div class="wrap footer-bottom"><span>© 2026 GameZoney. Todos os direitos reservados.</span><div class="footer-trust"><div class="secure-seal"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5.1 3.4 9.7 8 11 4.6-1.3 8-5.9 8-11V5l-8-3zm-1.2 14.2-3.6-3.6 1.4-1.4 2.2 2.2 5-5 1.4 1.4-6.4 6.4z"/></svg><span><b>Compra 100% segura</b><small>Pagamento pelo Mercado Pago • Site protegido (HTTPS)</small></span></div></div><div class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></div></div></footer>
+<footer class="site premium-footer"><div class="wrap footer-grid"><div class="footer-brand"><a href="/"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253" loading="lazy"></a><p>Gestão profissional.<br>Essência gamer.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Planos</a><a href="/atualizacoes.html">Atualizações</a></nav><nav aria-label="Ajuda"><h2>Precisa de ajuda?</h2><a href="/guia">Guia de instalação</a><a href="/atendimento.html">Atendimento</a><a href="/conta#suporte">Meus chamados</a><a href="/#duvidas">Dúvidas frequentes</a></nav><nav aria-label="Institucional"><h2>GameZoney</h2><a href="/termos.html">Termos de uso</a><a href="/privacidade.html">Privacidade</a><a href="https://www.instagram.com/gamezoney_" class="ig-link" target="_blank" rel="noopener">Instagram ↗</a></nav></div><div class="wrap footer-bottom"><span>© 2026 GameZoney. Todos os direitos reservados.</span><div class="footer-trust"><div class="secure-seal"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5.1 3.4 9.7 8 11 4.6-1.3 8-5.9 8-11V5l-8-3zm-1.2 14.2-3.6-3.6 1.4-1.4 2.2 2.2 5-5 1.4 1.4-6.4 6.4z"/></svg><span><b>Compra 100% segura</b><small>Pagamento pelo Mercado Pago • Site protegido (HTTPS)</small></span></div></div><div class="lang-switch" aria-label="Idioma"><button type="button" data-lang="pt">Português (Brasil)</button><button type="button" data-lang="en">English</button><button type="button" data-lang="es">Español</button></div></div></footer>
 <script src="/i18n-site-dict.js"></script>
-<script src="/i18n-premium.js?v=20261106-19"></script>
-<script src="/i18n-site.js?v=20261106-19"></script>
-<script src="/site.js?v=20261106-19"></script>
-<script src="/premium.js?v=20261106-19"></script>
-<script src="/conta.js?v=20261106-19"></script>
+<script src="/i18n-premium.js?v=20261106-20"></script>
+<script src="/i18n-site.js?v=20261106-20"></script>
+<script src="/site.js?v=20261106-20"></script>
+<script src="/premium.js?v=20261106-20"></script>
+<script src="/conta.js?v=20261106-20"></script>
 </body>
 </html>

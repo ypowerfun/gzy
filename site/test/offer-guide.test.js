@@ -4,7 +4,7 @@ const {createApp}=require('../server');
 
 async function boot(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-o-'));const {privateKey}=crypto.generateKeyPairSync('ed25519');const mails=[];
- const app=createApp({env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:'',PRICE_CENTS:'',LIST_PRICE_CENTS:''},mail:{enabled:true,send:async(to,subject,text)=>{mails.push({to,subject,text});return true}},log:{log(){},error(){}}});
+ const app=createApp({env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:'',PRICE_CENTS:'',LIST_PRICE_CENTS:'',LEGACY_SALES:'1'},mail:{enabled:true,send:async(to,subject,text)=>{mails.push({to,subject,text});return true}},log:{log(){},error(){}}});
  const server=await new Promise(r=>{const s=app.listen(0,'127.0.0.1',()=>r(s))});const base='http://127.0.0.1:'+server.address().port;
  t.after(()=>{server.close();app.locals.close();fs.rmSync(dir,{recursive:true,force:true})});
  const client=()=>{let cookie='';return async(url,body,status=200,headers={})=>{const r=await fetch(base+url,{redirect:'manual',method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie,...headers},body:body===undefined?undefined:JSON.stringify(body)});
@@ -44,5 +44,5 @@ test('1.4: Guia só com login (página, imagens e modelo CSV)',async t=>{
  const csv=await ana('/guia/modelo-clientes.csv');assert.match(csv.text,/Nome;Nick;Tempo;Medalhas de fidelidade/);
  // a página não fica na pasta pública
  assert.notEqual((await fetch(s.base+'/private/guia.html')).status,200);
- const home=await (await fetch(s.base+'/')).text();assert.match(home,/Pacote Padrão/);assert.match(home,/Pacote Premium/);assert.match(home,/Layout personalizado \(no seu estilo\)/);assert.match(home,/>Atualizações</);assert.doesNotMatch(home,/Novas Atualizações/);
+ const home=await (await fetch(s.base+'/')).text();assert.match(home,/Escolha o seu plano/);assert.match(home,/id="plans-grid"/);assert.match(home,/data-period="anual"/);assert.doesNotMatch(home,/Licença vitalícia/);assert.match(home,/>Atualizações</);assert.doesNotMatch(home,/Novas Atualizações/);
 });

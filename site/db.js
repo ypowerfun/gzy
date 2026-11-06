@@ -62,6 +62,9 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
   db.exec("CREATE TABLE IF NOT EXISTS campaigns(id TEXT PRIMARY KEY, subject TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL, button_label TEXT NOT NULL DEFAULT '', button_url TEXT NOT NULL DEFAULT '', image TEXT NOT NULL DEFAULT '', audience TEXT NOT NULL, status TEXT NOT NULL, total INTEGER NOT NULL DEFAULT 0, sent INTEGER NOT NULL DEFAULT 0, failed INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, created_by TEXT NOT NULL, finished_at INTEGER)");
   db.exec("CREATE TABLE IF NOT EXISTS campaign_recipients(campaign_id TEXT NOT NULL, user_id TEXT NOT NULL, email TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', at INTEGER, PRIMARY KEY(campaign_id, user_id))");
   db.exec("CREATE INDEX IF NOT EXISTS campaign_recipients_status ON campaign_recipients(status, at)");
+  // 2.0: assinaturas dos planos (Standard/Pro, mensal/anual) — Mercado Pago, cortesia do admin ou vitalícia convertida
+  db.exec("CREATE TABLE IF NOT EXISTS subscriptions(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), plan TEXT NOT NULL, period TEXT NOT NULL, amount_cents INTEGER NOT NULL, status TEXT NOT NULL, source TEXT NOT NULL, mp_id TEXT, charged_count INTEGER NOT NULL DEFAULT 0, paid_until INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, synced_at INTEGER NOT NULL DEFAULT 0, note TEXT NOT NULL DEFAULT '')");
+  db.exec("CREATE INDEX IF NOT EXISTS subscriptions_user ON subscriptions(user_id)");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

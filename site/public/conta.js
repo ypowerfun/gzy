@@ -89,7 +89,27 @@
       }
     });
   }
+  // 2.0: Meu plano (assinatura Standard/Pro); a compra da licença vitalícia só aparece se a venda antiga estiver ligada
+  const PERIOD = {mensal: 'mensal', anual: 'anual'};
+  function renderPlan(m) {
+    const box = $('#plan-box'); if (!box || !m) return;
+    const p = m.plan, subs = m.subscriptions || [], d = t => new Date(t).toLocaleDateString('pt-BR');
+    const cur = subs.find(s => s.source === 'mp' && ['pending', 'authorized', 'paused'].includes(s.status));
+    let html = '<p class="eyebrow">Seu plano</p><h3>Meu plano</h3>';
+    if (p) html += `<div class="plan-now"><div><span class="pill ${p.inGrace ? 'wait' : 'ok'}">${p.inGrace ? 'Renovação pendente' : 'Ativo'}</span><h4>${esc(p.name)} <small>${esc(PERIOD[p.period] || p.period)}</small></h4>
+      <p class="note">${p.inGrace ? `O período pago terminou em ${d(p.paidUntil)}. Regularize até ${d(p.graceUntil)} para não bloquear recargas, sessões novas e vendas.` : `Válido até <b>${d(p.paidUntil)}</b>${p.autoRenew ? ' • renova sozinho no cartão' : ''}.`}</p></div>
+      ${cur ? `<button type="button" class="btn small ghost" data-sub-cancel="${esc(cur.id)}">Cancelar assinatura</button>` : '<a class="btn small" href="/#precos">Assinar / renovar</a>'}</div>`;
+    else if (cur) html += `<div class="plan-now"><div><span class="pill wait">${esc(cur.statusText)}</span><h4>${esc(cur.planName)} <small>${esc(cur.period)}</small></h4><p class="note">Assim que o Mercado Pago confirmar a cobrança no cartão, o plano fica ativo e você recebe um e-mail.</p></div><button type="button" class="btn small ghost" data-sub-cancel="${esc(cur.id)}">Cancelar assinatura</button></div>`;
+    else html += '<div class="plan-now"><div><h4>Nenhum plano ativo</h4><p class="note">Escolha o Standard ou o Pro, mensal ou anual. Teste grátis de 30 dias no GameZoney Servidor.</p></div><a class="btn gold small" href="/#precos">Ver planos</a></div>';
+    html += '<p class="note">O plano fica ligado a esta conta: no GameZoney Servidor, entre com o mesmo e-mail e senha do site.</p>';
+    if (subs.length) html += `<details class="plan-history"><summary>Histórico de assinaturas</summary><div class="table"><table><thead><tr><th>Plano</th><th>Situação</th><th>Valor</th><th>Válido até</th></tr></thead><tbody>${subs.map(s => `<tr><td>${esc(s.planName)} <small class="note">${esc(s.period)}</small></td><td>${esc(s.statusText)}${s.note ? `<br><small class="note">${esc(s.note)}</small>` : ''}</td><td>${s.amountCents ? money(s.amountCents) : '—'}</td><td>${s.paidUntil ? d(s.paidUntil) : '—'}</td></tr>`).join('')}</tbody></table></div></details>`;
+    box.innerHTML = html;
+    $$('[data-sub-cancel]').forEach(b => b.onclick = () => { if (!window.confirm('Cancelar a assinatura? A cobrança automática para e o plano continua valendo até o fim do período já pago.')) return;
+      busy(b, async () => { try { await api('/api/subscriptions/' + b.dataset.subCancel + '/cancel', {}); renderPlan(await api('/api/me')); } catch (e) { alert(e.message); } }); });
+  }
+  api('/api/me').then(renderPlan).catch(() => {});
   api('/api/config').then(c => {
+    if (c.legacySales) $('#legacy-buy').classList.remove('hidden');
     if (c.bricks && c.mpPublicKey) {
       // um botão só: abre o quadro do Mercado Pago com PIX, crédito e débito
       $('#buy').textContent = 'Pagar com PIX ou cartão'; $('#buy-card').classList.add('hidden'); $('#card-note').classList.add('hidden');

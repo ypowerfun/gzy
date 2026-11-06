@@ -62,7 +62,7 @@ function createApp(options = {}) {
   app.use((req, res, next) => {
     res.set({'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin',
-      'Content-Security-Policy': /^\/conta(\.html)?\/?$/.test(req.path) && env.MP_PUBLIC_KEY
+      'Content-Security-Policy': /^\/(conta|carrinho)(\.html)?\/?$/.test(req.path) && env.MP_PUBLIC_KEY
         // 1.9: só Minha conta (compra) carrega o quadro de pagamento do Mercado Pago (script, campos do cartão e imagens das bandeiras)
         ? "default-src 'self'; img-src 'self' data: https://*.mlstatic.com https://*.mercadopago.com https://*.mercadolibre.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.mlstatic.com; font-src 'self' data: https://fonts.gstatic.com https://*.mlstatic.com; script-src 'self' https://sdk.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com https://*.mercadolibre.com; connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com; frame-src https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"
         : "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
@@ -148,7 +148,7 @@ function createApp(options = {}) {
   });
 
   // ---------- configuração pública ----------
-  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
+  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), subscriptions: !!(pay.enabled && env.MP_PUBLIC_KEY), legacySales: env.LEGACY_SALES === '1', plans: plans.publicPlans(), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
     supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}); });
 
   // ---------- contas ----------
@@ -323,6 +323,8 @@ function createApp(options = {}) {
   }
   app.post('/api/checkout', jsonOnly, limit('checkout', 20, 3600000), api(async req => {
     const u = needUser(req), now = Date.now(), card = req.body?.method === 'card', brick = req.body?.method === 'brick', PRICE = offer().priceCents;
+    // 2.0: a licença vitalícia não é mais vendida (só com LEGACY_SALES=1); agora são os planos por assinatura
+    if (env.LEGACY_SALES !== '1') fail(410, 'A licença vitalícia não é mais vendida. Escolha um plano em gamezoney.com/#precos.');
     if (card && !pay.enabled) fail(400, 'Pagamento com cartão indisponível no momento. Use o PIX.');
     if (brick && !(pay.enabled && env.MP_PUBLIC_KEY)) fail(400, 'Pagamento no site indisponível no momento.');
     const provider = brick ? 'mercadopago-brick' : card ? 'mercadopago-card' : (pay.enabled ? 'mercadopago' : 'manual');
@@ -375,6 +377,9 @@ function createApp(options = {}) {
   app.post('/api/mp/webhook', limit('webhook', 300, 60000), async (req, res) => {
     res.json({ok: true});
     const id = String(req.body?.data?.id || req.query['data.id'] || req.query.id || '');
+    // 2.0: avisos de assinatura (preapproval / cobrança da assinatura)
+    const type = String(req.body?.type || req.query.type || req.query.topic || '');
+    if (/preapproval|subscription|authorized_payment/.test(type)) { await plans.webhook(type, id); return; }
     if (!/^\d{1,30}$/.test(id) || !pay.enabled) return;
     let o = db.get('SELECT * FROM orders WHERE provider_id=?', id);
     if (!o) { // cartão: o pagamento é criado no Mercado Pago; o pedido vem na referência do pagamento
@@ -384,10 +389,10 @@ function createApp(options = {}) {
   });
 
   // ---------- conta ----------
-  app.get('/api/me', api(req => {
+  app.get('/api/me', api(async req => {
     if (!req.user) return {user: null};
     const u = req.user;
-    return {user: publicUser(u), admin: req.admin,
+    return {user: publicUser(u), admin: req.admin, ...(await plans.forUser(u.id)),
       licenses: db.all('SELECT * FROM licenses WHERE user_id=? ORDER BY created_at DESC', u.id).map(publicLicense),
       orders: db.all('SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 20', u.id).map(o => ({...publicOrder(o), pixQr: ''})),
       tickets: db.all('SELECT id,subject,message,status,reply,created_at,replied_at FROM tickets WHERE user_id=? ORDER BY created_at DESC LIMIT 50', u.id),
@@ -487,6 +492,9 @@ function createApp(options = {}) {
   // 1.8: comunicados e promoções por e-mail (fila) e cancelar inscrição
   const campaigns = require('./campaigns')(app, {db, needAdmin, jsonOnly, api, fail, str, uid, mail, SITE, env, log, intervalMs: options.campaignIntervalMs});
   app.locals.campaignTick = campaigns.tick;
+  // 2.0: planos Standard/Pro por assinatura (mensal/anual, cobrança automática no cartão)
+  const plans = require('./plans')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, pay, env, SITE, log, notify, intervalMs: options.planSyncIntervalMs ?? options.campaignIntervalMs});
+  app.locals.plans = plans;
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
   app.use('/img', (req, res, next) => { // 1.4: vale para todas as imagens do site (capturas e foto do topo)
@@ -520,7 +528,7 @@ function createApp(options = {}) {
     if (req.path.startsWith('/api')) return res.status(status).json({error: status === 413 ? 'Arquivo grande demais.' : status < 500 ? 'Requisição inválida.' : 'Erro interno. Tente de novo.'});
     res.status(status === 404 ? 404 : status).sendFile(path.join(__dirname, 'public', '404.html'));
   });
-  app.locals.close = () => { clearInterval(sweep); campaigns.stop(); db.close(); };
+  app.locals.close = () => { clearInterval(sweep); campaigns.stop(); plans.stop(); db.close(); };
   return app;
 }
 

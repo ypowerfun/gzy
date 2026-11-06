@@ -6,6 +6,10 @@
 // ---------- Mercado Pago: PIX e cartão ----------
 // MP_ACCESS_TOKEN = Access Token de PRODUÇÃO (Mercado Pago > Suas integrações > Credenciais).
 const MP = 'https://api.mercadopago.com';
+// assinatura: só o que o site usa (cobranças feitas e a data da última cobrança vêm em "summarized")
+const normSub = p => ({id: String(p.id || ''), status: String(p.status || ''), externalReference: String(p.external_reference || ''), nextPaymentDate: p.next_payment_date || null,
+  chargedQuantity: Number(p.summarized && p.summarized.charged_quantity) || 0, lastChargedDate: (p.summarized && p.summarized.last_charged_date) || null,
+  amountCents: Math.round(Number(p.auto_recurring && p.auto_recurring.transaction_amount) * 100) || 0});
 function mercadoPago(env, fetchImpl = fetch) {
   const token = env.MP_ACCESS_TOKEN;
   const call = async (method, url, body, idem) => {
@@ -57,6 +61,18 @@ function mercadoPago(env, fetchImpl = fetch) {
       return {providerId: String(p.id), status: p.status, detail: p.status_detail || '', amountCents: Math.round(Number(p.transaction_amount) * 100), orderId: p.external_reference || '',
         pix, pixCode: t.qr_code || '', pixQr: t.qr_code_base64 || '', pixUrl: t.ticket_url || ''};
     },
+    // 2.0: ASSINATURA (cobrança automática no cartão) — preapproval sem plano associado, já autorizada com o cartão
+    // tokenizado no próprio site (Card Payment Brick). frequency em meses: 1 = mensal, 12 = anual.
+    async createSubscription({reason, externalReference, payerEmail, cardTokenId, amountCents, months, backUrl}) {
+      if (!/^[A-Za-z0-9_-]{8,200}$/.test(String(cardTokenId || ''))) throw new Error('Dados do cartão incompletos.');
+      const p = await call('POST', '/preapproval', {reason, external_reference: externalReference, payer_email: payerEmail, card_token_id: String(cardTokenId),
+        auto_recurring: {frequency: months, frequency_type: 'months', transaction_amount: amountCents / 100, currency_id: 'BRL'}, back_url: backUrl, status: 'authorized'});
+      return normSub(p);
+    },
+    async getSubscription(id) { return normSub(await call('GET', '/preapproval/' + encodeURIComponent(id))); },
+    async cancelSubscription(id) { return normSub(await call('PUT', '/preapproval/' + encodeURIComponent(id), {status: 'cancelled'})); },
+    // aviso de cobrança da assinatura: descobre de qual assinatura é
+    async getAuthorizedPayment(id) { const a = await call('GET', '/authorized_payments/' + encodeURIComponent(id)); return {id: String(a.id), preapprovalId: String(a.preapproval_id || ''), status: a.status || ''}; },
     // pagamentos de um pedido (procurados pela referência do pedido)
     async findPayments(orderId) {
       const r = await call('GET', '/v1/payments/search?' + new URLSearchParams({external_reference: orderId, sort: 'date_created', criteria: 'desc'}));

@@ -24,7 +24,7 @@ function fakeMp() {
 async function boot(t, env = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-site-b-')); const {privateKey} = crypto.generateKeyPairSync('ed25519'); const mails = [], mp = fakeMp();
   const app = createApp({campaignIntervalMs: 0, fetch: mp.fetch, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: dir, DOWNLOADS_DIR: path.join(dir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', LICENSE_PRIVATE_KEY: privateKey.export({type: 'pkcs8', format: 'pem'}),
-    MP_ACCESS_TOKEN: 'TESTE', MP_PUBLIC_KEY: 'APP_USR-chave-publica', GOOGLE_CLIENT_ID: '', SMTP_HOST: '', PRICE_CENTS: '', ...env},
+    MP_ACCESS_TOKEN: 'TESTE', MP_PUBLIC_KEY: 'APP_USR-chave-publica', GOOGLE_CLIENT_ID: '', SMTP_HOST: '', PRICE_CENTS: '', LEGACY_SALES: '1', ...env},
     mail: {enabled: true, send: async (to, subject, text) => { mails.push({to, subject, text}); return true; }}, log: {log() {}, error() {}}});
   const server = await new Promise(r => { const s = app.listen(0, '127.0.0.1', () => r(s)); }); const base = 'http://127.0.0.1:' + server.address().port;
   t.after(() => { server.close(); app.locals.close(); fs.rmSync(dir, {recursive: true, force: true}); });

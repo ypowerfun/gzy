@@ -264,3 +264,35 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 
 /* 1.9: quadro de pagamento do Mercado Pago (Checkout Bricks) em Minha conta */
 .mp-brick{margin-top:18px;max-width:620px}
+
+/* 2.0: planos (cartões no estilo da página inicial) */
+.period-switch{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#0d1016;margin:6px 0 26px}.period-switch button{background:none;border:0;color:#c6ccd8;font:inherit;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;cursor:pointer}.period-switch button.on{background:linear-gradient(180deg,#FFEC6C,#FDD034 55%,#F0B11E);color:#15120a}.period-switch em{font-style:normal;font-size:10px;margin-left:6px;padding:2px 7px;border-radius:999px;background:#2a2312;color:#ffdb73}.period-switch button.on em{background:#15120a;color:#ffdb73}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:end;max-width:980px}
+.plan-card{position:relative;background:#121620;border:1px solid #262c38;border-radius:22px;overflow:hidden;display:flex;flex-direction:column}.plan-card.popular{border:2px solid #F0B11E;box-shadow:0 18px 60px rgba(240,177,30,.12)}
+.plan-ribbon{background:linear-gradient(180deg,#FFEC6C,#FDD034 55%,#F0B11E);color:#15120a;text-align:center;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:9px}
+.plan-body{padding:26px 26px 22px;display:flex;flex-direction:column;gap:10px}.plan-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.plan-head h3{margin:0;font-size:22px;font-weight:800}
+.plan-badge{background:#e5484d;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;white-space:nowrap}
+.plan-old{margin:6px 0 0;color:#8a92a3;text-decoration:line-through;font-size:15px;min-height:20px}.plan-price{margin:0;display:flex;align-items:baseline;gap:4px}.plan-price strong{font-size:42px;font-weight:900;letter-spacing:-.02em;color:#fff}.plan-price span{color:#c6ccd8;font-size:16px}
+.plan-btn{margin-top:8px;width:100%;justify-content:center;min-height:50px;font-size:15px}.plan-terms{font-size:12px;color:#9aa3b2;line-height:1.55;margin:4px 0 0;padding-bottom:16px;border-bottom:1px solid #262c38}
+.plan-feats{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:12px}.plan-feats li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#e4e8ef}.plan-feats svg{width:18px;height:18px;color:#FDD034;flex:0 0 auto;margin-top:1px}
+.plans-trust{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:26px 0 8px}.plans-trust .note{max-width:520px;margin:0}
+/* 2.0: carrinho do plano */
+.cart-title{font-size:30px;font-weight:800;margin:10px 0 22px}.cart-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:24px;align-items:start}
+.cart-left{display:grid;gap:18px}.cart-box,.cart-summary{background:#121620;border:1px solid #262c38;border-radius:18px;padding:24px}
+.cart-item{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.cart-item b{display:block;font-size:17px}.cart-item small{color:#9aa3b2}.cart-ico{width:44px;height:44px;border-radius:10px;background:#1c222d;display:grid;place-items:center;color:#FDD034}.cart-ico svg{width:24px;height:24px}
+.cart-plan-pick{margin:0 0 0 auto;min-width:150px}.cart-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:18px}.cart-period{margin:0;min-width:220px;flex:1;max-width:320px}
+.cart-period select,.cart-plan-pick select{border-radius:10px;border:2px solid #3a4352;background:#0b0e13;color:#fff;padding:11px 12px;font:inherit;width:100%}.cart-period select:focus{border-color:#FDD034}
+.cart-price{display:flex;gap:12px;align-items:center;text-align:right}.cart-price strong{font-size:26px;font-weight:800}.cart-price span{color:#c6ccd8}.cart-price s{color:#8a92a3;font-size:13px}
+.cart-upsell{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;background:#0b0e13;border:1px solid #3a3220;border-radius:12px;padding:14px 16px;margin:14px 0}.cart-upsell b{color:#ffdb73}
+.cart-box .plan-feats{margin-top:16px}.cart-box h2,.cart-summary h2{font-size:20px;margin:0 0 14px}
+.cart-summary{position:sticky;top:90px;display:grid;gap:12px}.cart-sum-plan{font-weight:700;margin:0}.cart-line,.cart-total{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#c6ccd8}.cart-line s,.cart-total s{color:#7f8796;margin-right:4px}
+.cart-total{border-top:1px solid #262c38;padding-top:14px;font-size:18px;color:#fff;font-weight:700}.cart-total b{font-size:22px}.cart-note{font-size:12px;color:#9aa3b2;margin:0}
+.cart-economy{background:#0f1a14;border:1px solid #3c6b4c;color:#bfe9cc;border-radius:10px;padding:12px 14px;font-size:14px}.cart-continue{width:100%;justify-content:center;min-height:52px;font-size:16px}
+#cart-done h2{color:#ffdb73}
+@media(max-width:900px){.cart-grid{grid-template-columns:1fr}.cart-summary{position:static}.cart-plan-pick{margin:0;width:100%}}
+
+/* 2.0: Meu plano */
+.plan-now{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:#0b0e13;border:1px solid #262c38;border-radius:14px;padding:18px 20px;margin:10px 0}.plan-now h4{margin:8px 0 4px;font-size:22px}.plan-now h4 small{font-size:13px;color:#9aa3b2;font-weight:500}.plan-now .note{margin:0}.plan-history{margin-top:10px}.plan-history summary{cursor:pointer;color:#c6ccd8;font-size:13px}
+
+/* 2.0: planos no /admin */
+.plans-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}.plan-admin{border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:grid;gap:8px;margin:0}.plan-admin legend input{font-weight:800;font-size:16px;width:160px}.plan-admin .row label{flex:1;min-width:140px}.plan-admin label.inline{display:flex;gap:8px;align-items:center}.plan-admin label.inline input{width:auto;margin:0}

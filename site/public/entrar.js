@@ -2,7 +2,7 @@
 (() => {
   const params = new URLSearchParams(location.search), msg = $('#msg');
   const next = /^\/(?!\/)[a-z0-9/._#-]*$/i.test(params.get('next') || '') ? params.get('next') : '/conta';
-  const purchasing = next === '/conta#comprar';
+  const purchasing = next === '/conta#comprar' || next.startsWith('/carrinho');
   const t = text => text;
   const login = $('#login-form'), register = $('#register-form'), recovery = $('#forgot-form');
   const tabs = $$('[data-tab]');

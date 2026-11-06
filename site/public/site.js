@@ -21,8 +21,32 @@ async function loadConfig() {
   const badge = $('#promo-badge'); if (badge) badge.textContent = siteConfig.priceLabel + ' • Licença vitalícia ' + money(siteConfig.priceCents);
   // 1.4: faixa do topo (texto editável no /admin)
   const strip = $('#promo-strip'); if (strip && siteConfig.banner) { $$('[data-banner]').forEach(e => e.textContent = siteConfig.banner); strip.classList.remove('hidden'); }
+  // 2.0: "a partir de" (menor preço mensal dos planos) e os cartões dos planos na página inicial
+  if (siteConfig.plans && siteConfig.plans.length) { const from = Math.min(...siteConfig.plans.map(p => Math.min(p.monthly, Math.round(p.annual / 12)))); $$('[data-plan-from]').forEach(e => e.textContent = money(from)); renderPlans(); }
   document.dispatchEvent(new CustomEvent('gz:config', {detail: siteConfig}));
 }
+// ---------- 2.0: cartões dos planos (Standard / Pro), mensal ou anual ----------
+const PLAN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.6 16.6 5 12l1.4-1.4 3.2 3.2 8-8L19 7.2z"/></svg>';
+let planPeriod = 'mensal';
+function planView(p, period) {
+  const annual = period === 'anual', price = annual ? Math.round(p.annual / 12) : p.monthly;
+  const old = annual ? (p.annualList ? Math.round(p.annualList / 12) : p.monthly) : (p.monthlyList || 0);
+  const off = old > price ? Math.round((1 - price / old) * 100) : 0;
+  return {price, old: old > price ? old : 0, badge: p.badge || (off ? `${off}% de desconto` : ''), total: annual ? p.annual : p.monthly};
+}
+function renderPlans() {
+  const box = $('#plans-grid'); if (!box || !siteConfig || !siteConfig.plans) return;
+  $$('[data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === planPeriod));
+  box.innerHTML = siteConfig.plans.map(p => { const v = planView(p, planPeriod), annual = planPeriod === 'anual';
+    return `<article class="plan-card${p.popular ? ' popular' : ''}">${p.popular ? '<div class="plan-ribbon">Mais popular</div>' : ''}<div class="plan-body">
+      <div class="plan-head"><h3>${esc(p.name)}</h3>${v.badge ? `<span class="plan-badge">${esc(v.badge)}</span>` : ''}</div>
+      <p class="plan-old">${v.old ? money(v.old) : '&nbsp;'}</p>
+      <p class="plan-price"><strong>${money(v.price)}</strong><span>/mês</span></p>
+      <a class="btn ${p.popular ? 'gold' : 'outline'} plan-btn" href="/carrinho#${esc(p.id)}-${planPeriod}">Escolher plano</a>
+      <p class="plan-terms">${annual ? `Pague ${money(p.annual)} por ano no cartão de crédito.` : `Cobrado ${money(p.monthly)} todo mês no cartão de crédito.`} Renovação automática. Cancele quando quiser.</p>
+      <ul class="plan-feats">${p.features.map(f => `<li>${PLAN_ICON}<span>${esc(f)}</span></li>`).join('')}</ul></div></article>`; }).join('');
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-period]'); if (b && $('#plans-grid')) { planPeriod = b.dataset.period; renderPlans(); } });
 async function loadMe() { try { return await api('/api/me'); } catch { return {user: null}; } }
 (async () => {
   loadConfig();
