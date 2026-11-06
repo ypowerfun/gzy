@@ -65,6 +65,8 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
   // 2.0: assinaturas dos planos (Standard/Pro, mensal/anual) — Mercado Pago, cortesia do admin ou vitalícia convertida
   db.exec("CREATE TABLE IF NOT EXISTS subscriptions(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), plan TEXT NOT NULL, period TEXT NOT NULL, amount_cents INTEGER NOT NULL, status TEXT NOT NULL, source TEXT NOT NULL, mp_id TEXT, charged_count INTEGER NOT NULL DEFAULT 0, paid_until INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, synced_at INTEGER NOT NULL DEFAULT 0, note TEXT NOT NULL DEFAULT '')");
   db.exec("CREATE INDEX IF NOT EXISTS subscriptions_user ON subscriptions(user_id)");
+  // 2.2: em qual computador (installId) cada conta usa o plano no GameZoney Servidor (1 por conta)
+  db.exec("CREATE TABLE IF NOT EXISTS plan_installs(user_id TEXT PRIMARY KEY REFERENCES users(id), install_id TEXT NOT NULL, machine TEXT NOT NULL DEFAULT '', version TEXT NOT NULL DEFAULT '', activated_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL, ip TEXT NOT NULL DEFAULT '')");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

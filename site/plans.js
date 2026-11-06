@@ -149,12 +149,12 @@ module.exports = function plans(app, ctx) {
     saveSetting('plans', out); db.audit(req.user.email, 'planos', Object.values(out).map(p => `${p.name}: ${(p.monthly / 100).toFixed(2)}/mês, ${(p.annual / 100).toFixed(2)}/ano`).join(' • '));
     return {ok: true, plans: publicPlans()};
   }));
-  const adminSub = s => ({...publicSub(s), email: s.email, name: s.name, mpId: s.mp_id || '', chargedCount: s.charged_count});
+  const adminSub = s => ({...publicSub(s), email: s.email, name: s.name, mpId: s.mp_id || '', chargedCount: s.charged_count, machine: s.pc_machine || '', machineSeenAt: s.pc_seen || 0});
   function adminData() {
     const now = Date.now(), active = db.all('SELECT DISTINCT user_id FROM subscriptions WHERE paid_until>?', now - GRACE).length;
     const mrr = db.all("SELECT period, amount_cents FROM subscriptions WHERE source='mp' AND status='authorized' AND paid_until>?", now).reduce((a, s) => a + (s.period === 'anual' ? s.amount_cents / 12 : s.amount_cents), 0);
     return {plans: publicPlans(), stats: {activePlans: active, monthlyRevenueCents: Math.round(mrr)},
-      subscriptions: db.all('SELECT s.*, u.email, u.name FROM subscriptions s JOIN users u ON u.id=s.user_id ORDER BY s.created_at DESC LIMIT 300').map(adminSub)};
+      subscriptions: db.all('SELECT s.*, u.email, u.name, pi.machine pc_machine, pi.last_seen_at pc_seen FROM subscriptions s JOIN users u ON u.id=s.user_id LEFT JOIN plan_installs pi ON pi.user_id=s.user_id ORDER BY s.created_at DESC LIMIT 300').map(adminSub)};
   }
   app.get('/api/admin/plans', api(req => { needAdmin(req); return adminData(); }));
   app.post('/api/admin/subscriptions/grant', jsonOnly, api(req => {

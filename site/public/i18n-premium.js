@@ -1,6 +1,12 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "O GameZoney recebe melhorias constantes. Confira o que chegou nas versões 1.0.6 e 1.0.5.":["GameZoney gets constant improvements. See what arrived in versions 1.0.6 and 1.0.5.", "GameZoney recibe mejoras constantes. Vea lo que llegó en las versiones 1.0.6 y 1.0.5."],
+  "Plano na sua conta":["Plan in your account", "Plan en su cuenta"],
+  "Entre no GameZoney Servidor com o e-mail e a senha do site: o plano Standard ou Pro vale na hora e é conferido sozinho, mesmo depois de renovado.":["Sign in to GameZoney Server with your website email and password: the Standard or Pro plan works right away and is checked automatically, even after renewal.", "Ingrese a GameZoney Servidor con el correo y la contraseña del sitio: el plan Standard o Pro vale al instante y se verifica solo, incluso después de renovado."],
+  "Troca de computador segura":["Safe computer switch", "Cambio de computadora seguro"],
+  "Uma conta, um servidor por vez. Ao usar em outro computador, o painel pede confirmação e o dono recebe um aviso por e-mail.":["One account, one server at a time. When used on another computer, the panel asks for confirmation and the owner gets an email.", "Una cuenta, un servidor a la vez. Al usarla en otra computadora, el panel pide confirmación y el dueño recibe un aviso por correo."],
+  "Plano na sua conta, Corujão, ranking, pagamento combinado e melhorias para o dia a dia.":["Plan in your account, all-nighters, ranking, split payment and everyday improvements.", "Plan en su cuenta, maratones, ranking, pago combinado y mejoras para el día a día."],
   "Todas as funções por 30 dias":["All features for 30 days", "Todas las funciones por 30 días"],
   "Sem cartão de crédito":["No credit card", "Sin tarjeta de crédito"],
   "Seus dados ficam guardados ao assinar":["Your data is kept when you subscribe", "Sus datos se guardan al suscribirse"],
