@@ -28,13 +28,15 @@ class Launcher : ApplicationContext {
     // desenvolvimento a lista vem vazia (GzIntegrity.dev.cs) e nada é conferido.
     static void CheckIntegrity(){
         var list=GzIntegrity.Files;if(list==null||list.Length==0)return;
-        using(var sha=System.Security.Cryptography.SHA256.Create()){
-            for(int i=0;i+1<list.Length;i+=2){
-                string file=Path.Combine(root,list[i]),hex="";
-                try{using(var f=File.OpenRead(file))foreach(byte b in sha.ComputeHash(f))hex+=b.ToString("x2");}catch{}
-                if(!String.Equals(hex,list[i+1],StringComparison.OrdinalIgnoreCase))throw new Exception("Os arquivos do GameZoney Servidor foram alterados ou estão corrompidos ("+list[i]+").\n\nReinstale o GameZoney Servidor pelo instalador baixado em gamezoney.com (Minha conta › Downloads). Seus dados são mantidos.");
-            }
-        }
+        // 1.0.7: em paralelo (na 1ª abertura o antivírus examina cada arquivo e a conferência em fila demorava)
+        string bad=null;
+        System.Threading.Tasks.Parallel.For(0,list.Length/2,new System.Threading.Tasks.ParallelOptions{MaxDegreeOfParallelism=Math.Max(2,Math.Min(8,Environment.ProcessorCount))},()=>System.Security.Cryptography.SHA256.Create(),(k,state,sha)=>{
+            if(bad!=null){state.Stop();return sha;}
+            string rel=list[2*k],file=Path.Combine(root,rel.Replace('\\',Path.DirectorySeparatorChar)),hex="";
+            try{using(var f=new FileStream(file,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete,1<<16))foreach(byte b in sha.ComputeHash(f))hex+=b.ToString("x2");}catch{}
+            if(!String.Equals(hex,list[2*k+1],StringComparison.OrdinalIgnoreCase)){bad=rel;state.Stop();}
+            return sha;},sha=>sha.Dispose());
+        if(bad!=null)throw new Exception("Os arquivos do GameZoney Servidor foram alterados ou estão corrompidos ("+bad+").\n\nReinstale o GameZoney Servidor pelo instalador baixado em gamezoney.com (Minha conta › Downloads). Seus dados são mantidos.");
     }
     static void Open(string target) { Process.Start(new ProcessStartInfo(target){UseShellExecute=true}); }
     static void OpenPanel(string address) {
@@ -74,6 +76,7 @@ class Launcher : ApplicationContext {
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.Copy(log,log+".previous",true);
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.WriteAllText(log,"");
         using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);if(result.AsyncWaitHandle.WaitOne(400)&&probe.Connected)throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");}
+        if(!silent&&!selftest)Splash.Open();
         CheckIntegrity();
         var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning --disable-sigusr1 server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
@@ -85,7 +88,7 @@ class Launcher : ApplicationContext {
         if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
         child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
-        bool ready=false;for(int i=0;i<60;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
+        bool ready=false;for(int i=0;i<240;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
         var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());/* 1.0.5: "Abrir no navegador" e "Abrir pasta de dados" retirados do menu */menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
@@ -96,6 +99,7 @@ class Launcher : ApplicationContext {
         panel.Hidden=()=>{if(panelHintShown||tray==null)return;panelHintShown=true;tray.ShowBalloonTip(6000,"GameZoney","O servidor continua ativo. Para abrir o painel de novo, use o ícone perto do relógio.",ToolTipIcon.Info);};
         SystemEvents.SessionEnding+=OnSessionEnding;
         monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();/* 1.0.6: código 75 = o servidor fechou para instalar a atualização (Configuração › Verificar atualização): fecha sem aviso de erro */if(child.ExitCode==75){Log("Servidor fechado para instalar a atualização.");ExitThread();return;}MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Start();
+        Splash.Close();
         if(!silent)ShowPanel();
     }
     void OnSessionEnding(object sender,SessionEndingEventArgs e){Stop();}
@@ -109,11 +113,11 @@ class Launcher : ApplicationContext {
         int port=3000;string data=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoney","data");
         for(int i=0;i<args.Length-1;i++){if(args[i]=="/data")data=args[i+1];if(args[i]=="/port")port=Int32.Parse(args[i+1]);}
         bool created;using(var mutex=new Mutex(true,"Local\\GameZoneyServer_"+port,out created)){
-            if(!created){if(Array.IndexOf(args,"/restore")>=0){MessageBox.Show("Encerre o servidor pelo ícone ao lado do relógio antes de restaurar.","GameZoney");return 1;}if(!silent&&!selftest&&!PanelHost.SignalRunning(port))OpenPanel("http://127.0.0.1:"+port);return 0;}
+            if(!created){if(Array.IndexOf(args,"/restore")>=0){MessageBox.Show("Encerre o servidor pelo ícone ao lado do relógio antes de restaurar.","GameZoney");return 1;}if(!silent&&!selftest){/* 1.0.7: a 1ª abertura pode estar conferindo os arquivos e iniciando: espera até 90 s o painel ficar pronto */bool shown=false;for(int w=0;w<180&&!shown;w++){shown=PanelHost.SignalRunning(port);if(!shown)Thread.Sleep(500);}if(!shown)OpenPanel("http://127.0.0.1:"+port);}return 0;}
             Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
             if(Array.IndexOf(args,"/restore")>=0){try{Restore(data);}catch(Exception ex){MessageBox.Show(ex.Message,"Falha na restauração");return 1;}return 0;}
             try{var app=new Launcher(data,port,silent,selftest);if(!selftest)Application.Run(app);}
-            catch(Exception e){MainCode=1;Directory.CreateDirectory(data);File.AppendAllText(Path.Combine(data,"launcher-error.log"),DateTime.Now+" "+e+Environment.NewLine);if(!selftest)MessageBox.Show(e.Message,"GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+            catch(Exception e){Splash.Close();MainCode=1;Directory.CreateDirectory(data);File.AppendAllText(Path.Combine(data,"launcher-error.log"),DateTime.Now+" "+e+Environment.NewLine);if(!selftest)MessageBox.Show(e.Message,"GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);}
             mutex.ReleaseMutex();
         }return MainCode;
     }
@@ -298,4 +302,19 @@ class PanelWindow : Form {
         shared=null;
         BeginInvoke(new Action(()=>{try{Dispose();}catch{}if(!popup)host.Crashed(wasVisible);}));
     }
+}
+// 1.0.7: janela "Iniciando o GameZoney…" enquanto confere os arquivos e inicia o servidor (na 1ª abertura pode levar alguns
+// segundos); fecha sozinha quando o painel aparece ou se der erro.
+static class Splash {
+    static Form form;
+    public static void Open(){
+        try{
+            form=new Form{FormBorderStyle=FormBorderStyle.None,StartPosition=FormStartPosition.CenterScreen,Size=new Size(420,130),BackColor=Color.FromArgb(18,23,32),ShowInTaskbar=true,Text="GameZoney",TopMost=true};
+            try{using(var s=Assembly.GetExecutingAssembly().GetManifestResourceStream("gamezoney.ico"))if(s!=null)form.Icon=new Icon(s);}catch{}
+            var title=new Label{Text="GameZoney",ForeColor=Color.FromArgb(253,208,52),Font=new Font("Segoe UI",18,FontStyle.Bold),AutoSize=true,Location=new Point(24,22)};
+            var sub=new Label{Text="Iniciando o servidor… aguarde alguns segundos.",ForeColor=Color.FromArgb(220,224,232),Font=new Font("Segoe UI",10),AutoSize=true,Location=new Point(26,72)};
+            form.Controls.Add(title);form.Controls.Add(sub);form.Show();form.Refresh();Application.DoEvents();
+        }catch{form=null;}
+    }
+    public static void Close(){try{if(form!=null){form.Close();form.Dispose();}}catch{}form=null;}
 }
