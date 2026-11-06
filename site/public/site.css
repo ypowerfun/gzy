@@ -296,3 +296,7 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 
 /* 2.0: planos no /admin */
 .plans-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}.plan-admin{border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:grid;gap:8px;margin:0}.plan-admin legend input{font-weight:800;font-size:16px;width:160px}.plan-admin .row label{flex:1;min-width:140px}.plan-admin label.inline{display:flex;gap:8px;align-items:center}.plan-admin label.inline input{width:auto;margin:0}
+
+/* 2.1: plano Free */
+.plans-grid{max-width:none}.plan-badge.free{background:#1f3a2a;color:#9fe3b8}
+.plan-old.empty{text-decoration:none}

@@ -22,7 +22,7 @@ async function loadConfig() {
   // 1.4: faixa do topo (texto editável no /admin)
   const strip = $('#promo-strip'); if (strip && siteConfig.banner) { $$('[data-banner]').forEach(e => e.textContent = siteConfig.banner); strip.classList.remove('hidden'); }
   // 2.0: "a partir de" (menor preço mensal dos planos) e os cartões dos planos na página inicial
-  if (siteConfig.plans && siteConfig.plans.length) { const from = Math.min(...siteConfig.plans.map(p => Math.min(p.monthly, Math.round(p.annual / 12)))); $$('[data-plan-from]').forEach(e => e.textContent = money(from)); renderPlans(); }
+  if (siteConfig.plans && siteConfig.plans.some(p => !p.free)) { const from = Math.min(...siteConfig.plans.filter(p => !p.free).map(p => Math.min(p.monthly, Math.round(p.annual / 12)))); $$('[data-plan-from]').forEach(e => e.textContent = money(from)); renderPlans(); }
   document.dispatchEvent(new CustomEvent('gz:config', {detail: siteConfig}));
 }
 // ---------- 2.0: cartões dos planos (Standard / Pro), mensal ou anual ----------
@@ -38,9 +38,14 @@ function renderPlans() {
   const box = $('#plans-grid'); if (!box || !siteConfig || !siteConfig.plans) return;
   $$('[data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === planPeriod));
   box.innerHTML = siteConfig.plans.map(p => { const v = planView(p, planPeriod), annual = planPeriod === 'anual';
+    // Free = teste grátis de 30 dias: leva direto para os downloads (quem não está logado entra e volta para lá)
+    if (p.free) return `<article class="plan-card free"><div class="plan-body"><div class="plan-head"><h3>${esc(p.name)}</h3><span class="plan-badge free">30 dias grátis</span></div><p class="plan-old empty">&nbsp;</p>
+      <p class="plan-price"><strong>${money(0)}</strong><span>/30 dias</span></p><a class="btn outline plan-btn" href="/conta#downloads">Escolher plano</a>
+      <p class="plan-terms">Baixe e use todas as funções por 30 dias, sem cartão. Depois, escolha o Standard ou o Pro.</p>
+      <ul class="plan-feats">${p.features.map(f => `<li>${PLAN_ICON}<span>${esc(f)}</span></li>`).join('')}</ul></div></article>`;
     return `<article class="plan-card${p.popular ? ' popular' : ''}">${p.popular ? '<div class="plan-ribbon">Mais popular</div>' : ''}<div class="plan-body">
       <div class="plan-head"><h3>${esc(p.name)}</h3>${v.badge ? `<span class="plan-badge">${esc(v.badge)}</span>` : ''}</div>
-      <p class="plan-old">${v.old ? money(v.old) : '&nbsp;'}</p>
+      <p class="plan-old${v.old ? '' : ' empty'}">${v.old ? money(v.old) : '&nbsp;'}</p>
       <p class="plan-price"><strong>${money(v.price)}</strong><span>/mês</span></p>
       <a class="btn ${p.popular ? 'gold' : 'outline'} plan-btn" href="/carrinho#${esc(p.id)}-${planPeriod}">Escolher plano</a>
       <p class="plan-terms">${annual ? `Pague ${money(p.annual)} por ano no cartão de crédito.` : `Cobrado ${money(p.monthly)} todo mês no cartão de crédito.`} Renovação automática. Cancele quando quiser.</p>

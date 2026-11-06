@@ -57,3 +57,14 @@ test('segurança: bloqueio de senha errada por conta, redirecionamento aberto, o
  const me=await a('/api/me');assert.equal(me.user.name,'<img src=x onerror=alert(1)>');
  const js=await (await fetch(s.base+'/site.js')).text();assert.match(js,/esc\(r\.name\)/);
 });
+
+test('2.1: envios grandes (imagens) só são lidos depois de conferir login/administrador', async t => {
+  const {createApp} = require('../server'), fs = require('node:fs'), os = require('node:os'), path = require('node:path'), assert = require('node:assert/strict');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-site-big-'));
+  const app = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: dir, DOWNLOADS_DIR: path.join(dir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', MP_ACCESS_TOKEN: '', GOOGLE_CLIENT_ID: '', SMTP_HOST: ''}, mail: {enabled: false, send: async () => false}, log: {log() {}, error() {}}});
+  const server = await new Promise(r => { const s = app.listen(0, '127.0.0.1', () => r(s)); }); const base = 'http://127.0.0.1:' + server.address().port;
+  t.after(() => { server.close(); app.locals.close(); fs.rmSync(dir, {recursive: true, force: true}); });
+  const big = JSON.stringify({data: 'x'.repeat(4 * 1024 * 1024)});
+  assert.equal((await fetch(base + '/api/admin/design/image', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: big})).status, 403);
+  assert.equal((await fetch(base + '/api/reviews', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: big})).status, 401);
+});

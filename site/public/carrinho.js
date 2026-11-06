@@ -6,7 +6,7 @@
   let plan = hp || 'standard', period = hper === 'anual' ? 'anual' : 'mensal', cfg, me, brick = null, poll = null;
   try { [cfg, me] = await Promise.all([api('/api/config'), api('/api/me')]); } catch (e) { $('#cart-loading').textContent = e.message; return; }
   if (!me.user) { location.href = '/entrar.html?next=' + encodeURIComponent(`/carrinho#${plan}-${period}`); return; }
-  const plans = cfg.plans || []; if (!plans.some(p => p.id === plan)) plan = (plans[0] || {}).id;
+  const plans = (cfg.plans || []).filter(p => !p.free); if (!plans.some(p => p.id === plan)) plan = (plans[0] || {}).id;
   $('#cart-loading').classList.add('hidden'); $('#cart').classList.remove('hidden');
   $('#cart-plan').innerHTML = plans.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
   const msg = (t, ok) => showMsg($('#cart-msg'), t, ok);

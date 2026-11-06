@@ -38,7 +38,7 @@ module.exports = function community(app, ctx) {
     return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.user_id=?', u.id)) || null};
   }));
   // cada usuário tem 1 avaliação (enviar de novo atualiza a mesma)
-  app.post('/api/reviews', express.json({limit: '6mb'}), jsonOnly, limit('review', 20, 3600000), api(req => {
+  app.post('/api/reviews', (req, res, next) => req.user ? next() : res.status(401).json({error: 'Entre na sua conta.'}), express.json({limit: '6mb'}), jsonOnly, limit('review', 20, 3600000), api(req => {
     const u = needUser(req), stars = Number(req.body.stars), text = str(req.body.text, 1500);
     if (!Number.isInteger(stars) || stars < 1 || stars > 5) fail(400, 'Escolha de 1 a 5 estrelas.');
     if (text.length < 10) fail(400, 'Escreva sua avaliação (mínimo 10 caracteres).');

@@ -41,18 +41,20 @@ async function boot(t, {env = {}, before} = {}) {
 test('2.0: planos — padrão Standard 29,90 e Pro 129,90; preços editáveis no /admin; vitalícia não é mais vendida', async t => {
   const s = await boot(t); const anon = s.client(), ana = s.client();
   const cfg = await anon('/api/config'); assert.equal(cfg.subscriptions, true); assert.equal(cfg.legacySales, false);
-  assert.deepEqual(cfg.plans.map(p => [p.id, p.monthly]), [['standard', 2990], ['pro', 12990]]); assert.ok(cfg.plans[1].features.includes('1 app (Servidor/Cliente)'));
+  assert.deepEqual(cfg.plans.map(p => [p.id, p.monthly, p.popular]), [['free', 0, false], ['standard', 2990, true], ['pro', 12990, false]]); assert.ok(cfg.plans[2].features.includes('1 app (Servidor/Cliente)')); assert.equal(cfg.plans[0].free, true);
   await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'});
   const old = await ana('/api/checkout', {}, 410); assert.match(old.error, /não é mais vendida/);
+  await ana('/api/subscriptions', {plan: 'free', period: 'mensal', token: 'TOKEN_OK_1234'}, 400);
   await ana('/api/admin/plans', {plans: {}}, 403);
   const dono = await s.admin();
   await dono('/api/admin/plans', {plans: {standard: {monthly: '0,50'}}}, 400);
   await dono('/api/admin/plans', {plans: {standard: {monthly: '29,90', monthlyList: '19,90'}}}, 400);
   const r = await dono('/api/admin/plans', {plans: {standard: {monthly: '34.90', annual: '349,00', annualList: '418,80', badge: 'Oferta especial', features: ['Tudo liberado', '', 'Suporte']}, pro: {monthly: 'R$ 1.299,90'}}, popular: 'standard'});
   const st = r.plans.find(p => p.id === 'standard'), pro = r.plans.find(p => p.id === 'pro');
+  assert.equal(r.plans.find(p => p.id === 'free').monthly, 0, 'Free continua sem preço'); await dono('/api/admin/subscriptions/grant', {email: 'ana@x.com', plan: 'free', months: 1}, 400);
   assert.deepEqual([st.monthly, st.annual, st.annualList, st.badge, st.popular, st.features], [3490, 34900, 41880, 'Oferta especial', true, ['Tudo liberado', 'Suporte']]);
-  assert.deepEqual([pro.monthly, pro.popular], [129990, false]);
-  assert.equal((await anon('/api/config')).plans[0].monthly, 3490);
+  assert.deepEqual([pro.monthly, pro.popular], [129990, false]); assert.equal(r.plans.filter(p => p.popular).length, 1);
+  assert.equal((await anon('/api/config')).plans.find(p => p.id === 'standard').monthly, 3490);
   const home = await (await fetch(s.base + '/')).text(); assert.match(home, /id="plans-grid"/);
   assert.match((await fetch(s.base + '/carrinho')).headers.get('content-security-policy'), /sdk\.mercadopago\.com/);
 });

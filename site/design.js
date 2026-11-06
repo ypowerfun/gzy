@@ -77,7 +77,7 @@ module.exports = function design(app, ctx) {
     write('design', d); db.audit(req.user.email, 'design', 'restaurado o original: ' + (what === 'all' ? 'site inteiro' : what)); sweep();
     return {ok: true};
   }));
-  app.post('/api/admin/design/image', express.json({limit: '5mb'}), jsonOnly, api(req => {
+  app.post('/api/admin/design/image', (req, res, next) => req.admin ? next() : res.status(403).json({error: 'Acesso restrito ao administrador.'}), express.json({limit: '5mb'}), jsonOnly, api(req => {
     needAdmin(req);
     const m = /^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(req.body.data || '')); if (!m) fail(400, 'Envie uma imagem .png, .jpg ou .webp.');
     const buf = Buffer.from(m[2], 'base64'); if (buf.length > MAX_IMAGE) fail(400, 'Imagem muito grande (máximo 3 MB).');

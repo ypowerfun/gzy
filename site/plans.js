@@ -9,11 +9,14 @@
 //  - Cancelar: a cobrança automática para e o plano vale até o fim do período já pago.
 //  - Licenças vitalícias vendidas antes viram Standard com 12 meses grátis (uma vez, na primeira abertura desta versão).
 const DAY = 86400000, GRACE = 7 * DAY;
-const PLAN_IDS = ['standard', 'pro'], PERIODS = {mensal: 1, anual: 12};
+// 2.1: Free (teste grátis de 30 dias: só vitrine, leva para os downloads) + Standard (meio, mais popular) + Pro
+const PLAN_IDS = ['free', 'standard', 'pro'], PAID = ['standard', 'pro'], PERIODS = {mensal: 1, anual: 12};
 const DEFAULT_PLANS = {
-  standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: false,
+  free: {name: 'Free', monthly: 0, monthlyList: 0, annual: 0, annualList: 0, badge: '', popular: false, free: true,
+    features: ['Todas as funções por 30 dias', 'PCs e consoles ilimitados', 'Sem cartão de crédito', 'Seus dados ficam guardados ao assinar']},
+  standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
     features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Suporte completo', 'Novas atualizações']},
-  pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: true,
+  pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
     features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Suporte completo', 'Novas atualizações']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
@@ -41,7 +44,7 @@ module.exports = function plans(app, ctx) {
     return out;
   }
   const priceOf = (p, period) => period === 'anual' ? p.annual : p.monthly;
-  const publicPlans = () => Object.values(plansConfig()).map(p => ({id: p.id, name: p.name, monthly: p.monthly, monthlyList: p.monthlyList, annual: p.annual, annualList: p.annualList, badge: p.badge, popular: !!p.popular, features: p.features}));
+  const publicPlans = () => Object.values(plansConfig()).map(p => ({id: p.id, name: p.name, monthly: p.monthly, monthlyList: p.monthlyList, annual: p.annual, annualList: p.annualList, badge: p.badge, popular: !!p.popular, free: !!p.free, features: p.features}));
 
   // plano em vigor da conta (o melhor que ainda vale, contando os 7 dias de tolerância)
   function planOf(userId, now = Date.now()) {
@@ -85,7 +88,7 @@ module.exports = function plans(app, ctx) {
   // assinar: cria a assinatura no Mercado Pago com o token do cartão (Card Payment Brick)
   app.post('/api/subscriptions', jsonOnly, limit('subscribe', 10, 3600000), api(async req => {
     const u = needUser(req), planId = String(req.body.plan || ''), period = String(req.body.period || '');
-    const p = plansConfig()[planId]; if (!p || !PERIODS[period]) fail(400, 'Escolha o plano e o período.');
+    const p = PAID.includes(planId) && plansConfig()[planId]; if (!p || !PERIODS[period]) fail(400, 'Escolha o plano e o período.');
     if (!pay.enabled || !env.MP_PUBLIC_KEY) fail(400, 'Assinatura indisponível no momento. Fale com o suporte.');
     const current = db.get("SELECT * FROM subscriptions WHERE user_id=? AND source='mp' AND status IN ('pending','authorized','paused') ORDER BY created_at DESC LIMIT 1", u.id);
     if (current) fail(409, 'Você já tem uma assinatura ativa. Para trocar de plano ou período, cancele a atual em Minha conta e assine de novo (o período já pago continua valendo).');
@@ -136,12 +139,12 @@ module.exports = function plans(app, ctx) {
   app.post('/api/admin/plans', jsonOnly, api(req => {
     needAdmin(req); const input = req.body.plans || {}, cur = plansConfig(), out = {};
     for (const id of PLAN_IDS) {
-      const i = input[id] || {}, c = cur[id];
-      const monthly = toCents(i.monthly ?? c.monthly), annual = toCents(i.annual ?? c.annual), monthlyList = toCents(i.monthlyList ?? c.monthlyList), annualList = toCents(i.annualList ?? c.annualList);
-      if (monthly < 100 || annual < 100) fail(400, `${c.name}: o preço precisa ser de pelo menos R$ 1,00.`);
+      const i = input[id] || {}, c = cur[id], isFree = id === 'free';
+      const monthly = isFree ? 0 : toCents(i.monthly ?? c.monthly), annual = isFree ? 0 : toCents(i.annual ?? c.annual), monthlyList = isFree ? 0 : toCents(i.monthlyList ?? c.monthlyList), annualList = isFree ? 0 : toCents(i.annualList ?? c.annualList);
+      if (!isFree && (monthly < 100 || annual < 100)) fail(400, `${c.name}: o preço precisa ser de pelo menos R$ 1,00.`);
       if ((monthlyList && monthlyList <= monthly) || (annualList && annualList <= annual)) fail(400, `${c.name}: o preço "de" precisa ser maior que o preço "por" (ou vazio).`);
       const features = (Array.isArray(i.features) ? i.features : c.features).map(f => str(f, 120)).filter(Boolean).slice(0, 12);
-      out[id] = {name: str(i.name ?? c.name, 40) || c.name, monthly, monthlyList, annual, annualList, badge: str(i.badge ?? c.badge, 40), popular: req.body.popular ? req.body.popular === id : !!c.popular, features};
+      out[id] = {name: str(i.name ?? c.name, 40) || c.name, monthly, monthlyList, annual, annualList, badge: str(i.badge ?? c.badge, 40), popular: req.body.popular ? req.body.popular === id : !!c.popular, ...(isFree ? {free: true} : {}), features};
     }
     saveSetting('plans', out); db.audit(req.user.email, 'planos', Object.values(out).map(p => `${p.name}: ${(p.monthly / 100).toFixed(2)}/mês, ${(p.annual / 100).toFixed(2)}/ano`).join(' • '));
     return {ok: true, plans: publicPlans()};
@@ -157,7 +160,7 @@ module.exports = function plans(app, ctx) {
   app.post('/api/admin/subscriptions/grant', jsonOnly, api(req => {
     needAdmin(req); const email = str(req.body.email, 200).toLowerCase(), planId = String(req.body.plan || ''), months = Math.floor(Number(req.body.months) || 0);
     const u = db.get('SELECT * FROM users WHERE email=?', email) || fail(404, 'Nenhuma conta com este e-mail. A pessoa precisa criar a conta no site primeiro.');
-    if (!PLAN_IDS.includes(planId) || months < 1 || months > 60) fail(400, 'Escolha o plano e de 1 a 60 meses.');
+    if (!PAID.includes(planId) || months < 1 || months > 60) fail(400, 'Escolha o plano e de 1 a 60 meses.');
     const now = Date.now(), id = uid();
     db.run('INSERT INTO subscriptions(id,user_id,plan,period,amount_cents,status,source,paid_until,created_at,updated_at,note) VALUES(?,?,?,?,?,?,?,?,?,?,?)', id, u.id, planId, months >= 12 ? 'anual' : 'mensal', 0, 'granted', 'admin', addMonths(now, months), now, now, str(req.body.note, 200) || `Cortesia: ${months} mês(es)`);
     db.audit(req.user.email, 'assinatura', `cortesia ${planId} ${months} mês(es) para ${email}`);
