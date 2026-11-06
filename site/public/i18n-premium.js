@@ -1,6 +1,9 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "PCs reconectam sozinhos":["PCs reconnect by themselves", "Los PC se reconectan solos"],
+  "Se o servidor for reinstalado, cada PC pede autorização ao novo servidor sem interromper a sessão em andamento. Basta aprovar na recepção.":["If the server is reinstalled, each PC asks the new server for authorization without interrupting the running session. Just approve it at the front desk.", "Si el servidor se reinstala, cada PC pide autorización al nuevo servidor sin interrumpir la sesión en curso. Solo apruebe en la recepción."],
+  "Cliente 1.0.6":["Client 1.0.6", "Cliente 1.0.6"],
   "Verificação em duas etapas":["Two-step verification", "Verificación en dos pasos"],
   "Código de acesso":["Access code", "Código de acceso"],
   "Para entrar na administração, enviamos um código de 6 dígitos para o e-mail da sua conta. Ele vale por 10 minutos.":["To enter the admin area, we send a 6-digit code to your account email. It is valid for 10 minutes.", "Para entrar en la administración, enviamos un código de 6 dígitos al correo de su cuenta. Vale por 10 minutos."],

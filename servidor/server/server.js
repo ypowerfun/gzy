@@ -3,7 +3,7 @@ const express=require('express'),http=require('http'),path=require('path'),fs=re
 const {Store,id,text,integer,fail,passwordHash,verify}=require('./store');
 const Vidaa=require('./vidaa');const netinfo=require('./netinfo');
 // Versão atual do GameZoney Cliente (PCs gamers): usada nos avisos do painel para pedir a atualização dos PCs.
-const CLIENT_VERSION='1.0.5';const AndroidTv=require('./androidtv');
+const CLIENT_VERSION='1.0.6';const AndroidTv=require('./androidtv');
 function createServer(options={}){
  const directory=options.directory||process.env.GZ_DATA_DIR||path.join(process.env.LOCALAPPDATA||os.homedir(),'GameZoney','data');
  const store=new Store(directory),app=express(),server=http.createServer(app),sessions=require('./panel-sessions')(store),clients=new Map(),status=new Map(),attempts=new Map();

@@ -2,7 +2,7 @@
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
-AppVersion=1.0.5
+AppVersion=1.0.6
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyCliente
 DefaultGroupName=GameZoney Cliente
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Cliente-1.0.5-Setup
+OutputBaseFilename=GameZoney-Cliente-1.0.6-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -24,7 +24,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.0.5.0
+VersionInfoVersion=1.0.6.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
