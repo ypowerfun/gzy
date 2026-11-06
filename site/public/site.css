@@ -261,3 +261,6 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .camp-preview iframe{width:100%;height:620px;border:1px solid var(--line);border-radius:8px;background:#eef0f3}
 .camp-bar{height:6px;background:#1c222c;border-radius:3px;margin-top:6px;overflow:hidden;min-width:120px}.camp-bar i{display:block;height:100%;background:linear-gradient(90deg,#FDD034,#F0B11E)}
 @media(max-width:900px){.camp-grid{grid-template-columns:1fr}}
+
+/* 1.9: quadro de pagamento do Mercado Pago (Checkout Bricks) em Minha conta */
+.mp-brick{margin-top:18px;max-width:620px}

@@ -35,6 +35,28 @@ function mercadoPago(env, fetchImpl = fetch) {
       }, 'pref-' + orderId);
       return {providerId: String(p.id), url: p.init_point};
     },
+    // 1.9: pagamento feito no Checkout Bricks (quadro do Mercado Pago dentro do site: PIX, crédito e débito).
+    // O valor vem SEMPRE do pedido (nunca do navegador). O cartão chega como token de uso único: o site nunca vê o cartão.
+    async createBrickPayment({orderId, amountCents, description, email, notificationUrl, formData, deviceId, attempt}) {
+      const f = formData || {}, method = String(f.payment_method_id || '');
+      if (!/^[a-z_]{2,30}$/.test(method)) throw new Error('Forma de pagamento inválida.');
+      const pix = method === 'pix', idn = f.payer && f.payer.identification;
+      const body = {transaction_amount: amountCents / 100, description, payment_method_id: method, external_reference: orderId, notification_url: notificationUrl, statement_descriptor: 'GAMEZONEY',
+        payer: {email: String((f.payer && f.payer.email) || email).slice(0, 200), ...(idn && idn.type && idn.number ? {identification: {type: String(idn.type).slice(0, 10), number: String(idn.number).replace(/\D/g, '').slice(0, 20)}} : {})}};
+      if (pix) body.date_of_expiration = new Date(Date.now() + 30 * 60000).toISOString().replace('Z', '-00:00');
+      else {
+        if (!/^[A-Za-z0-9_-]{8,200}$/.test(String(f.token || ''))) throw new Error('Dados do cartão incompletos.');
+        body.token = String(f.token); body.installments = Math.max(1, Math.min(12, Math.floor(Number(f.installments) || 1)));
+        if (f.issuer_id && /^\d{1,12}$/.test(String(f.issuer_id))) body.issuer_id = Number(f.issuer_id);
+      }
+      const r = await fetchImpl(MP + '/v1/payments', {method: 'POST', signal: AbortSignal.timeout(30000), body: JSON.stringify(body),
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'X-Idempotency-Key': orderId + '-' + attempt, ...(deviceId && /^[A-Za-z0-9.:_-]{6,120}$/.test(deviceId) ? {'X-meli-session-id': deviceId} : {})}});
+      const p = await r.json().catch(() => ({}));
+      if (!r.ok) { const e = new Error('Mercado Pago: ' + (p.message || ('HTTP ' + r.status))); e.mp = p; throw e; }
+      const t = p.point_of_interaction?.transaction_data || {};
+      return {providerId: String(p.id), status: p.status, detail: p.status_detail || '', amountCents: Math.round(Number(p.transaction_amount) * 100), orderId: p.external_reference || '',
+        pix, pixCode: t.qr_code || '', pixQr: t.qr_code_base64 || '', pixUrl: t.ticket_url || ''};
+    },
     // pagamentos de um pedido (procurados pela referência do pedido)
     async findPayments(orderId) {
       const r = await call('GET', '/v1/payments/search?' + new URLSearchParams({external_reference: orderId, sort: 'date_created', criteria: 'desc'}));

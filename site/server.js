@@ -62,7 +62,10 @@ function createApp(options = {}) {
   app.use((req, res, next) => {
     res.set({'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin',
-      'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
+      'Content-Security-Policy': /^\/conta(\.html)?\/?$/.test(req.path) && env.MP_PUBLIC_KEY
+        // 1.9: só Minha conta (compra) carrega o quadro de pagamento do Mercado Pago (script, campos do cartão e imagens das bandeiras)
+        ? "default-src 'self'; img-src 'self' data: https://*.mlstatic.com https://*.mercadopago.com https://*.mercadolibre.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.mlstatic.com; font-src 'self' data: https://fonts.gstatic.com https://*.mlstatic.com; script-src 'self' https://sdk.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com https://*.mercadolibre.com; connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com; frame-src https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"
+        : "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
     // 1.3: sem includeSubDomains (mail. e webmail. continuam na HostGator/Titan)
     if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000');
     // 1.8: a logo e as imagens do design/comunicados aparecem dentro dos e-mails (Outlook, Hotmail, Gmail): só elas saem do 'same-origin'
@@ -145,7 +148,7 @@ function createApp(options = {}) {
   });
 
   // ---------- configuração pública ----------
-  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled,
+  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
     supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}); });
 
   // ---------- contas ----------
@@ -286,7 +289,7 @@ function createApp(options = {}) {
   }));
 
   // ---------- compra (PIX) ----------
-  const publicOrder = o => o && ({id: o.id, amountCents: o.amount_cents, status: o.status, provider: o.provider, pixCode: o.pix_code || '', pixQr: o.pix_qr || '', pixUrl: o.pix_url || '', checkoutUrl: o.checkout_url || '', method: o.provider === 'mercadopago-card' ? 'card' : 'pix', expiresAt: o.expires_at, createdAt: o.created_at, paidAt: o.paid_at,
+  const publicOrder = o => o && ({id: o.id, amountCents: o.amount_cents, status: o.status, provider: o.provider, pixCode: o.pix_code || '', pixQr: o.pix_qr || '', pixUrl: o.pix_url || '', checkoutUrl: o.checkout_url || '', method: o.provider === 'mercadopago-card' ? 'card' : (o.provider === 'mercadopago-brick' && !o.pix_code ? 'brick' : 'pix'), expiresAt: o.expires_at, createdAt: o.created_at, paidAt: o.paid_at,
     licenseKey: o.license_id ? db.get('SELECT key FROM licenses WHERE id=?', o.license_id)?.key : null, pixKey: o.provider === 'manual' ? (env.PIX_KEY || '') : ''});
   function fulfill(orderId, providerNote = '') {
     const result = db.tx(() => {
@@ -306,10 +309,10 @@ function createApp(options = {}) {
   async function refreshOrder(o) {
     if (o.status !== 'pending' || !pay.enabled || !String(o.provider).startsWith('mercadopago')) return o;
     try {
-      if (o.provider === 'mercadopago-card') {
+      if (o.provider === 'mercadopago-card' || o.provider === 'mercadopago-brick') {
         // cartão: o cliente pode tentar mais de um cartão no mesmo pedido; vale o primeiro aprovado
         const ok = (await pay.findPayments(o.id)).find(p => approved(o, p));
-        if (ok) fulfill(o.id, 'Mercado Pago cartão ' + ok.id);
+        if (ok) fulfill(o.id, (o.provider === 'mercadopago-brick' ? 'Mercado Pago (no site) ' : 'Mercado Pago cartão ') + ok.id);
       } else if (o.provider_id) {
         const p = await pay.getPayment(o.provider_id);
         if (approved(o, p)) fulfill(o.id, 'Mercado Pago ' + p.id);
@@ -319,14 +322,18 @@ function createApp(options = {}) {
     return db.get('SELECT * FROM orders WHERE id=?', o.id);
   }
   app.post('/api/checkout', jsonOnly, limit('checkout', 20, 3600000), api(async req => {
-    const u = needUser(req), now = Date.now(), card = req.body?.method === 'card', PRICE = offer().priceCents;
+    const u = needUser(req), now = Date.now(), card = req.body?.method === 'card', brick = req.body?.method === 'brick', PRICE = offer().priceCents;
     if (card && !pay.enabled) fail(400, 'Pagamento com cartão indisponível no momento. Use o PIX.');
-    const provider = card ? 'mercadopago-card' : (pay.enabled ? 'mercadopago' : 'manual');
+    if (brick && !(pay.enabled && env.MP_PUBLIC_KEY)) fail(400, 'Pagamento no site indisponível no momento.');
+    const provider = brick ? 'mercadopago-brick' : card ? 'mercadopago-card' : (pay.enabled ? 'mercadopago' : 'manual');
     let o = db.get("SELECT * FROM orders WHERE user_id=? AND status='pending' AND provider=? AND expires_at>? AND amount_cents=? ORDER BY created_at DESC LIMIT 1", u.id, provider, now + 60000, PRICE);
     if (o) return {order: publicOrder(await refreshOrder(o))};
     db.run("UPDATE orders SET status='expired' WHERE user_id=? AND status='pending' AND expires_at<=?", u.id, now);
     const id = uid(), expiresAt = now + 30 * 60000;
-    if (card) {
+    if (brick) {
+      // 1.9: o pedido nasce sem pagamento; o cliente paga no quadro do Mercado Pago dentro do site (/api/checkout/brick)
+      db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,expires_at,created_at) VALUES(?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'mercadopago-brick', now + 2 * DAY, now);
+    } else if (card) {
       const c = await pay.createCardCheckout({orderId: id, amountCents: PRICE, title: 'GameZoney - Licença vitalícia', email: u.email, notificationUrl: SITE + '/api/mp/webhook', backUrl: SITE + '/conta?pedido=' + id + '#comprar'});
       db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,provider_id,checkout_url,expires_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'mercadopago-card', c.providerId, c.url, now + 2 * DAY, now);
     } else if (pay.enabled) {
@@ -336,8 +343,29 @@ function createApp(options = {}) {
       // sem Mercado Pago configurado: PIX manual (chave PIX_KEY); o administrador confirma o pagamento no painel /admin
       db.run('INSERT INTO orders(id,user_id,amount_cents,status,provider,expires_at,created_at) VALUES(?,?,?,?,?,?,?)', id, u.id, PRICE, 'pending', 'manual', now + 7 * DAY, now);
     }
-    db.audit(u.email, 'pedido', `${money(PRICE)} (${card ? 'cartão Mercado Pago' : pay.enabled ? 'PIX Mercado Pago' : 'PIX manual'})`);
+    db.audit(u.email, 'pedido', `${money(PRICE)} (${brick ? 'Mercado Pago no site' : card ? 'cartão Mercado Pago' : pay.enabled ? 'PIX Mercado Pago' : 'PIX manual'})`);
     return {order: publicOrder(db.get('SELECT * FROM orders WHERE id=?', id))};
+  }));
+  // 1.9: pagamento enviado pelo quadro do Mercado Pago (Checkout Bricks) dentro de Minha conta
+  const CARD_MSG = {cc_rejected_bad_filled_card_number: 'Confira o número do cartão.', cc_rejected_bad_filled_date: 'Confira a validade do cartão.', cc_rejected_bad_filled_security_code: 'Confira o código de segurança (CVV).',
+    cc_rejected_bad_filled_other: 'Confira os dados do cartão.', cc_rejected_insufficient_amount: 'Saldo ou limite insuficiente. Tente outro cartão ou o PIX.', cc_rejected_call_for_authorize: 'O banco pediu autorização: fale com o banco e tente de novo.',
+    cc_rejected_card_disabled: 'Cartão não habilitado: fale com o banco.', cc_rejected_duplicated_payment: 'Pagamento duplicado: confira se você já não foi cobrado.', cc_rejected_high_risk: 'Pagamento recusado pela análise de segurança. Tente outro cartão ou o PIX.',
+    cc_rejected_max_attempts: 'Limite de tentativas atingido. Tente outro cartão ou o PIX.', cc_rejected_blacklist: 'Pagamento recusado. Tente outro cartão ou o PIX.'};
+  app.post('/api/checkout/brick', jsonOnly, limit('brickpay', 15, 3600000), api(async req => {
+    const u = needUser(req), o = db.get("SELECT * FROM orders WHERE id=? AND user_id=? AND provider='mercadopago-brick'", str(req.body.orderId, 60), u.id) || fail(404, 'Pedido não encontrado.');
+    if (o.status === 'paid') return {order: publicOrder(o), payment: {status: 'approved'}};
+    if (o.status !== 'pending' || o.expires_at < Date.now()) fail(400, 'Este pedido venceu. Recarregue a página para começar de novo.');
+    if (!(pay.enabled && env.MP_PUBLIC_KEY)) fail(400, 'Pagamento no site indisponível no momento.');
+    let p;
+    try { p = await pay.createBrickPayment({orderId: o.id, amountCents: o.amount_cents, description: 'GameZoney - Licença vitalícia', email: u.email, notificationUrl: SITE + '/api/mp/webhook', formData: req.body.formData, deviceId: str(req.body.deviceId, 120), attempt: crypto.randomBytes(6).toString('hex')}); }
+    catch (e) { log.error('Pagamento no site:', e.message); fail(400, /inválida|incompletos/.test(e.message) ? e.message : 'O Mercado Pago não aceitou o pagamento. Confira os dados ou tente o PIX.'); }
+    db.audit(u.email, 'pagamento', `Mercado Pago (no site) ${p.pix ? 'PIX' : 'cartão'} ${p.providerId}: ${p.status} ${p.detail}`);
+    if (p.pix && p.pixCode) db.run('UPDATE orders SET provider_id=?, pix_code=?, pix_qr=?, pix_url=?, expires_at=? WHERE id=?', p.providerId, p.pixCode, p.pixQr, p.pixUrl, Date.now() + 30 * 60000, o.id);
+    else if (!p.pix) db.run('UPDATE orders SET provider_id=? WHERE id=?', p.providerId, o.id);
+    if (approved(o, p)) fulfill(o.id, 'Mercado Pago (no site) ' + p.providerId);
+    const fresh = publicOrder(db.get('SELECT * FROM orders WHERE id=?', o.id));
+    if (['rejected', 'cancelled'].includes(p.status)) return {order: fresh, payment: {status: 'rejected', message: CARD_MSG[p.detail] || 'Pagamento recusado. Tente outro cartão ou o PIX.'}};
+    return {order: fresh, payment: {status: p.status === 'approved' ? 'approved' : 'pending'}};
   }));
   app.get('/api/orders/:id', api(async req => {
     const u = needUser(req), o = db.get('SELECT * FROM orders WHERE id=? AND user_id=?', req.params.id, u.id) || fail(404, 'Pedido não encontrado.');
@@ -350,7 +378,7 @@ function createApp(options = {}) {
     if (!/^\d{1,30}$/.test(id) || !pay.enabled) return;
     let o = db.get('SELECT * FROM orders WHERE provider_id=?', id);
     if (!o) { // cartão: o pagamento é criado no Mercado Pago; o pedido vem na referência do pagamento
-      try { const p = await pay.getPayment(id); o = p.orderId && db.get("SELECT * FROM orders WHERE id=? AND provider='mercadopago-card'", p.orderId); } catch (e) { log.error('Aviso do Mercado Pago:', e.message); }
+      try { const p = await pay.getPayment(id); o = p.orderId && db.get("SELECT * FROM orders WHERE id=? AND provider IN ('mercadopago-card','mercadopago-brick')", p.orderId); } catch (e) { log.error('Aviso do Mercado Pago:', e.message); }
     }
     if (o) await refreshOrder(o);
   });

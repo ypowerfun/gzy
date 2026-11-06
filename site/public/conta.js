@@ -44,6 +44,7 @@
       load(); return;
     }
     if (o.status !== 'pending') { clearInterval(poll); poll = null; box.innerHTML = '<p class="msg err" style="display:block">Este PIX venceu. Clique em Pagar com PIX para gerar outro.</p>'; return; }
+    if (o.method === 'brick') { if (!poll) poll = setInterval(async () => { try { const n = (await api('/api/orders/' + o.id)).order; if (n.status === 'paid' || n.pixCode) showOrder(n, false); } catch { } }, 5000); return; }
     if (o.method === 'card') {
       box.innerHTML = `<div class="msg ok" style="display:block;margin-top:18px">Confirmando o pagamento com cartão… Assim que o Mercado Pago aprovar, a chave aparece aqui (pode levar alguns minutos). <a href="${esc(o.checkoutUrl)}">Abrir o pagamento de novo</a></div>`;
       if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order, false); } catch { } }, 5000);
@@ -60,7 +61,43 @@
   $('#buy').onclick = () => busy($('#buy'), async () => { try { showOrder((await api('/api/checkout', {method: 'pix'})).order); load(); } catch (e) { showMsg($('#buy-msg'), e.message); } });
   // cartão de crédito ou débito: vai para o Checkout do Mercado Pago e volta para /conta?pedido=...
   $('#buy-card').onclick = () => busy($('#buy-card'), async () => { try { const o = (await api('/api/checkout', {method: 'card'})).order; if (o.status === 'paid') return showOrder(o); location.href = o.checkoutUrl; } catch (e) { showMsg($('#buy-msg'), e.message); } });
-  api('/api/config').then(c => { if (c.card) { $('#buy-card').classList.remove('hidden'); $('#card-note').classList.remove('hidden'); } }).catch(() => {});
+  // 1.9: Checkout Bricks — PIX, crédito e débito num só quadro do Mercado Pago, dentro desta página (sem ir para o Mercado Pago).
+  // Os campos do cartão são do Mercado Pago (o site recebe só um token de uso único); o valor é sempre o do pedido no servidor.
+  let brickCtl = null;
+  const loadMpSdk = () => window.MercadoPago ? Promise.resolve() : new Promise((ok, err) => { const s = document.createElement('script'); s.src = 'https://sdk.mercadopago.com/js/v2'; s.onload = ok; s.onerror = () => err(new Error('Não foi possível carregar o pagamento do Mercado Pago. Confira a internet e tente de novo.')); document.head.appendChild(s); });
+  async function openBrick(c) {
+    showMsg($('#buy-msg'), '', true); $('#buy-msg').className = 'msg';
+    const o = (await api('/api/checkout', {method: 'brick'})).order;
+    if (o.status === 'paid' || o.pixCode) return showOrder(o);
+    await loadMpSdk();
+    const box = $('#checkout'); box.classList.remove('hidden'); box.innerHTML = '<div id="mp-brick" class="mp-brick" data-no-i18n></div><p class="note" style="margin-top:8px">Pagamento processado pelo Mercado Pago. Os dados do cartão são digitados direto no Mercado Pago e não passam pelo site da GameZoney.</p>';
+    if (brickCtl) { try { brickCtl.unmount(); } catch { } brickCtl = null; }
+    const lang = (window.gzSite && gzSite.lang) || 'pt', mp = new MercadoPago(c.mpPublicKey, {locale: lang === 'en' ? 'en-US' : lang === 'es' ? 'es-AR' : 'pt-BR'});
+    brickCtl = await mp.bricks().create('payment', 'mp-brick', {
+      initialization: {amount: o.amountCents / 100, payer: {email: (me && me.user && me.user.email) || ''}},
+      customization: {paymentMethods: {bankTransfer: ['pix'], creditCard: 'all', debitCard: 'all', maxInstallments: 12},
+        visual: {style: {theme: 'dark', customVariables: {baseColor: '#FDD034', baseColorFirstVariant: '#F0B11E', baseColorSecondVariant: '#FFEC6C', textPrimaryColor: '#F2F4F8', formBackgroundColor: '#121720', inputBackgroundColor: '#0B0E13'}}}},
+      callbacks: {
+        onReady: () => {},
+        onError: err => { console.error(err); },
+        onSubmit: ({formData}) => api('/api/checkout/brick', {orderId: o.id, formData, deviceId: window.MP_DEVICE_SESSION_ID || ''}).then(r => {
+          if (r.payment.status === 'rejected') { showMsg($('#buy-msg'), r.payment.message); throw new Error(r.payment.message); }
+          try { brickCtl.unmount(); } catch { } brickCtl = null;
+          if (r.order.status === 'paid' || r.order.pixCode) showOrder(r.order, false);
+          else { $('#checkout').innerHTML = '<div class="msg ok" style="display:block;margin-top:18px">Pagamento em análise no Mercado Pago… Assim que for aprovado, a chave aparece aqui e chega por e-mail (pode levar alguns minutos).</div>'; showOrder(r.order, false); }
+        }, e => { showMsg($('#buy-msg'), e.message); throw e; })
+      }
+    });
+  }
+  api('/api/config').then(c => {
+    if (c.bricks && c.mpPublicKey) {
+      // um botão só: abre o quadro do Mercado Pago com PIX, crédito e débito
+      $('#buy').textContent = 'Pagar com PIX ou cartão'; $('#buy-card').classList.add('hidden'); $('#card-note').classList.add('hidden');
+      $('#buy').onclick = () => busy($('#buy'), async () => { try { await openBrick(c); } catch (e) { showMsg($('#buy-msg'), e.message); } });
+      return;
+    }
+    if (c.card) { $('#buy-card').classList.remove('hidden'); $('#card-note').classList.remove('hidden'); }
+  }).catch(() => {});
   const back = new URLSearchParams(location.search).get('pedido');
   if (back) api('/api/orders/' + encodeURIComponent(back)).then(r => showOrder(r.order)).catch(() => {});
   $('#logout').onclick = async () => { await api('/api/auth/logout', {}).catch(() => {}); location.href = '/'; };
