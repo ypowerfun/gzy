@@ -4,11 +4,11 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>Administração | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/site.css?v=20261106-17"><link rel="stylesheet" href="/premium.css?v=20261106-17">
+<link rel="stylesheet" href="/site.css?v=20261106-18"><link rel="stylesheet" href="/premium.css?v=20261106-18">
 </head>
 <body data-no-chat>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#oferta">Preço</a><a href="#design">Design</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#oferta">Preço</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
 <main id="conteudo" class="page"><div class="wrap dash">
   <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
   <div class="stats" id="stats"></div>
@@ -28,6 +28,26 @@
     <div id="partner-list"></div>
     <form id="partner-form" class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="flex:1;min-width:160px">Nome do parceiro<input name="name" required maxlength="80"></label><label style="flex:2;min-width:200px">Link (opcional)<input name="url" placeholder="https://"></label><label style="flex:1;min-width:180px">Logo<input name="logo" type="file" accept="image/png,image/jpeg,image/webp" required></label><button class="btn">Adicionar parceiro</button></form>
     <p role="status" aria-live="polite" class="msg" id="design-msg"></p></section>
+  <section class="card" id="comunicados"><h3><span>Comunicados e promoções</span><small class="note">E-mail para as contas cadastradas, com o visual GameZoney e "Cancelar inscrição".</small></h3>
+    <div class="camp-grid">
+      <form id="camp-form" class="camp-form">
+        <label>Assunto do e-mail<input name="subject" required maxlength="150" placeholder="Ex.: Black Friday GameZoney: licença vitalícia por R$ 89,90"></label>
+        <label>Título em destaque (opcional)<input name="title" maxlength="150" placeholder="Ex.: Oferta por tempo limitado"></label>
+        <label>Mensagem<textarea name="body" required maxlength="8000" rows="9" placeholder="Olá, {nome}!&#10;&#10;Escreva o comunicado aqui. Deixe uma linha em branco entre os parágrafos."></textarea></label>
+        <p class="note" style="margin:-4px 0 4px">{nome} vira o primeiro nome de cada cliente. Links (https://…) ficam clicáveis.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><label style="flex:1;min-width:160px">Texto do botão (opcional)<input name="buttonLabel" maxlength="60" placeholder="Ex.: Garantir minha licença"></label><label style="flex:2;min-width:200px">Link do botão<input name="buttonUrl" maxlength="500" placeholder="https://gamezoney.com/conta#comprar"></label></div>
+        <label>Banner (opcional: .png, .jpg ou .webp até 3 MB)<input name="banner" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <p class="note hidden" id="camp-banner-note">Banner pronto. <button type="button" class="btn small ghost" id="camp-banner-remove">Tirar banner</button></p>
+        <fieldset class="camp-aud"><legend>Quem recebe</legend>
+          <label><input type="radio" name="audience" value="all" checked> Todos os cadastrados (<b id="aud-all">0</b>)</label>
+          <label><input type="radio" name="audience" value="verified"> Só e-mails confirmados (<b id="aud-verified">0</b>)</label>
+          <p class="note" id="aud-note"></p></fieldset>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="camp-preview">Ver prévia</button><button type="button" class="btn ghost" id="camp-test">Enviar teste para mim</button><button class="btn" id="camp-send">Enviar comunicado</button></div>
+        <p role="status" aria-live="polite" class="msg" id="camp-msg"></p>
+      </form>
+      <div class="camp-preview"><p class="note" style="margin:0 0 6px">Prévia do e-mail</p><iframe id="camp-frame" title="Prévia do e-mail" sandbox></iframe></div>
+    </div>
+    <h4 style="margin:22px 0 6px">Enviados</h4><div id="camp-list"></div></section>
   <section class="card" id="chat"><h3><span>Chat ao vivo</span><small class="note">Enquanto esta página está aberta, os visitantes veem você como <b style="color:var(--green)">online</b>.</small></h3>
     <div class="admin-chat"><div class="chat-list" id="chat-list"></div>
       <div class="chat-pane"><div class="chat-head" id="chat-head"><span class="note">Escolha uma conversa.</span></div><div class="chat-log" id="admin-log"></div>
@@ -47,8 +67,8 @@
   <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
   <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>
 </div></main>
-<script src="/site.js?v=20261106-17"></script>
-<script src="/premium.js?v=20261106-17"></script>
-<script src="/admin.js"></script>
+<script src="/site.js?v=20261106-18"></script>
+<script src="/premium.js?v=20261106-18"></script>
+<script src="/admin.js?v=20261106-18"></script>
 </body>
 </html>

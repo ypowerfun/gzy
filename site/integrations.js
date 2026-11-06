@@ -85,9 +85,11 @@ function mailer(env, log = console) {
   }
   return {
     enabled: !!transport,
-    async send(to, subject, text) {
+    // 1.8: todo e-mail vai com o visual GameZoney (HTML) + o texto simples; opts.html vem pronto do modelo (email-template.js)
+    async send(to, subject, text, opts = {}) {
       if (!transport) { log.log(`[e-mail não enviado: SMTP não configurado] para ${to}: ${subject}`); return false; }
-      try { await transport.sendMail({from: env.MAIL_FROM || env.SMTP_USER, to, subject, text}); return true; }
+      const html = opts.html || require('./email-template').fromText(text, env.SITE_URL);
+      try { await transport.sendMail({from: env.MAIL_FROM || env.SMTP_USER, to, subject, text, html, headers: opts.headers || undefined}); return true; }
       catch (e) { log.error('Falha ao enviar e-mail:', e.message); return false; }
     }
   };

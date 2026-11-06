@@ -65,6 +65,8 @@ function createApp(options = {}) {
       'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
     // 1.3: sem includeSubDomains (mail. e webmail. continuam na HostGator/Titan)
     if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000');
+    // 1.8: a logo e as imagens do design/comunicados aparecem dentro dos e-mails (Outlook, Hotmail, Gmail): só elas saem do 'same-origin'
+    if (req.method === 'GET' && (req.path === '/logo-gamezoney.png' || req.path.startsWith('/media/design/'))) res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     if (req.path.startsWith('/api')) res.set('Cache-Control', 'no-store');
     next();
   });
@@ -82,7 +84,7 @@ function createApp(options = {}) {
   // 1.3: limite geral da API por IP (abuso/robôs)
   app.use('/api', limit('api', 600, 60000));
   // 1.3: POST que usa a sessão só vale vindo do próprio site (Origin/Referer); aviso do Mercado Pago, ativação e feedback dos servidores não usam sessão
-  const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback']);
+  const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback', '/api/unsubscribe']);
   const siteOrigin = new URL(SITE).origin;
   app.use((req, res, next) => {
     if (req.method !== 'POST' || MACHINE.has(req.path)) return next();
@@ -116,7 +118,10 @@ function createApp(options = {}) {
   const api = fn => (req, res) => Promise.resolve().then(() => fn(req, res)).then(r => { if (!res.headersSent) res.json(r ?? {ok: true}); })
     .catch(e => { if (!(e instanceof HttpError)) log.error(e); if (!res.headersSent) res.status(e.status || 500).json(e instanceof HttpError ? {...(e.extra || {}), error: e.message} : {error: 'Erro interno. Tente de novo.'}); });
 
-  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', emailVerified: !!u.email_verified, google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
+  // 1.8: e-mails com o visual GameZoney (email-template.js): texto simples + HTML no mesmo envio
+  const tpl = require('./email-template');
+  const notify = (to, subject, o) => { const m = {site: SITE, subject, ...o}; return mail.send(to, subject, tpl.renderText(m), {html: tpl.renderEmail(m), ...(o.mailOpts || {})}); };
+  const publicUser = u => u && ({id: u.id, email: u.email, name: u.name, phone: u.phone, organization: u.organization || '', marketing: !u.marketing_opt_out, emailVerified: !!u.email_verified, google: !!u.google_sub, hasPassword: !!u.password_hash, createdAt: u.created_at});
   function createUser({email, name, password, googleSub}) {
     const u = {id: uid(), email, name, password_hash: password ? hashPassword(password) : null, google_sub: googleSub || null, created_at: Date.now()};
     db.run('INSERT INTO users(id,email,name,password_hash,google_sub,created_at,email_verified) VALUES(?,?,?,?,?,?,?)', u.id, u.email, u.name, u.password_hash, u.google_sub, u.created_at, googleSub ? 1 : 0);
@@ -128,7 +133,8 @@ function createApp(options = {}) {
   async function sendVerification(user) {
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
-    return mail.send(user.email, 'GameZoney: confirme seu e-mail', `Olá, ${user.name}!\n\nConfirme o seu e-mail abrindo o link abaixo (vale por 7 dias):\n${SITE}/api/auth/verify?t=${token}\n\nSe não foi você, ignore este e-mail.`);
+    return notify(user.email, 'GameZoney: confirme seu e-mail', {preheader: 'Confirme seu e-mail para usar sua conta GameZoney.', lines: [`Olá, ${user.name}!`, 'Confirme o seu endereço de e-mail para usar todos os recursos da sua conta GameZoney.'],
+      title: 'Confirme seu e-mail', button: {label: 'Confirmar e-mail', url: `${SITE}/api/auth/verify?t=${token}`}, codeNote: 'O link vale por 7 dias.', after: ['Se não foi você que criou a conta, ignore este e-mail.']});
   }
   app.get('/api/auth/verify', (req, res) => {
     const row = db.get('SELECT * FROM verifications WHERE token_hash=? AND expires_at>?', sha(String(req.query.t || '')), Date.now());
@@ -154,7 +160,8 @@ function createApp(options = {}) {
     // 1.3: boas-vindas + link de confirmação do e-mail
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
-    mail.send(email, 'Bem-vindo ao GameZoney', `Olá, ${name}!\n\nSua conta no GameZoney foi criada. Confirme o seu e-mail abrindo o link abaixo:\n${SITE}/api/auth/verify?t=${token}\n\nBaixe o sistema e use grátis por 30 dias: ${SITE}/conta\n\nEquipe GameZoney`);
+    notify(email, 'Bem-vindo ao GameZoney', {preheader: 'Sua conta foi criada. Confirme seu e-mail e teste grátis por 30 dias.', lines: [`Olá, ${name}!`, 'Sua conta no GameZoney foi criada. Confirme o seu e-mail para começar.'],
+      title: 'Confirme seu e-mail', button: {label: 'Confirmar e-mail', url: `${SITE}/api/auth/verify?t=${token}`}, after: [`Depois, baixe o sistema e use grátis por 30 dias em Minha conta: ${SITE}/conta`]});
     return {user: publicUser(user)};
   }));
   // 1.3: no máximo 10 senhas erradas por conta a cada 15 min (contra tentativa de adivinhar a senha de vários lugares)
@@ -181,7 +188,8 @@ function createApp(options = {}) {
     if (user) {
       const token = crypto.randomBytes(32).toString('hex');
       db.run('INSERT INTO resets(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 3600000);
-      await mail.send(email, 'GameZoney: redefinir senha', `Olá, ${user.name}!\n\nPara criar uma nova senha, abra o link abaixo (vale por 1 hora):\n${SITE}/redefinir.html?t=${token}\n\nSe não foi você, ignore este e-mail.`);
+      await notify(email, 'GameZoney: redefinir senha', {preheader: 'Crie uma nova senha para sua conta GameZoney.', lines: [`Olá, ${user.name}!`, 'Recebemos um pedido para criar uma nova senha na sua conta GameZoney.'],
+        title: 'Criar nova senha', button: {label: 'Criar nova senha', url: `${SITE}/redefinir.html?t=${token}`}, codeNote: 'O link vale por 1 hora.', after: ['Se não foi você, ignore este e-mail: sua senha continua a mesma.']});
     }
     return {ok: true, mail: mail.enabled};
   }));
@@ -201,7 +209,9 @@ function createApp(options = {}) {
   app.post('/api/profile', jsonOnly, api(req => {
     const u = needUser(req), name = str(req.body.name, 100), phone = str(req.body.phone, 30), organization = str(req.body.organization, 100);
     if (!name) fail(400, 'Informe seu nome.');
-    db.run('UPDATE users SET name=?, phone=?, organization=? WHERE id=?', name, phone, organization, u.id); return {ok: true};
+    db.run('UPDATE users SET name=?, phone=?, organization=? WHERE id=?', name, phone, organization, u.id);
+    if (typeof req.body.marketing === 'boolean') db.run('UPDATE users SET marketing_opt_out=? WHERE id=?', req.body.marketing ? 0 : 1, u.id); // 1.8: receber comunicados e promoções
+    return {ok: true};
   }));
 
   // ---------- Google ----------
@@ -254,7 +264,8 @@ function createApp(options = {}) {
       db.run('INSERT INTO license_transfers(license_id,at,how,from_install,from_machine,to_install,to_machine,ip) VALUES(?,?,?,?,?,?,?,?)', lic.id, Date.now(), 'servidor', lic.install_id, lic.machine || '', installId, machine, req.ip || '');
       db.run('UPDATE licenses SET install_id=NULL, machine=NULL, activated_at=NULL, releases=releases+1 WHERE id=?', lic.id);
       db.audit(owner.email, 'troca', `${key} trocada de ${lic.machine || '?'} para ${machine || '?'}`);
-      Promise.resolve(mail.send(owner.email, 'GameZoney: licença ativada em outro computador', `Olá, ${owner.name}!\n\nSua licença ${key.slice(0, 7)}-****-****-${key.slice(-4)} foi ativada no computador "${machine || 'sem nome'}" e deixou de valer no computador "${lic.machine || 'sem nome'}".\n\nSe não foi você, troque a senha da sua conta em ${SITE}/entrar.html e fale com o suporte.`)).catch(() => {});
+      Promise.resolve(notify(owner.email, 'GameZoney: licença ativada em outro computador', {preheader: 'Sua licença foi ativada em outro computador.', lines: [`Olá, ${owner.name}!`, `Sua licença foi ativada no computador "${machine || 'sem nome'}" e deixou de valer no computador "${lic.machine || 'sem nome'}".`],
+        title: 'Licença', code: `${key.slice(0, 7)}-****-****-${key.slice(-4)}`, after: ['Se não foi você, troque a senha da sua conta agora e fale com o suporte.'], button: {label: 'Trocar minha senha', url: `${SITE}/entrar.html`}})).catch(() => {});
       lic.install_id = null;
     }
     if (!lic.install_id) {
@@ -287,7 +298,9 @@ function createApp(options = {}) {
     if (!result) return;
     const user = db.get('SELECT * FROM users WHERE id=?', result.o.user_id);
     db.audit(user.email, 'compra', `${money(result.o.amount_cents)} • ${result.lic.key}`);
-    mail.send(user.email, 'GameZoney: sua licença vitalícia', `Olá, ${user.name}!\n\nPagamento confirmado. Obrigado por escolher o GameZoney!\n\nSua chave de licença (vitalícia, nunca expira):\n\n    ${result.lic.key}\n\nComo ativar: no GameZoney Servidor, abra Configuração › Licença › Ativar licença e digite a chave.\nSuas chaves e downloads: ${SITE}/conta\n\nSuporte: ${SITE}/conta#suporte\n\nEquipe GameZoney`);
+    notify(user.email, 'GameZoney: sua licença vitalícia', {preheader: 'Pagamento confirmado. Aqui está a sua chave de licença.', lines: [`Olá, ${user.name}!`, 'Pagamento confirmado. Obrigado por escolher o GameZoney!'],
+      title: 'Sua chave de licença', code: result.lic.key, codeNote: 'Licença vitalícia: nunca expira.', button: {label: 'Minhas licenças e downloads', url: `${SITE}/conta#licencas`},
+      after: ['Como ativar: no GameZoney Servidor, abra Configuração › Licença › Ativar licença e digite a chave.', `Precisa de ajuda? ${SITE}/conta#suporte`]});
   }
   const approved = (o, p) => p.status === 'approved' && p.orderId === o.id && p.amountCents >= o.amount_cents;
   async function refreshOrder(o) {
@@ -418,7 +431,8 @@ function createApp(options = {}) {
     const user = db.get('SELECT * FROM users WHERE email=?', email) || fail(404, 'Nenhuma conta com este e-mail. Peça para o cliente criar a conta primeiro.');
     const lic = issueLicense(user.id, null, note || 'Emitida pelo administrador');
     db.audit(req.user.email, 'licenca', `${lic.key} emitida para ${email}`);
-    mail.send(email, 'GameZoney: sua licença', `Olá, ${user.name}!\n\nSua chave de licença do GameZoney:\n\n    ${lic.key}\n\nAtive em Configuração › Licença no GameZoney Servidor.\n${SITE}/conta`);
+    notify(email, 'GameZoney: sua licença', {preheader: 'Sua chave de licença do GameZoney.', lines: [`Olá, ${user.name}!`], title: 'Sua chave de licença', code: lic.key, codeNote: 'Licença vitalícia: nunca expira.',
+      button: {label: 'Minhas licenças', url: `${SITE}/conta#licencas`}, after: ['Ative em Configuração › Licença no GameZoney Servidor.']});
     return {ok: true, key: lic.key};
   }));
   app.post('/api/admin/licenses/:id', jsonOnly, api(req => {
@@ -433,7 +447,7 @@ function createApp(options = {}) {
     const reply = str(req.body.reply, 4000), status = req.body.status === 'open' ? 'open' : 'closed';
     db.run('UPDATE tickets SET reply=?, status=?, replied_at=? WHERE id=?', reply || t.reply, status, Date.now(), t.id);
     // o envio do e-mail não derruba o pedido se falhar; o cliente também vê a resposta em Minha conta › Suporte
-    const emailed = reply && reply !== t.reply ? await Promise.resolve(mail.send(t.email, 'GameZoney suporte: ' + t.subject, `Olá, ${t.name}!\n\n${reply}\n\nSeus chamados: ${SITE}/conta#suporte`)).then(r => r !== false, () => false) : undefined;
+    const emailed = reply && reply !== t.reply ? await Promise.resolve(notify(t.email, 'GameZoney suporte: ' + t.subject, {preheader: 'Resposta do suporte GameZoney.', lines: [`Olá, ${t.name}!`, reply], button: {label: 'Ver meus chamados', url: `${SITE}/conta#suporte`}})).then(r => r !== false, () => false) : undefined;
     db.audit(req.user.email, 'chamado', `${t.subject} (${t.email}): ${status === 'open' ? 'reaberto' : 'respondido e fechado'}`);
     return {ok: true, emailed};
   }));
@@ -442,6 +456,9 @@ function createApp(options = {}) {
   const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
   // 1.7: design do site (editor visual) e parceiros do rodapé
   require('./design')(app, {db, needAdmin, jsonOnly, api, fail, str, dataDir});
+  // 1.8: comunicados e promoções por e-mail (fila) e cancelar inscrição
+  const campaigns = require('./campaigns')(app, {db, needAdmin, jsonOnly, api, fail, str, uid, mail, SITE, env, log, intervalMs: options.campaignIntervalMs});
+  app.locals.campaignTick = campaigns.tick;
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
   app.use('/img', (req, res, next) => { // 1.4: vale para todas as imagens do site (capturas e foto do topo)
@@ -475,7 +492,7 @@ function createApp(options = {}) {
     if (req.path.startsWith('/api')) return res.status(status).json({error: status === 413 ? 'Arquivo grande demais.' : status < 500 ? 'Requisição inválida.' : 'Erro interno. Tente de novo.'});
     res.status(status === 404 ? 404 : status).sendFile(path.join(__dirname, 'public', '404.html'));
   });
-  app.locals.close = () => { clearInterval(sweep); db.close(); };
+  app.locals.close = () => { clearInterval(sweep); campaigns.stop(); db.close(); };
   return app;
 }
 

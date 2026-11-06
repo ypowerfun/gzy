@@ -127,7 +127,8 @@ module.exports = function community(app, ctx) {
       db.run('INSERT INTO chat_messages(chat_id,sender,text,at) VALUES(?,?,?,?)', c.id, 'admin', text, now);
       db.run("UPDATE chats SET last_at=?, unread_user=unread_user+1, status='open' WHERE id=?", now, c.id);
       // se a pessoa saiu do site, a resposta também vai por e-mail
-      if (req.body.email) mail.send(c.email, 'GameZoney: resposta da sua conversa', `Olá, ${c.name}!\n\n${text}\n\nContinue a conversa em ${SITE} (botão Fale conosco).`);
+      if (req.body.email) { const tpl = require('./email-template'), m = {site: SITE, preheader: 'Resposta da equipe GameZoney.', lines: [`Olá, ${c.name}!`, text], button: {label: 'Continuar a conversa', url: `${SITE}/atendimento.html`}};
+        mail.send(c.email, 'GameZoney: resposta da sua conversa', tpl.renderText(m), {html: tpl.renderEmail(m)}); }
     }
     if (['open', 'closed'].includes(req.body.status)) db.run('UPDATE chats SET status=? WHERE id=?', req.body.status, c.id);
     return {messages: messages(c.id, req.body.after)};

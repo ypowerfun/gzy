@@ -57,6 +57,11 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
   db.exec("CREATE TABLE IF NOT EXISTS license_transfers(id INTEGER PRIMARY KEY AUTOINCREMENT, license_id TEXT NOT NULL, at INTEGER NOT NULL, how TEXT NOT NULL, from_install TEXT, from_machine TEXT, to_install TEXT, to_machine TEXT, ip TEXT)");
   db.exec("CREATE INDEX IF NOT EXISTS license_transfers_lic ON license_transfers(license_id, at)");
   db.exec("CREATE TABLE IF NOT EXISTS verifications(token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL)");
+  // 1.8: comunicados e promoções por e-mail (envio em fila, um por pessoa) e quem não quer receber
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'marketing_opt_out')) db.exec("ALTER TABLE users ADD COLUMN marketing_opt_out INTEGER NOT NULL DEFAULT 0");
+  db.exec("CREATE TABLE IF NOT EXISTS campaigns(id TEXT PRIMARY KEY, subject TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL, button_label TEXT NOT NULL DEFAULT '', button_url TEXT NOT NULL DEFAULT '', image TEXT NOT NULL DEFAULT '', audience TEXT NOT NULL, status TEXT NOT NULL, total INTEGER NOT NULL DEFAULT 0, sent INTEGER NOT NULL DEFAULT 0, failed INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, created_by TEXT NOT NULL, finished_at INTEGER)");
+  db.exec("CREATE TABLE IF NOT EXISTS campaign_recipients(campaign_id TEXT NOT NULL, user_id TEXT NOT NULL, email TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', at INTEGER, PRIMARY KEY(campaign_id, user_id))");
+  db.exec("CREATE INDEX IF NOT EXISTS campaign_recipients_status ON campaign_recipients(status, at)");
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {
