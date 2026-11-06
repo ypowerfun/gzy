@@ -19,7 +19,8 @@ test('3.0.68: instalador do servidor leva o WebView2 do painel e o iniciador usa
  assert(/menu\.Items\.Add\("Abrir GameZoney",null,\(s,e\)=>ShowPanel\(\)\)/.test(launcher),'menu do ícone abre a janela própria');
  assert(!launcher.includes('menu.Items.Add("Abrir no navegador"')&&!launcher.includes('menu.Items.Add("Abrir pasta de dados"'),'1.0.5: menu do ícone sem Abrir no navegador e sem Abrir pasta de dados');
  assert(launcher.includes('new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel)'),'reserva: sem WebView2 o painel abre no Edge/navegador');
- assert(launcher.includes('if(!silent&&!selftest&&!PanelHost.SignalRunning(port))OpenPanel('),'segunda abertura avisa o servidor aberto');
+ assert(launcher.includes('shown=PanelHost.SignalRunning(port)')&&launcher.includes('if(!shown)OpenPanel('),'segunda abertura avisa o servidor aberto (1.0.7: espera a primeira ficar pronta antes de abrir o navegador)');
+ assert(launcher.includes('Splash.Open()')&&launcher.includes('Splash.Close()'),'1.0.7: janela Iniciando o servidor na abertura');
  assert(/FormClosing\+=\(s,e\)=>\{if\(e\.CloseReason==CloseReason\.UserClosing\)\{e\.Cancel=true;Hide\(\)/.test(launcher),'fechar a janela só esconde o painel (servidor continua)');
  assert(launcher.includes('settings.AreDevToolsEnabled=false'),'ferramentas de desenvolvedor desligadas');
  assert(!/GZ_DATA_DIR[^;]*painel|Path\.Combine\(data,"painel/.test(launcher),'a janela do painel não usa a pasta de dados do servidor');
