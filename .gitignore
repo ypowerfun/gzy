@@ -17,3 +17,6 @@ pairing/
 *.sqlite-wal
 *.sqlite-shm
 servidor/tools/npm-cache/
+# Zips de entrega gerados com git archive (não vão para o repositório)
+gamezoney-site.zip
+gamezoney-codigo-fonte.zip
