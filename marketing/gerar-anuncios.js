@@ -22,8 +22,8 @@ const frame = (img, w, rot = -3) => `<div style="width:${w}px;border-radius:18px
 const PECAS = {
   // Instagram/Facebook feed 4:5
   'feed-1080x1350-recursos': [1080, 1350, `<div style="position:absolute;inset:0;padding:70px 60px;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:360px"><div style="margin-top:44px;font-size:96px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">LAN HOUSE</span></div>
-    <div style="margin-top:14px;font-size:44px;font-weight:600;color:#e7eaf0">e Arena Gamer</div>
+    <img src="${logo}" style="width:360px"><div style="margin-top:44px;font-size:96px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">ARENA GAMER</span></div>
+    <div style="margin-top:14px;font-size:44px;font-weight:600;color:#e7eaf0">Lan Houses e Cyber cafés</div>
     <div style="margin-top:46px">${frame(shot('painel'), 760)}</div>
     <div style="position:absolute;bottom:70px;left:0;right:0">${tiles(TILES, 220)}</div></div>`],
   'feed-1080x1350-pc-trava': [1080, 1350, `<div style="position:absolute;inset:0;padding:80px 70px">
@@ -33,20 +33,21 @@ const PECAS = {
     <div style="position:absolute;bottom:80px;left:70px;right:70px;display:flex;align-items:center;justify-content:space-between"><div style="padding:30px 46px;border-radius:18px;background:${GOLD};color:#141008;font-size:44px;font-weight:900">Teste grátis 30 dias</div><div style="font-size:40px;font-weight:800">gamezoney.com</div></div></div>`],
   // Stories / Reels / Status do WhatsApp 9:16 (topo e base livres para os botões do app)
   'story-1080x1920': [1080, 1920, `<div style="position:absolute;inset:0;padding:260px 60px 0;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:380px"><div style="margin-top:50px;font-size:108px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">LAN HOUSE</span></div>
-    <div style="margin-top:16px;font-size:48px;font-weight:600;color:#e7eaf0">e Arena Gamer</div>
+    <img src="${logo}" style="width:380px"><div style="margin-top:50px;font-size:108px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">ARENA GAMER</span></div>
+    <div style="margin-top:16px;font-size:48px;font-weight:600;color:#e7eaf0">Lan Houses e Cyber cafés</div>
     <div style="margin-top:60px">${frame(shot('painel'), 860, -2)}</div>
     <div style="margin-top:70px">${tiles(TILES, 225)}</div>
     <div style="margin-top:60px;padding:30px 60px;border-radius:20px;background:${GOLD};color:#141008;font-size:50px;font-weight:900">Teste grátis · gamezoney.com</div></div>`],
   // Facebook/Google Display quadrado
   'quadrado-1080x1080': [1080, 1080, `<div style="position:absolute;inset:0;padding:64px 60px;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:330px"><div style="margin-top:40px;font-size:92px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">LAN HOUSE</span></div>
-    <div style="margin-top:14px;font-size:42px;font-weight:600;color:#e7eaf0">PCs, consoles, caixa e fidelidade</div>
+    <img src="${logo}" style="width:330px"><div style="margin-top:40px;font-size:92px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">SISTEMA PARA<br><span class="g">ARENA GAMER</span></div>
+    <div style="margin-top:14px;font-size:42px;font-weight:600;color:#e7eaf0">Lan Houses e Cyber cafés</div>
     <div style="position:absolute;bottom:64px;left:0;right:0">${tiles(TILES, 215)}</div></div>`],
   // Google Display / link do Facebook 1,91:1
   'paisagem-1200x628': [1200, 628, `<div style="position:absolute;inset:0;padding:50px 56px">
-    <img src="${logo}" style="width:250px"><div style="margin-top:30px;font-size:70px;font-weight:900;font-style:italic;line-height:.98;letter-spacing:-1.5px">SISTEMA PARA<br><span class="g">LAN HOUSE</span></div>
-    <div style="margin-top:14px;font-size:30px;color:#e7eaf0;max-width:560px">PCs, consoles, recargas, PDV, caixa e fidelidade em um só sistema.</div>
+    <img src="${logo}" style="width:250px"><div style="margin-top:30px;font-size:70px;font-weight:900;font-style:italic;line-height:.98;letter-spacing:-1.5px">SISTEMA PARA<br><span class="g">ARENA GAMER</span></div>
+    <div style="margin-top:10px;font-size:34px;font-weight:600;color:#fff">Lan Houses e Cyber cafés</div>
+    <div style="margin-top:12px;font-size:26px;color:#e7eaf0;max-width:560px">PCs, consoles, recargas, PDV, caixa e fidelidade em um só sistema.</div>
     <div style="margin-top:28px;display:inline-block;padding:16px 30px;border-radius:12px;background:${GOLD};color:#141008;font-size:28px;font-weight:900">Teste grátis 30 dias</div>
     <div style="position:absolute;right:40px;top:90px">${frame(shot('painel'), 500, -3)}</div></div>`]
 };
