@@ -35,7 +35,7 @@ const SEO = {
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const urlOf = (lang, page) => (lang === 'pt' ? '' : '/' + lang) + '/' + (page === 'index' ? '' : page + '.html');
 
-module.exports = function seo(app, {publicDir, SITE, plans, extraUrls}) {
+module.exports = function seo(app, {publicDir, SITE, plans}) {
   const cache = new Map();
   const read = file => { const st = fs.statSync(file), c = cache.get(file); if (c && c.mtime === st.mtimeMs) return c.html; const html = fs.readFileSync(file, 'utf8'); cache.set(file, {mtime: st.mtimeMs, html}); return html; };
   function structured(lang) {
@@ -78,8 +78,6 @@ module.exports = function seo(app, {publicDir, SITE, plans, extraUrls}) {
   app.get('/sitemap.xml', (req, res) => {
     const mod = p => { try { return new Date(fs.statSync(path.join(publicDir, p + '.html')).mtimeMs).toISOString().slice(0, 10); } catch { return new Date().toISOString().slice(0, 10); } };
     const urls = PAGES.flatMap(p => LANGS.map(l => `<url><loc>${SITE + urlOf(l, p)}</loc><lastmod>${mod(p)}</lastmod><changefreq>${p === 'index' || p === 'atualizacoes' ? 'weekly' : 'yearly'}</changefreq><priority>${p === 'index' ? '1.0' : p === 'atualizacoes' ? '0.7' : '0.3'}</priority>${LANGS.map(a => `<xhtml:link rel="alternate" hreflang="${HTML_LANG[a]}" href="${SITE + urlOf(a, p)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SITE + urlOf('pt', p)}"/></url>`));
-    // 2.7: artigos do blog (só em português por enquanto)
-    for (const u of (extraUrls ? extraUrls() : [])) urls.push(`<url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${new Date(u.lastmod).toISOString().slice(0, 10)}</lastmod>` : ''}<changefreq>monthly</changefreq><priority>0.6</priority></url>`);
     res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join('')}</urlset>\n`);
   });
   return {SEO, urlOf};

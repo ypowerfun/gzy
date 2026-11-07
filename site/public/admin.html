@@ -4,11 +4,11 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>Administração | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/site.css?v=20261107-1"><link rel="stylesheet" href="/premium.css?v=20261107-1">
+<link rel="stylesheet" href="/site.css?v=20261107-2"><link rel="stylesheet" href="/premium.css?v=20261107-2">
 </head>
 <body data-no-chat>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#planos">Planos</a><a href="#atualizacao">Atualização</a><a href="#oferta">Preço</a><a href="#blog">Blog</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
+<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#planos">Planos</a><a href="#atualizacao">Atualização</a><a href="#oferta">Preço</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
 <main id="conteudo" class="page"><div class="wrap dash">
   <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
   <div class="stats" id="stats"></div>
@@ -30,17 +30,6 @@
       <label style="flex:2;min-width:240px">Faixa do topo (vazio = sem faixa)<input name="banner" maxlength="60" placeholder="Black Friday GameZoney"></label>
       <button class="btn">Salvar</button>
     </form><p role="status" aria-live="polite" class="msg" id="offer-msg"></p></section>
-  <section class="card" id="blog"><h3><span>Blog</span><small class="note">Artigos para o Google trazer visitantes (gamezoney.com/blog). Publicado aparece na hora; rascunho só aqui.</small></h3>
-    <div id="blog-list"></div>
-    <form id="blog-form" style="margin-top:16px"><input type="hidden" name="id">
-      <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end"><label style="flex:3;min-width:260px">Título<input name="title" required maxlength="160" placeholder="Ex.: Como abrir uma lan house"></label><label style="flex:2;min-width:200px">Endereço (opcional)<input name="slug" maxlength="80" placeholder="gerado pelo título"></label><label style="flex:1;min-width:140px">Situação<select name="status"><option value="published">Publicado</option><option value="draft">Rascunho</option></select></label></div>
-      <label>Resumo (aparece no Google e na lista, até 300 caracteres)<textarea name="summary" rows="2" maxlength="300"></textarea></label>
-      <label>Texto<textarea name="body" rows="16" required placeholder="Parágrafos separados por uma linha em branco."></textarea></label>
-      <p class="note">Formato: <code>## Título</code>, <code>### Subtítulo</code>, linhas com <code>- item</code> ou <code>1. item</code>, <code>**negrito**</code> e <code>[texto do link](/#precos)</code>. Parágrafos separados por uma linha em branco.</p>
-      <div class="row" style="gap:10px;margin-top:10px"><button class="btn">Salvar artigo</button><button type="button" class="btn ghost small" id="blog-preview">Pré-visualizar</button><button type="button" class="btn ghost small" id="blog-new">Novo artigo</button></div>
-    </form>
-    <div class="blog-body card hidden" id="blog-preview-box" style="margin-top:12px"></div>
-    <p role="status" aria-live="polite" class="msg" id="blog-msg"></p></section>
   <section class="card" id="design"><h3><span>Design do site</span><small class="note">Edite textos, imagens, botões, tamanho e posição direto na página. O HTML original fica guardado: "Restaurar" volta ao original.</small></h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><a class="btn" href="/?design=1">Abrir editor na página inicial</a><a class="btn ghost small" href="/atendimento.html?design=1">Atendimento</a><a class="btn ghost small" href="/atualizacoes.html?design=1">Atualizações</a><a class="btn ghost small" href="/entrar.html?design=1">Entrar</a><a class="btn ghost small" href="/conta?design=1">Minha conta</a><a class="btn ghost small" href="/guia?design=1">Guia</a><a class="btn ghost small" href="/termos.html?design=1">Termos</a><a class="btn ghost small" href="/privacidade.html?design=1">Privacidade</a></div>
     <p class="note" style="margin-top:12px">Páginas com alterações:</p><div id="design-pages"></div>
@@ -87,8 +76,8 @@
   <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
   <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>
 </div></main>
-<script src="/site.js?v=20261107-1"></script>
-<script src="/premium.js?v=20261107-1"></script>
-<script src="/admin.js?v=20261107-1"></script>
+<script src="/site.js?v=20261107-2"></script>
+<script src="/premium.js?v=20261107-2"></script>
+<script src="/admin.js?v=20261107-2"></script>
 </body>
 </html>

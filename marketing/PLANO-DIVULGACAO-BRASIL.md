@@ -26,10 +26,10 @@ Ritmo: **3 vídeos curtos + 2 posts por semana**. Melhor horário para donos de 
 
 | Semana | Segunda | Quarta | Sexta | Extra |
 |---|---|---|---|---|
-| 1 | Reel 1 (tempo acaba e PC trava) | Post: "8 funções que o sistema precisa ter" (link do blog) | Reel 2 (recarga em 10 s) | Story: enquete "Você controla o tempo no papel?" |
-| 2 | Reel 3 (fechamento do caixa) | Post: carrossel "Quanto cobrar por hora" (link do blog) | Reel 4 (Corujão com medalhas) | Live curta mostrando o painel |
+| 1 | Reel 1 (tempo acaba e PC trava) | Post: carrossel "8 funções que o sistema precisa ter" | Reel 2 (recarga em 10 s) | Story: enquete "Você controla o tempo no papel?" |
+| 2 | Reel 3 (fechamento do caixa) | Post: carrossel "Quanto cobrar por hora" | Reel 4 (Corujão com medalhas) | Live curta mostrando o painel |
 | 3 | Reel 5 (console/TV controlado) | Post: depoimento de cliente | Reel 6 (queda de internet não derruba a sessão) | Story: bastidores |
-| 4 | Reel 7 (PDV da lanchonete) | Post: "Como abrir uma lan house" (link do blog) | Reel 8 (ranking dos clientes) | Sorteio de 1 mês grátis (regras na seção 4) |
+| 4 | Reel 7 (PDV da lanchonete) | Post: carrossel "Checklist para abrir uma lan house" | Reel 8 (ranking dos clientes) | Sorteio de 1 mês grátis (regras na seção 4) |
 
 ---
 
@@ -60,9 +60,9 @@ Regra de ouro: **o problema nos 2 primeiros segundos**, o GameZoney resolvendo, 
 > 🎮 Teste grátis por 30 dias: link na bio.
 > #lanhouse #arenagamer #lanhousebrasil #gamer #empreendedorismo #pcgamer #playstation #negociogamer #sistemaparalanhouse
 
-**Post do blog**
+**Post carrossel (dica)**
 > Quanto cobrar por hora na sua lan house? 💰
-> Fizemos um passo a passo com a conta certa: custos, ocupação e margem. Leia no nosso blog (link na bio) e salve este post para usar depois.
+> Arrasta para o lado 👉 o passo a passo com a conta certa: custos, ocupação e margem. Salve este post para usar depois e conheça o GameZoney pelo link na bio.
 
 **Sorteio (1 mês grátis)**
 > 🎁 Sorteio: 1 mês do plano Standard grátis para a sua arena!
@@ -75,7 +75,7 @@ Regra de ouro: **o problema nos 2 primeiros segundos**, o GameZoney resolvendo, 
 
 Procure por: "lan house", "donos de lan house", "arena gamer", "cyber café", "empreendedor gamer", "lan house [sua cidade/estado]". Leia as regras de cada grupo antes.
 
-**Primeiro contato (ajudar antes de vender)** — responda dúvidas de outros donos com dicas e o link do artigo do blog quando fizer sentido.
+**Primeiro contato (ajudar antes de vender)** — responda dúvidas de outros donos com dicas práticas; indique o GameZoney só quando fizer sentido.
 
 **Mensagem de apresentação (só onde for permitido)**
 > Boa tarde, pessoal! Sou da GameZoney, um sistema feito para lan house e arena gamer: controla o tempo de PCs e consoles, recargas, lanchonete, caixa e fidelidade. Quem quiser testar, são 30 dias grátis em gamezoney.com — e se tiverem qualquer dúvida sobre controle da arena, fico à disposição para ajudar aqui mesmo. 🎮
@@ -128,26 +128,7 @@ Revise os anúncios toda semana: pause palavras que gastam sem gerar cadastro.
 
 ---
 
-## 8. Próximos artigos do blog (um por semana, em /admin › Blog)
-
-1. Como aumentar o faturamento da lan house nas férias escolares
-2. Programa de fidelidade para arena gamer: como fazer o cliente voltar
-3. Lan house dá dinheiro? O que pesa no resultado do mês
-4. Como montar a rede de uma lan house (cabo, roteador e switch)
-5. Quantos PCs e consoles colocar para começar
-6. Como organizar um campeonato na sua arena gamer
-7. Como controlar o caixa da lan house e evitar diferença no fim do dia
-8. Lanchonete na arena gamer: o que vender e como controlar o estoque
-9. Locação de videogame por hora: como funciona e quanto cobrar
-10. Como divulgar sua lan house no Instagram
-11. Segurança nos PCs da lan house: como evitar que o cliente mexa no Windows
-12. Checklist de abertura e fechamento diário da arena
-
-Dica: cada artigo deve responder **uma pergunta** que o dono faria no Google, ter 600–1.200 palavras, subtítulos com `##`, e terminar com link para `/#precos`.
-
----
-
-## 9. Metas e acompanhamento (todo mês)
+## 8. Metas e acompanhamento (todo mês)
 
 | Indicador | Onde ver | Meta inicial (mês 1 → mês 3) |
 |---|---|---|
