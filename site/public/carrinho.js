@@ -28,6 +28,7 @@
     $('#sum-renew').textContent = `Renovação automática: ${money(v.total)} a cada ${annual ? '12 meses' : 'mês'}. Cancele quando quiser.`;
     $('#sum-economy').textContent = save ? `🎉 Você está economizando ${money(save)} hoje` : ''; $('#sum-economy').classList.toggle('hidden', !save);
     history.replaceState(null, '', `#${plan}-${period}`); void months;
+    if (window.gzTrack && (render.last !== plan + period)) { render.last = plan + period; gzTrack('checkout', {value: v.total / 100, plan: p.name + ' ' + period}); } // 2.8: anúncios
   }
   $('#cart-plan').onchange = e => { plan = e.target.value; closePay(); render(); };
   $('#cart-period').onchange = e => { period = e.target.value; closePay(); render(); };
@@ -46,6 +47,7 @@
   function done(r) {
     closePay(); $('#cart-continue').classList.add('hidden');
     const box = $('#cart-done'); box.classList.remove('hidden');
+    if (r.subscription && r.subscription.active && window.gzTrack && !done.sent) { done.sent = true; gzTrack('subscribe', {value: (r.subscription.amountCents || 0) / 100, plan: r.subscription.planName + ' ' + r.subscription.period, id: r.subscription.id}); } // 2.8: anúncios
     if (r.plan && r.subscription && r.subscription.active) box.innerHTML = `<h2>Plano ativado! 🎉</h2><p>O plano <b>${esc(r.subscription.planName)}</b> está ativo até <b>${new Date(r.plan.paidUntil).toLocaleDateString('pt-BR')}</b>. A renovação é automática no cartão.</p><p>No GameZoney Servidor, entre com o mesmo e-mail e senha do site para usar o plano.</p><a class="btn gold" href="/conta#comprar">Ir para Minha conta</a>`;
     else {
       box.innerHTML = '<h2>Assinatura criada</h2><p>Aguardando o Mercado Pago confirmar a primeira cobrança no cartão… (normalmente leva poucos segundos; você também recebe um e-mail).</p><a class="btn outline" href="/conta#comprar">Ir para Minha conta</a>';

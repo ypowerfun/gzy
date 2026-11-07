@@ -109,4 +109,7 @@ Suba os vídeos curtos (roteiros no plano) como **Shorts** com título com a pal
 | Ajuste | 14 dias | o mesmo, só nas peças e palavras que deram mais cadastros | idem |
 | Escala | depois | aumente 20% a cada 3 dias enquanto o custo por cadastro ficar bom | onde vender mais |
 
-Meça pelo número de **contas criadas** em /admin › Clientes e pelas **assinaturas** em /admin › Planos. Um próximo passo técnico possível é instalar o **Pixel da Meta** e a **tag do Google** no site para os anúncios aprenderem quem se cadastra (exige aviso de cookies, por causa da LGPD).
+Meça pelo número de **contas criadas** em /admin › Clientes e pelas **assinaturas** em /admin › Planos. O site já tem o **Pixel da Meta** e a **tag do Google** prontos (com aviso de cookies): cole os IDs em **/admin › Anúncios**.
+- **Pixel:** business.facebook.com › Gerenciador de Eventos › Conectar fontes de dados › Web › nome "GameZoney" › copie o número do Pixel.
+- **Google:** analytics.google.com › Administrador › Criar propriedade "GameZoney" › Fluxo de dados Web (gamezoney.com) › copie o `G-…`. No Google Ads: Metas › Conversões › Nova conversão › Site › "Inscrição" e "Compra" › copie o `AW-…/…` de cada uma.
+- Com o Pixel ligado, nos anúncios da Meta escolha o objetivo **Cadastros** (evento *CompleteRegistration*) em vez de Tráfego: a Meta passa a mostrar o anúncio para quem tem mais chance de se cadastrar.

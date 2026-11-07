@@ -28,7 +28,7 @@
     $('#orders').innerHTML = table(['Data', 'Cliente', 'Valor', 'Forma', 'Situação', 'Chave', ''], d.orders.map(o => `<tr><td>${fmtDate(o.createdAt)}</td><td>${esc(o.email)}</td><td>${money(o.amountCents)}</td><td>${o.provider === 'manual' ? 'PIX manual' : o.method === 'card' ? 'Cartão Mercado Pago' : 'PIX Mercado Pago'}</td><td><span class="pill ${(ST[o.status] || [])[1] || ''}">${(ST[o.status] || [o.status])[0]}</span><br><small class="note">${esc(o.note || '')}</small></td><td>${o.licenseKey ? `<span class="key" style="font-size:13px">${esc(o.licenseKey)}</span>` : '—'}</td><td>${o.status !== 'paid' ? `<button class="btn small" data-approve="${o.id}">Confirmar pagamento</button>` : ''}</td></tr>`));
     $('#licenses').innerHTML = table(['Chave', 'Cliente', 'Situação', 'Computador', ''], d.licenses.map(l => `<tr><td><span class="key" style="font-size:13px">${esc(l.key)}</span><br><small class="note">${fmtDate(l.createdAt)} ${esc(l.note || '')}</small></td><td>${esc(l.email)}</td><td>${l.status === 'active' ? (l.active ? '<span class="pill ok">Ativada</span>' : '<span class="pill wait">Não ativada</span>') : '<span class="pill bad">Bloqueada</span>'}</td><td>${esc(l.machine || '—')}<br><small class="note">${esc(l.installId)} ${l.releases ? '• trocas: ' + l.releases : ''} ${l.machines ? '• ' + l.machines + ' computador(es)' : ''}</small>${l.suspect ? `<br><span class="pill bad" title="3 ou mais trocas de computador em 30 dias">Suspeita de revenda (${l.recentTransfers} trocas em 30 dias)</span>` : ''}</td><td class="row">${l.active ? `<button class="btn small ghost" data-lic="${l.id}" data-op="release">Liberar</button>` : ''}<button class="btn small ${l.status === 'active' ? 'danger' : ''}" data-lic="${l.id}" data-op="${l.status === 'active' ? 'blocked' : 'active'}">${l.status === 'active' ? 'Bloquear' : 'Desbloquear'}</button></td></tr>`));
     renderTickets(d.tickets);
-    loadDesign(); loadCampaigns(); loadPlans(); loadUpdates();
+    loadDesign(); loadCampaigns(); loadPlans(); loadUpdates(); loadTracking();
     $('#users').innerHTML = table(['Nome', 'E-mail', 'Telefone', 'Login', 'Criado', 'Último acesso'], d.users.map(u => `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone)}</td><td>${u.google ? 'Google' : 'E-mail'}</td><td>${fmtDate(u.created_at)}</td><td>${fmtDate(u.last_login_at)}</td></tr>`));
     $('#feedbacks').innerHTML = table(['Recebido', 'Nome', 'E-mail', 'Comentário', 'Versão'], d.feedback.map(f => `<tr><td>${fmtDate(f.received_at)}</td><td>${esc(f.name)}</td><td>${esc(f.email)}</td><td style="white-space:pre-wrap">${esc(f.comment)}</td><td>${esc(f.server_version)}</td></tr>`));
     const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
@@ -55,6 +55,15 @@
   const reais = c => c ? (c / 100).toFixed(2).replace('.', ',') : '';
   const SUBST = {pending: 'wait', authorized: 'ok', granted: 'ok', paused: 'wait', cancelled: 'bad', failed: 'bad'};
   let plansLoaded = false;
+  // 2.8: Pixel da Meta e tag do Google
+  async function loadTracking() {
+    let d; try { d = await api('/api/admin/tracking'); } catch { return; } const t = d.tracking, f = $('#trk-form');
+    f.meta.value = t.meta; f.google.value = t.google.join(' '); f.googleSignup.value = t.googleSignup; f.googlePurchase.value = t.googlePurchase;
+    $('#trk-status').textContent = t.meta || t.google.length ? 'Ligado: ' + [t.meta ? 'Meta' : '', t.google.length ? 'Google' : ''].filter(Boolean).join(' + ') : 'Desligado';
+  }
+  $('#trk-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
+    try { await api('/api/admin/tracking', {meta: f.meta.value, google: f.google.value, googleSignup: f.googleSignup.value, googlePurchase: f.googlePurchase.value}); showMsg($('#trk-msg'), 'Salvo. Abra o site em outra aba, aceite os cookies e confira no Gerenciador de Eventos da Meta e no Google (Tempo real).', true); loadTracking(); }
+    catch (err) { showMsg($('#trk-msg'), err.message); } }); };
   async function loadPlans() {
     let d; try { d = await api('/api/admin/plans'); } catch { return; }
     $('#plans-stats').textContent = `${d.stats.activePlans} conta(s) com plano ativo • receita mensal recorrente aprox. ${money(d.stats.monthlyRevenueCents)}`;

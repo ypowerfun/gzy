@@ -1,6 +1,13 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "Usamos o cookie necessário para manter você conectado. Com a sua permissão (aviso de cookies), usamos também o Pixel da Meta e a tag do Google para medir e melhorar nossos anúncios; você pode mudar a escolha a qualquer momento em Preferências de cookies, no rodapé.":["We use the cookie needed to keep you signed in. With your permission (cookie notice), we also use the Meta Pixel and the Google tag to measure and improve our ads; you can change your choice anytime in Cookie preferences, in the footer.", "Usamos la cookie necesaria para mantener su sesión. Con su permiso (aviso de cookies), también usamos el Píxel de Meta y la etiqueta de Google para medir y mejorar nuestros anuncios; puede cambiar su elección en cualquier momento en Preferencias de cookies, en el pie de página."],
+  "Usamos cookies da Meta e do Google para medir e melhorar nossos anúncios. Você pode aceitar ou recusar; o site funciona igual.":["We use Meta and Google cookies to measure and improve our ads. You can accept or decline; the site works the same.", "Usamos cookies de Meta y Google para medir y mejorar nuestros anuncios. Puede aceptar o rechazar; el sitio funciona igual."],
+  "Aceitar":["Accept", "Aceptar"],
+  "Recusar":["Decline", "Rechazar"],
+  "Preferências de cookies":["Cookie preferences", "Preferencias de cookies"],
+  "Cookies":["Cookies", "Cookies"],
+  "Privacidade":["Privacy", "Privacidad"],
   "GameZoney | Sistema para Lan House e Arena Gamer: PCs, Consoles, Caixa e PDV":["GameZoney | LAN Center & Gaming Center Management Software: PCs, Consoles, POS", "GameZoney | Software para Cibercafé y Centro Gamer: PCs, Consolas, Caja y TPV"],
   "Atualizações | GameZoney – sistema para lan house":["Updates | GameZoney – LAN center software", "Actualizaciones | GameZoney – software para cibercafé"],
   "Atendimento | GameZoney":["Support | GameZoney", "Atención | GameZoney"],

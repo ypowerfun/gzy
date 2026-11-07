@@ -309,3 +309,7 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .chat-ended{padding:14px;text-align:center;font-size:13px;color:#d9c791;border-top:1px solid #2b313c}.chat-ended .btn{margin-top:10px}
 .grid.updates>.card:nth-child(n+4){display:none} /* 2.4: Atualizações mostra só os 3 cards mais recentes (o mais novo vai no topo da lista) */
 .mfa-card{max-width:560px;margin:10px auto}.mfa-card input[name=code]{font-size:28px;letter-spacing:10px;text-align:center;max-width:260px} /* 2.5: código do /admin */
+/* 2.8: aviso de cookies (Pixel da Meta / tag do Google) */
+.cookie-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:80;max-width:760px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:16px 18px;border-radius:12px;background:#121720;border:1px solid #625432;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.cookie-banner p{margin:0;flex:1 1 320px;font-size:14px;line-height:1.55;color:#dde2ea}.cookie-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cookie-actions a{color:#d9c791;font-size:13px}
+.cookie-prefs{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:4px 0}

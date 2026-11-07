@@ -48,6 +48,7 @@ function createApp(options = {}) {
   const dataDir = env.DATA_DIR || path.join(__dirname, 'data');
   const downloadsDir = env.DOWNLOADS_DIR || path.join(__dirname, 'downloads');
   const db = options.db || open(dataDir);
+  const track = require('./tracking')(db); // 2.8: Pixel da Meta e tag do Google (IDs em /admin › Anúncios)
   const log = options.log || console;
   const pay = integrations.mercadoPago(env, options.fetch);
   const gg = integrations.google(env, options.fetch);
@@ -62,10 +63,10 @@ function createApp(options = {}) {
   app.use((req, res, next) => {
     res.set({'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin',
-      'Content-Security-Policy': /^\/(conta|carrinho)(\.html)?\/?$/.test(req.path) && env.MP_PUBLIC_KEY
+      'Content-Security-Policy': track.csp(/^\/(conta|carrinho)(\.html)?\/?$/.test(req.path) && env.MP_PUBLIC_KEY
         // 1.9: só Minha conta (compra) carrega o quadro de pagamento do Mercado Pago (script, campos do cartão e imagens das bandeiras)
         ? "default-src 'self'; img-src 'self' data: https://*.mlstatic.com https://*.mercadopago.com https://*.mercadolibre.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.mlstatic.com; font-src 'self' data: https://fonts.gstatic.com https://*.mlstatic.com; script-src 'self' https://sdk.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com https://*.mercadolibre.com; connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com; frame-src https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"
-        : "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'"});
+        : "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; base-uri 'self'")}); // 2.8: + Meta/Google só com ID configurado
     // 1.3: sem includeSubDomains (mail. e webmail. continuam na HostGator/Titan)
     if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000');
     // 1.8: a logo e as imagens do design/comunicados aparecem dentro dos e-mails (Outlook, Hotmail, Gmail): só elas saem do 'same-origin'
@@ -103,6 +104,7 @@ function createApp(options = {}) {
   const cookieOf = (req, name) => String(req.headers.cookie || '').split(/;\s*/).map(c => c.split('=')).find(([k]) => k === name)?.[1];
   const setCookie = (res, name, value, maxAge) => res.append('Set-Cookie', `${name}=${value}; Path=/; HttpOnly; SameSite=Lax${secureCookie ? '; Secure' : ''}; Max-Age=${Math.floor(maxAge / 1000)}`);
   const ADMIN_MFA = env.ADMIN_MFA !== '0'; // 2.5: verificação em duas etapas do /admin (ADMIN_MFA=0 desliga, só para testes)
+  const markSignup = res => res.append('Set-Cookie', `gzev=signup; Path=/; SameSite=Lax; Max-Age=600${secureCookie ? '; Secure' : ''}`); // 2.8: evento de cadastro para os anúncios
   function login(res, user) {
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)', sha(token), user.id, Date.now() + 30 * DAY, Date.now());
@@ -153,7 +155,7 @@ function createApp(options = {}) {
 
   // ---------- configuração pública ----------
   app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), subscriptions: !!(pay.enabled && env.MP_PUBLIC_KEY), legacySales: env.LEGACY_SALES === '1', plans: plans.publicPlans(), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
-    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || ''}); });
+    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || '', tracking: track.publicConfig()}); });
 
   // ---------- contas ----------
   app.post('/api/auth/register', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
@@ -163,7 +165,7 @@ function createApp(options = {}) {
     if (password.length < 8 || password.length > 100) fail(400, 'A senha precisa ter de 8 a 100 caracteres.');
     if (db.get('SELECT id FROM users WHERE email=?', email)) fail(409, 'Já existe uma conta com este e-mail. Use Entrar (ou Esqueci a senha).');
     const user = createUser({email, name, password});
-    login(res, user);
+    login(res, user); markSignup(res);
     // 1.3: boas-vindas + link de confirmação do e-mail
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
@@ -269,7 +271,7 @@ function createApp(options = {}) {
       const p = await gg.profile(String(req.query.code || ''), redirectUri);
       let user = db.get('SELECT * FROM users WHERE google_sub=?', p.sub) || db.get('SELECT * FROM users WHERE email=?', p.email);
       if (user && !user.google_sub) db.run('UPDATE users SET google_sub=?, email_verified=1 WHERE id=?', p.sub, user.id);
-      if (!user) user = createUser({email: p.email, name: p.name || p.email.split('@')[0], googleSub: p.sub});
+      if (!user) { user = createUser({email: p.email, name: p.name || p.email.split('@')[0], googleSub: p.sub}); markSignup(res); }
       login(res, user);
       const next = nextB64 ? Buffer.from(nextB64, 'base64url').toString('utf8') : '/conta';
       res.redirect(/^\/(?!\/)[a-z0-9/._#-]*$/i.test(next) ? next : '/conta');
@@ -574,6 +576,7 @@ function createApp(options = {}) {
   app.get('/guia/modelo-clientes.csv', (req, res) => req.user ? res.download(path.join(privateDir, 'modelo-clientes.csv'), 'modelo-clientes.csv') : res.redirect('/entrar.html?next=/guia'));
 
   // ---------- páginas ----------
+  track.routes(app, {needAdmin, jsonOnly, api, fail});
   // 2.6: páginas públicas com SEO por idioma (/, /en/, /es/), robots.txt e sitemap.xml
   require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans});
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
