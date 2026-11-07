@@ -37,6 +37,9 @@ test('2.8: Pixel/Google desligados por padrão; admin configura IDs válidos; CS
   // páginas públicas carregam o script; o /admin não
   assert.match(await (await fetch(base + '/')).text(), /<script src="\/tracking.js\?v=/);
   assert.ok(!(await (await fetch(base + '/admin')).text()).includes('/tracking.js'));
+  // contêiner do Google Tag Manager também é aceito
+  assert.deepEqual((await dono('/api/admin/tracking', {google: 'GTM-5X7WMDC4'})).j.tracking.google, ['GTM-5X7WMDC4']);
+  await dono('/api/admin/tracking', {google: 'GTM-5X7"><'}, 400);
   // desligar de novo
   await dono('/api/admin/tracking', {meta: '', google: ''}); assert.equal((await anon('/api/config')).j.tracking, null); assert.ok(!/facebook/.test(await csp('/')));
 });

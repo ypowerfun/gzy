@@ -19,8 +19,12 @@
     }
     if (cfg.google && cfg.google.length) {
       window.dataLayer = window.dataLayer || []; window.gtag = function () { dataLayer.push(arguments); };
-      gtag('js', new Date()); for (const id of cfg.google) gtag('config', id);
-      addScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(cfg.google[0]));
+      gtag('js', new Date());
+      const gtm = cfg.google.filter(id => /^GTM-/.test(id)), tags = cfg.google.filter(id => !/^GTM-/.test(id));
+      // contêiner do Google Tag Manager (as tags ficam configuradas dentro dele)
+      for (const id of gtm) { dataLayer.push({'gtm.start': Date.now(), event: 'gtm.js'}); addScript('https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(id)); }
+      // tag do Google direta (G-/AW-/GT-)
+      if (tags.length) { for (const id of tags) gtag('config', id); addScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(tags[0])); }
     }
     // cadastro feito agora (o site deixa a marca "gzev=signup" por 10 min)
     if (/(^|;\s*)gzev=signup/.test(document.cookie)) { document.cookie = 'gzev=; Path=/; Max-Age=0; SameSite=Lax'; send('signup', {}); }
@@ -36,6 +40,8 @@
     if (window.gtag && cfg.google && cfg.google.length) {
       if (ev === 'signup') { gtag('event', 'sign_up', {method: 'site'}); if (cfg.googleSignup) gtag('event', 'conversion', {send_to: cfg.googleSignup}); }
       if (ev === 'checkout') gtag('event', 'begin_checkout', {...cur, items: [{item_name: d.plan || 'Plano'}]});
+      // com Tag Manager: também como evento do dataLayer (para os acionadores do GTM)
+      if (cfg.google.some(id => /^GTM-/.test(id))) dataLayer.push({event: {signup: 'sign_up', checkout: 'begin_checkout', subscribe: 'purchase'}[ev], value, currency: 'BRL', plan: d.plan || '', transaction_id: d.id || ''});
       if (ev === 'subscribe') { gtag('event', 'purchase', {...cur, transaction_id: d.id || '', items: [{item_name: d.plan || 'Plano'}]}); if (cfg.googlePurchase) gtag('event', 'conversion', {send_to: cfg.googlePurchase, ...cur, transaction_id: d.id || ''}); }
     }
   }

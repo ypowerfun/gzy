@@ -111,5 +111,5 @@ Suba os vídeos curtos (roteiros no plano) como **Shorts** com título com a pal
 
 Meça pelo número de **contas criadas** em /admin › Clientes e pelas **assinaturas** em /admin › Planos. O site já tem o **Pixel da Meta** e a **tag do Google** prontos (com aviso de cookies): cole os IDs em **/admin › Anúncios**.
 - **Pixel:** business.facebook.com › Gerenciador de Eventos › Conectar fontes de dados › Web › nome "GameZoney" › copie o número do Pixel.
-- **Google:** analytics.google.com › Administrador › Criar propriedade "GameZoney" › Fluxo de dados Web (gamezoney.com) › copie o `G-…`. No Google Ads: Metas › Conversões › Nova conversão › Site › "Inscrição" e "Compra" › copie o `AW-…/…` de cada uma.
+- **Google:** analytics.google.com › Administrador › Criar propriedade "GameZoney" › Fluxo de dados Web (gamezoney.com) › copie o `G-…`. Se o Google mostrar um código **GTM-…** (contêiner do Tag Manager), ele também serve: cole só ele (não cole o G- junto, senão as visitas contam em dobro). No Google Ads: Metas › Conversões › Nova conversão › Site › "Inscrição" e "Compra" › copie o `AW-…/…` de cada uma.
 - Com o Pixel ligado, nos anúncios da Meta escolha o objetivo **Cadastros** (evento *CompleteRegistration*) em vez de Tráfego: a Meta passa a mostrar o anúncio para quem tem mais chance de se cadastrar.
