@@ -575,7 +575,9 @@ function createApp(options = {}) {
 
   // ---------- páginas ----------
   // 2.6: páginas públicas com SEO por idioma (/, /en/, /es/), robots.txt e sitemap.xml
-  require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans});
+  // 2.7: blog (português) — /blog e /blog/<endereço>; artigos escritos em /admin › Blog
+  const blogPages = require('./blog')(app, {db, needAdmin, jsonOnly, api, fail, str, uid, SITE, publicDir: path.join(__dirname, 'public')});
+  require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans, extraUrls: blogPages.sitemap});
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
   app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
   app.get('/entrar', (req, res) => res.redirect('/entrar.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '')));
