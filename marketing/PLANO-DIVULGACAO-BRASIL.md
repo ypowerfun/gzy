@@ -87,6 +87,9 @@ Procure por: "lan house", "donos de lan house", "arena gamer", "cyber café", "e
 
 ## 6. Google Ads (quando quiser acelerar)
 
+Peças de imagem e passo a passo de anúncios patrocinados (Instagram, Facebook, WhatsApp, Google Performance Max): `ANUNCIOS-PASSO-A-PASSO.md` e pasta `anuncios/`.
+
+
 **Campanha:** Rede de Pesquisa, somente Brasil, idioma português. **Orçamento inicial:** R$ 20–30/dia por 30 dias, depois ajustar pelo custo por teste grátis.
 **Página de destino:** `https://gamezoney.com/#precos`. **Conversão:** criação de conta (página `/conta` depois do cadastro).
 
