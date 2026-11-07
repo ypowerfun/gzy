@@ -1,6 +1,11 @@
 'use strict';
 // Loaded before the existing translation runtime; Portuguese remains the default.
 Object.assign(window.GZ_SITE_DICT.exact, {
+  "GameZoney | Sistema para Lan House e Arena Gamer: PCs, Consoles, Caixa e PDV":["GameZoney | LAN Center & Gaming Center Management Software: PCs, Consoles, POS", "GameZoney | Software para Cibercafé y Centro Gamer: PCs, Consolas, Caja y TPV"],
+  "Atualizações | GameZoney – sistema para lan house":["Updates | GameZoney – LAN center software", "Actualizaciones | GameZoney – software para cibercafé"],
+  "Atendimento | GameZoney":["Support | GameZoney", "Atención | GameZoney"],
+  "Termos de uso | GameZoney":["Terms of use | GameZoney", "Términos de uso | GameZoney"],
+  "Política de privacidade | GameZoney":["Privacy policy | GameZoney", "Política de privacidad | GameZoney"],
   "PCs reconectam sozinhos":["PCs reconnect by themselves", "Los PC se reconectan solos"],
   "Se o servidor for reinstalado, cada PC pede autorização ao novo servidor sem interromper a sessão em andamento. Basta aprovar na recepção.":["If the server is reinstalled, each PC asks the new server for authorization without interrupting the running session. Just approve it at the front desk.", "Si el servidor se reinstala, cada PC pide autorización al nuevo servidor sin interrumpir la sesión en curso. Solo apruebe en la recepción."],
   "Cliente 1.0.6":["Client 1.0.6", "Cliente 1.0.6"],

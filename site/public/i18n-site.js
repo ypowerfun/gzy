@@ -16,6 +16,9 @@
     // padrão: Português (Brasil); muda só quando o visitante escolhe no rodapé (fica lembrado)
     if (LANGS.includes(saved)) lang = saved;
   } catch { }
+  // 2.6: em /en/ e /es/ o idioma vem do endereço (página feita para os buscadores e para quem chega de outro país); fica lembrado
+  const forced = document.documentElement.getAttribute('data-gz-lang');
+  if (LANGS.includes(forced)) { lang = forced; try { localStorage.setItem('gz-site-lang', lang); } catch { } }
   function lookup(key) {
     const col = COL[lang], row = exact.get(key); if (row && row[col]) return row[col];
     for (const p of patterns) { const m = p.re.exec(key); if (!m) continue; const out = p.out[col]; if (!out) return null;
@@ -76,6 +79,10 @@
     get lang() { return lang; }, t: translate,
     // 1.7: texto original em português de um elemento (o editor de design usa para reconhecer o elemento em qualquer idioma)
     ptOf(el) { let out = ''; const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { const r = texts.get(n); out += r && n.nodeValue === r.shown ? r.pt : n.nodeValue; } return out; },
-    set(next) { if (!LANGS.includes(next) || next === lang) return; lang = next; cache = new Map(); try { localStorage.setItem('gz-site-lang', lang); } catch { } apply(); }
+    set(next) { if (!LANGS.includes(next) || next === lang) return; lang = next; cache = new Map(); try { localStorage.setItem('gz-site-lang', lang); } catch { }
+      // 2.6: nas páginas /en/ e /es/ (e nas versões em português delas), trocar o idioma leva ao endereço daquele idioma
+      const m = /^\/(?:(en|es)\/)?((?:atualizacoes|atendimento|termos|privacidade)\.html)?$/.exec(location.pathname);
+      if (m && (m[1] || document.documentElement.hasAttribute('data-gz-lang') || next !== 'pt') && (m[1] || '') !== (next === 'pt' ? '' : next)) { location.href = (next === 'pt' ? '/' : '/' + next + '/') + (m[2] || '') + location.hash; return; }
+      apply(); }
   };
 })();

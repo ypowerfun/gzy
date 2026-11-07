@@ -69,7 +69,7 @@ function createApp(options = {}) {
     // 1.3: sem includeSubDomains (mail. e webmail. continuam na HostGator/Titan)
     if (secureCookie) res.set('Strict-Transport-Security', 'max-age=31536000');
     // 1.8: a logo e as imagens do design/comunicados aparecem dentro dos e-mails (Outlook, Hotmail, Gmail): só elas saem do 'same-origin'
-    if (req.method === 'GET' && (req.path === '/logo-gamezoney.png' || req.path.startsWith('/media/design/'))) res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    if (req.method === 'GET' && (req.path === '/logo-gamezoney.png' || req.path.startsWith('/media/design/') || req.path.startsWith('/share/'))) res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     if (req.path.startsWith('/api')) res.set('Cache-Control', 'no-store');
     next();
   });
@@ -574,6 +574,8 @@ function createApp(options = {}) {
   app.get('/guia/modelo-clientes.csv', (req, res) => req.user ? res.download(path.join(privateDir, 'modelo-clientes.csv'), 'modelo-clientes.csv') : res.redirect('/entrar.html?next=/guia'));
 
   // ---------- páginas ----------
+  // 2.6: páginas públicas com SEO por idioma (/, /en/, /es/), robots.txt e sitemap.xml
+  require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans});
   app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
   app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
   app.get('/entrar', (req, res) => res.redirect('/entrar.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '')));

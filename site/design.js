@@ -25,7 +25,7 @@ module.exports = function design(app, ctx) {
   const write = (key, value) => db.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', key, JSON.stringify(value));
   const designData = () => { const d = read('design'); return d && typeof d.pages === 'object' ? d : {pages: {}}; };
   const partners = () => Array.isArray(read('partners')) ? read('partners') : [];
-  const pageKey = p => { let k = String(p || '/').split(/[?#]/)[0].replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; if (k.length > 1) k = k.replace(/\/+$/, ''); return k; };
+  const pageKey = p => { let k = String(p || '/').split(/[?#]/)[0].replace(/^\/(en|es)(?=\/|$)/, '') /* 2.6: /en/ e /es/ usam o design da página em português */.replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; if (k.length > 1) k = k.replace(/\/+$/, ''); return k; };
 
   const int = (v, min, max) => Math.max(min, Math.min(max, Math.round(Number(v) || 0)));
   function box(v) {
