@@ -9,6 +9,8 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-story-1080x1920.jpg` | Stories, Reels, Status do WhatsApp |
 | `gamezoney-quadrado-1080x1080.jpg` | Facebook, Google (Display e Performance Max) |
 | `gamezoney-paisagem-1200x628.jpg` | Google (Display), link do Facebook |
+| `gamezoney-logo-quadrado-1200x1200.png` | Logotipo quadrado (Google Ads, foto do perfil) |
+| `gamezoney-logo-horizontal-1200x300.png` | Logotipo horizontal 4:1 (Google Ads) |
 
 **Links com rastreio** (para saber de onde veio cada visita no Search Console e no /admin):
 - Instagram: `https://gamezoney.com/?utm_source=instagram&utm_medium=pago&utm_campaign=lanhouse-br`
