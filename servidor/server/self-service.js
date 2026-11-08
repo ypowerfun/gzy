@@ -14,6 +14,10 @@ const EXPIRE_MIN = 15;
 module.exports = function selfService(store, options = {}) {
   const s = store.state;
   s.settings.selfService ??= {signup: false, pix: false, values: [500, 1000, 2000], promotions: true, payerEmail: ''};
+  // 1.1.2: o admin escolhe QUAIS pacotes promocionais (Promoções cadastradas) aparecem no PC; o campo de valores soltos saiu.
+  //  Configuração anterior: com "mostrar promoções" ligado, as promoções ativas de hoje ficam marcadas (mesmo resultado no PC).
+  const sellable = () => s.promotions.filter(p => p.active && !p.removedAt && p.cents > 0);
+  if (!Array.isArray(s.settings.selfService.promotionIds)) s.settings.selfService.promotionIds = s.settings.selfService.promotions !== false ? sellable().map(p => p.id) : [];
   s.settings.selfService.customMinCents ??= 500;   // 1.1.1: valor livre digitado pelo cliente (mínimo configurável)
   s.settings.selfService.customMaxCents ??= 20000;
   s.secrets ??= {};                 // fora de settings: não vai no estado do painel
@@ -40,9 +44,9 @@ module.exports = function selfService(store, options = {}) {
   }
 
   function options_() {
-    const c = cfg(), hour = Number(s.settings.hourCents) || 0, list = [];
-    if (c.promotions) for (const p of s.promotions.filter(p => p.active && !p.removedAt && p.cents > 0)) list.push({id: 'p:' + p.id, label: p.name, cents: p.cents, minutes: p.minutes});
-    if (hour > 0) for (const v of c.values || []) list.push({id: 'v:' + v, label: 'R$ ' + (v / 100).toFixed(2).replace('.', ','), cents: v, minutes: Math.round(v * 60 / hour)});
+    const c = cfg(), list = [];
+    const chosen = new Set(c.promotionIds || []);
+    for (const p of sellable().filter(p => chosen.has(p.id))) list.push({id: 'p:' + p.id, label: p.name, cents: p.cents, minutes: p.minutes});
     return list;
   }
   // 1.1.1: "Outro valor" — o cliente digita quanto quer recarregar (entre o mínimo e o máximo da Configuração)
@@ -124,20 +128,20 @@ module.exports = function selfService(store, options = {}) {
   if (!options.noTimer) setInterval(() => { sweep().catch(() => {}); }, 5000).unref();
 
   // ---------- painel ----------
-  function settings() { const c = cfg(); return {...c, tokenSet: !!s.secrets.mpToken, options: options_(), customInfo: custom(), charges: s.pixCharges.slice(-30).reverse().map(c => ({...publicCharge(c), qr: undefined, copy: undefined, stationName: c.stationName, createdAt: c.createdAt, paidAt: c.paidAt, error: c.error}))}; }
+  function settings() { const c = cfg(); return {...c, tokenSet: !!s.secrets.mpToken, options: options_(), customInfo: custom(), promotionsList: s.promotions.filter(p => !p.removedAt).map(p => ({id: p.id, name: p.name, cents: p.cents, minutes: p.minutes, active: !!p.active && p.cents > 0})), charges: s.pixCharges.slice(-30).reverse().map(c => ({...publicCharge(c), qr: undefined, copy: undefined, stationName: c.stationName, createdAt: c.createdAt, paidAt: c.paidAt, error: c.error}))}; }
   function save(input, actor) {
-    const values = String(input.values ?? '').split(/[;,\s]+/).filter(Boolean).map(v => Math.round(Number(v.replace(',', '.')) * 100));
-    if (values.some(v => !Number.isInteger(v) || v < 100 || v > 100000)) fail('Valores do PIX: use reais entre 1 e 1000 separados por vírgula (ex.: 5, 10, 20).');
+    const valid = new Set(sellable().map(p => p.id));
+    const promotionIds = [...new Set((Array.isArray(input.promotionIds) ? input.promotionIds : []).map(String))].filter(x => valid.has(x)).slice(0, 50);
     const token = String(input.token ?? '').trim();
     if (token && !/^(APP_USR|TEST)-[0-9a-f-]{8,}[A-Za-z0-9-]*$/i.test(token)) fail('Access Token do Mercado Pago inválido (começa com APP_USR-).');
     const email = String(input.payerEmail ?? '').trim(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('E-mail inválido.');
     const reais = (v, d) => { const t = String(v ?? '').trim(); if (!t) return d; const n = Math.round(Number(t.replace(/r\$|\s/gi, '').replace(',', '.')) * 100); if (!Number.isInteger(n) || n < 100 || n > 100000) fail('Valor livre: use reais entre 1 e 1000 (ex.: 5,00).'); return n; };
     const old = cfg(), customMinCents = reais(input.customMin, old.customMinCents ?? 500), customMaxCents = reais(input.customMax, old.customMaxCents ?? 20000);
     if (customMaxCents < customMinCents) fail('Valor livre: o máximo precisa ser maior ou igual ao mínimo.');
-    const next = {signup: input.signup === true, pix: input.pix === true, values: [...new Set(values)].sort((a, b) => a - b).slice(0, 8), promotions: input.promotions !== false, payerEmail: email, custom: input.custom === true, customMinCents, customMaxCents};
+    const next = {signup: input.signup === true, pix: input.pix === true, values: cfg().values || [], promotionIds, payerEmail: email, custom: input.custom === true, customMinCents, customMaxCents};
     if (next.pix && !token && !s.secrets.mpToken) fail('Cole o Access Token do Mercado Pago da arena para ligar o PIX no PC.');
-    if (next.pix && !next.values.length && !next.custom && !(next.promotions && s.promotions.some(p => p.active && !p.removedAt && p.cents > 0))) fail('Deixe pelo menos um pacote, uma promoção ou o valor livre para o PIX no PC.');
-    store.change(actor, 'config', `Autoatendimento no PC: cadastro ${next.signup ? 'ligado' : 'desligado'}, PIX ${next.pix ? 'ligado' : 'desligado'}, valor livre ${next.custom ? 'a partir de ' + brl(customMinCents) + ' até ' + brl(customMaxCents) : 'desligado'}${token ? ' (Access Token atualizado)' : ''}${input.removeToken ? ' (Access Token removido)' : ''}`, () => {
+    if (next.pix && !next.promotionIds.length && !next.custom) fail('Marque pelo menos um pacote promocional ou o Outro valor para o PIX no PC.');
+    store.change(actor, 'config', `Autoatendimento no PC: cadastro ${next.signup ? 'ligado' : 'desligado'}, PIX ${next.pix ? 'ligado' : 'desligado'}, ${promotionIds.length} pacote(s) promocional(is), valor livre ${next.custom ? 'a partir de ' + brl(customMinCents) + ' até ' + brl(customMaxCents) : 'desligado'}${token ? ' (Access Token atualizado)' : ''}${input.removeToken ? ' (Access Token removido)' : ''}`, () => {
       s.settings.selfService = next; if (token) s.secrets.mpToken = token; if (input.removeToken === true) { delete s.secrets.mpToken; next.pix = false; } return null;
     });
     return settings();

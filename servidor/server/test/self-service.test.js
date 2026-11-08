@@ -17,8 +17,13 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     assert.throws(() => ss.signup(pc, {name: 'Ana', username: 'ana', password: '1234', repeatPassword: '1234'}), /desligado/);
     assert.throws(() => ss.save({pix: true}, 'admin'), /Access Token/);
     assert.throws(() => ss.save({pix: true, token: 'chave-qualquer'}, 'admin'), /inválido/);
-    let conf = ss.save({signup: true, pix: true, token: 'APP_USR-1234567890123456-abcdef', values: '5, 10, 20'}, 'admin');
-    assert.equal(conf.tokenSet, true); assert.equal(conf.token, undefined); assert.deepEqual(conf.values, [500, 1000, 2000]);
+    // 1.1.2: pacotes = promoções cadastradas que o admin marca
+    const promo = (name, cents, minutes, active = true) => { const p = {id: 'pr-' + cents, name, cents, minutes, active}; store.state.promotions.push(p); return p; };
+    const p5 = promo('1h30 por R$ 5', 500, 90), p10 = promo('3h por R$ 10', 1000, 180), p20 = promo('7h por R$ 20', 2000, 420), off = promo('Antiga', 300, 60, false);
+    assert.throws(() => ss.save({signup: true, pix: true, token: 'APP_USR-1234567890123456-abcdef', promotionIds: []}, 'admin'), /pelo menos um pacote/);
+    let conf = ss.save({signup: true, pix: true, token: 'APP_USR-1234567890123456-abcdef', promotionIds: [p5.id, p10.id, p20.id, off.id, 'inexistente']}, 'admin');
+    assert.equal(conf.tokenSet, true); assert.equal(conf.token, undefined); assert.deepEqual(conf.promotionIds, [p5.id, p10.id, p20.id], 'inativa e inexistente ficam de fora');
+    assert.equal(conf.promotionsList.length, 4);
     assert.doesNotMatch(JSON.stringify(store.snapshot()), /APP_USR/, 'o token não vai para o painel');
     assert.deepEqual(ss.flags(), {signup: true, pix: true});
     // cadastro no PC
@@ -26,12 +31,14 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     assert.equal(ss.signup(pc, {name: 'Ana', username: 'ana', password: '1234', repeatPassword: '1234', phone: '92999990000'}).username, 'ana');
     assert.throws(() => ss.signup(pc, {name: 'Outra', username: 'ANA', password: '1234', repeatPassword: '1234'}), /já existe/);
     // pacotes: valores e promoções
-    const opts = ss.options(); assert.deepEqual(opts.map(o => o.cents), [500, 1000, 2000]); assert.equal(opts[0].minutes, Math.round(500 * 60 / store.state.settings.hourCents));
+    const opts = ss.options(); assert.deepEqual(opts.map(o => o.cents), [500, 1000, 2000]); assert.deepEqual(opts.map(o => o.minutes), [90, 180, 420]); assert.equal(opts[1].label, '3h por R$ 10');
+    assert.deepEqual(ss.save({signup: true, pix: true, promotionIds: [p10.id]}, 'admin').options.map(o => o.id), ['p:' + p10.id], 'só os marcados aparecem no PC');
+    ss.save({signup: true, pix: true, promotionIds: [p5.id, p10.id, p20.id]}, 'admin');
     // PIX: senha errada, caixa fechado e depois aberto
-    await assert.rejects(ss.create(pc, {username: 'ana', password: 'errada', option: 'v:1000'}), /incorretos/);
-    await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'v:1000'}), /caixa/i);
+    await assert.rejects(ss.create(pc, {username: 'ana', password: 'errada', option: 'p:' + p10.id}), /incorretos/);
+    await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'p:' + p10.id}), /caixa/i);
     cash.open(store, {openingCents: 0}, 'admin');
-    const c = await ss.create(pc, {username: 'ana', password: '1234', option: 'v:1000'});
+    const c = await ss.create(pc, {username: 'ana', password: '1234', option: 'p:' + p10.id});
     assert.equal(c.status, 'pending'); assert.equal(c.copy, '000201PIXCOPIAECOLA'); assert.equal(c.qr, 'iVBORw0KGgo='); assert.equal(mpAmount, 10);
     assert.match(calls[0].init.headers.Authorization, /^Bearer APP_USR/); assert.ok(calls[0].init.headers['X-Idempotency-Key']);
     // ainda não pago
@@ -41,15 +48,15 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     mpStatus = 'approved'; await ss.check(store.state.pixCharges[0], true);
     assert.equal((await ss.status(pc, {id: c.id})).status, 'approved');
     await ss.check(store.state.pixCharges[0], true);
-    assert.equal(ana.creditSeconds, opts[1].minutes * 60);
+    assert.equal(ana.creditSeconds, (180 + (store.state.sales.at(-1).autoReward?.minutes || 0)) * 60, 'pacote + prêmio automático da Fidelidade, igual ao balcão');
     const sale = store.state.sales.at(-1); assert.equal(sale.paymentMethod, 'pix'); assert.equal(sale.cents, 1000); assert.equal(sale.actor, 'pix-automatico'); assert.ok(sale.cashId);
     // valor diferente do cobrado não libera
-    const c2 = await ss.create(pc, {username: 'ana', password: '1234', option: 'v:500'}); mpAmount = 1; mpStatus = 'approved';
+    const c2 = await ss.create(pc, {username: 'ana', password: '1234', option: 'p:' + p5.id}); mpAmount = 1; mpStatus = 'approved';
     await ss.check(store.state.pixCharges.find(x => x.id === c2.id), true); assert.equal(store.state.pixCharges.find(x => x.id === c2.id).credited, undefined);
     // 1.1.1: valor livre (Outro valor) com mínimo configurável
     await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 700}), /desligado/);
-    assert.throws(() => ss.save({signup: true, pix: true, values: '5', custom: true, customMin: '10', customMax: '5'}, 'admin'), /máximo/);
-    conf = ss.save({signup: true, pix: true, values: '5', custom: true, customMin: '5,00', customMax: '100'}, 'admin');
+    assert.throws(() => ss.save({signup: true, pix: true, promotionIds: [p5.id], custom: true, customMin: '10', customMax: '5'}, 'admin'), /máximo/);
+    conf = ss.save({signup: true, pix: true, promotionIds: [], custom: true, customMin: '5,00', customMax: '100'}, 'admin'); assert.equal(ss.options().length, 0, 'só o Outro valor');
     assert.equal(conf.customMinCents, 500); assert.equal(conf.customMaxCents, 10000); assert.equal(conf.tokenSet, true); assert.equal(ss.custom().min, 500);
     await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 499}), /mínimo.*5,00/);
     await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 10001}), /máximo/);
@@ -58,6 +65,15 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     const c3 = await ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 1350}); assert.equal(c3.cents, 1350); assert.equal(mpAmount, 13.5);
     const before = ana.creditSeconds; mpStatus = 'approved'; await ss.check(store.state.pixCharges.find(x => x.id === c3.id), true);
     assert.equal(ana.creditSeconds - before, Math.round(1350 * 60 / store.state.settings.hourCents) * 60);
+  } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
+});
+
+test('1.1.2: configuração anterior — promoções ativas continuam no PC', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-self2-')), store = new Store(dir);
+  try {
+    store.state.promotions.push({id: 'a', name: 'A', cents: 500, minutes: 60, active: true}, {id: 'b', name: 'B', cents: 900, minutes: 120, active: false});
+    store.state.settings.selfService = {signup: true, pix: true, values: [1000], promotions: true, payerEmail: ''};
+    const ss = selfService(store, {noTimer: true}); assert.deepEqual(store.state.settings.selfService.promotionIds, ['a']); assert.deepEqual(ss.options().map(o => o.id), ['p:a']);
   } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
 });
 

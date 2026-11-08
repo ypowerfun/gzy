@@ -13,18 +13,18 @@ function selfServiceSection(d) {
       <label>E-mail do pagador (opcional)<input name="payerEmail" maxlength="120" placeholder="usado quando o cliente não tem e-mail" value="${esc(d.payerEmail || '')}"></label></div>
       ${d.tokenSet ? '<label class="check"><input type="checkbox" name="removeToken"> Remover o Access Token deste servidor</label>' : ''}
       <h3>Pacotes no PC</h3>
-      <div class="row"><label>Valores em reais (separados por vírgula)<input name="values" maxlength="60" value="${esc((d.values || []).map(v => String(v / 100).replace('.', ',')).join(', '))}"></label></div>
-      <label class="check"><input type="checkbox" name="promotions" ${d.promotions !== false ? 'checked' : ''}> Mostrar também as promoções ativas</label>
+      <p class="hint">Marque os pacotes promocionais (cadastrados em <strong>Promoções</strong>) que aparecem para o cliente no PC.</p>
+      <div class="self-promos" style="margin-bottom:12px">${(d.promotionsList || []).map(p => `<label class="check"><input type="checkbox" name="promo" value="${esc(p.id)}" ${p.active ? '' : 'disabled'} ${p.active && (d.promotionIds || []).includes(p.id) ? 'checked' : ''}> ${esc(p.name)} — ${money(p.cents)} • ${p.minutes} min${p.active ? '' : ' (inativa ou sem preço)'}</label>`).join('') || '<p class="hint"><strong>Nenhuma promoção cadastrada.</strong> Cadastre os pacotes em Promoções e volte aqui para escolher.</p>'}</div>
       <label class="check"><input type="checkbox" name="custom" ${d.custom ? 'checked' : ''}> Permitir que o cliente digite o valor que quiser (Outro valor)</label>
       <div class="row"><label>Valor mínimo (R$)<input name="customMin" inputmode="decimal" maxlength="10" value="${esc(((d.customMinCents ?? 500) / 100).toFixed(2).replace('.', ','))}"></label><label>Valor máximo (R$)<input name="customMax" inputmode="decimal" maxlength="10" value="${esc(((d.customMaxCents ?? 20000) / 100).toFixed(2).replace('.', ','))}"></label></div>
       <p class="hint">Ex.: mínimo 5,00 = o PC aceita PIX de R$ 5,00 para cima. O tempo é calculado pelo valor da hora.</p>
-      <p class="hint">No PC agora: ${(d.options || []).map(o => `${esc(o.label)} = ${o.minutes} min`).join(' • ') || 'nenhum pacote (configure o valor da hora ou os valores acima)'}${d.customInfo ? ` • Outro valor de ${money(d.customInfo.min)} a ${money(d.customInfo.max)}` : ''}</p>
+      <p class="hint">No PC agora: ${(d.options || []).map(o => `${esc(o.label)} = ${o.minutes} min`).join(' • ') || 'nenhum pacote marcado'}${d.customInfo ? ` • Outro valor de ${money(d.customInfo.min)} a ${money(d.customInfo.max)}` : ''}</p>
       <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button></div><p class="error" id="self-error"></p>
     </form>
     ${(d.charges || []).length ? `<h3 style="margin-top:18px">Últimos PIX no PC</h3><div class="table-wrap"><table><thead><tr><th>Data</th><th>PC</th><th>Cliente</th><th>Pacote</th><th>Valor</th><th>Situação</th></tr></thead><tbody>${d.charges.map(c => `<tr><td>${datetime(c.createdAt)}</td><td>${esc(c.stationName)}</td><td>${esc(c.username)}</td><td>${esc(c.label)}</td><td>${money(c.cents)}</td><td>${esc(PIX_STATUS[c.status] || c.status)}${c.error ? `<small class="subtext">${esc(c.error)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
   sec.querySelector('#self-form').onsubmit = async e => {
     e.preventDefault(); const f = e.target, b = e.submitter; b.disabled = true; sec.querySelector('#self-error').textContent = '';
-    try { const r = await api('/self-service', {signup: f.signup.checked, pix: f.pix.checked, token: f.token.value.trim(), removeToken: !!f.removeToken?.checked, payerEmail: f.payerEmail.value, values: f.values.value, promotions: f.promotions.checked, custom: f.custom.checked, customMin: f.customMin.value, customMax: f.customMax.value}); sec.replaceWith(selfServiceSection(r)); toast('Autoatendimento salvo.'); }
+    try { const r = await api('/self-service', {signup: f.signup.checked, pix: f.pix.checked, token: f.token.value.trim(), removeToken: !!f.removeToken?.checked, payerEmail: f.payerEmail.value, promotionIds: [...f.querySelectorAll('input[name=promo]:checked')].map(x => x.value), custom: f.custom.checked, customMin: f.customMin.value, customMax: f.customMax.value}); sec.replaceWith(selfServiceSection(r)); toast('Autoatendimento salvo.'); }
     catch (err) { sec.querySelector('#self-error').textContent = err.message; b.disabled = false; }
   };
   return sec;
