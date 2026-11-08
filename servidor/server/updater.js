@@ -10,6 +10,12 @@
 //     normal (código 75: o GameZoney.exe fecha sem aviso de erro) e o update-helper.ps1 espera fechar, confere o SHA-256
 //     outra vez, roda o instalador (o Windows pede a permissão de administrador) e abre o GameZoney de novo. Se a
 //     permissão for negada ou algo falhar, abre a versão antiga. Os dados não são tocados pelo instalador.
+// 1.1.3: o passo 3 mudou. O script escondido do PowerShell (update-helper.ps1) às vezes não chegava a rodar (o servidor fechava
+//     e nada abria). Agora "Instalar" confere o SHA-256, faz o backup e grava pending-update.txt na pasta de atualizações; o
+//     painel mostra "É preciso encerrar o servidor para instalar" com o botão Encerrar servidor e instalar. Quem detecta o
+//     encerramento é o próprio GameZoney.exe (qualquer encerramento: botão do painel ou ícone ao lado do relógio): ele confere
+//     o SHA-256 outra vez e abre o instalador (janela normal + permissão de administrador). No fim do instalador, "Abrir o
+//     GameZoney" abre o servidor novo. Na abertura da versão nova, o pedido pendente é apagado.
 const crypto = require('node:crypto'), fs = require('node:fs'), fsp = require('node:fs/promises'), path = require('node:path');
 
 // só o instalador do SERVIDOR: o instalador único em modo silencioso poderia instalar também o Cliente (que trava o PC) na recepção
@@ -34,13 +40,23 @@ const fileSha = file => new Promise((ok, err) => { const h = crypto.createHash('
 module.exports = function updater(store, lic, options = {}) {
   const version = options.version, dir = options.dir, appDir = options.appDir || __dirname, publicKey = options.publicKey;
   const fetchImpl = options.fetch || ((...a) => fetch(...a)), platform = options.platform || process.platform;
-  const spawnHelper = options.spawn || ((args) => { const {spawn} = require('node:child_process'); spawn(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), args, {detached: true, stdio: 'ignore', windowsHide: true}).unref(); });
   let st = {status: 'idle', current: version, checkedAt: 0, error: ''}, manifest = null, job = null;
+  const PENDING = path.join(dir, 'pending-update.txt');
+  // pedido pendente da abertura anterior: já instalado (versão igual/menor) = apaga; senão continua esperando o encerramento
+  try {
+    const [tag, pv, pf, ps] = fs.readFileSync(PENDING, 'utf8').split(/\r?\n/);
+    if (tag !== 'GZUPDATE1' || !NAME_RE.test(pf || '') || cmp(pv, version) <= 0) {
+      fs.rmSync(PENDING, {force: true});
+      if (NAME_RE.test(pf || '')) fs.rmSync(path.join(dir, pf), {force: true});
+      if (tag === 'GZUPDATE1' && cmp(pv, version) === 0) store.log('sistema', 'atualizacao', `Atualização ${pv} instalada`);
+    } else if (fs.existsSync(path.join(dir, pf))) { manifest = {version: pv, file: pf, sha256: ps}; st = {...st, status: 'waiting', available: {version: pv, notes: '', size: fs.statSync(path.join(dir, pf)).size, canDownload: true}}; }
+    else fs.rmSync(PENDING, {force: true});
+  } catch {}
   const status = () => ({...st, current: version});
   const set = patch => { st = {...st, ...patch}; return status(); };
 
   async function check() {
-    if (['downloading', 'installing'].includes(st.status)) return status();
+    if (['downloading', 'installing', 'waiting'].includes(st.status)) return status();
     set({status: 'checking', error: ''});
     let r, data;
     try {
@@ -94,15 +110,27 @@ module.exports = function updater(store, lic, options = {}) {
     set({status: 'installing', error: '', step: 'backup'});
     try { if (options.backups) { options.backups.start(actor); await options.backups.wait(); } }
     catch (e) { set({status: 'ready', step: ''}); fail('Não foi possível fazer o backup antes de atualizar: ' + e.message + ' A atualização não foi instalada.'); }
-    const helper = path.join(appDir, 'update-helper.ps1');
-    if (!fs.existsSync(helper)) { set({status: 'ready', step: ''}); fail('Arquivo update-helper.ps1 não encontrado na pasta do programa. Reinstale o GameZoney Servidor pelo instalador.'); }
-    store.change(actor, 'atualizacao', `Instalando a atualização ${m.version}: o servidor fecha e abre de novo sozinho (backup feito antes)`, () => {});
-    spawnHelper(['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', helper, '-Installer', file, '-Sha256', m.sha256, '-WaitPid', String(process.pid), '-App', appDir, '-Log', path.join(dir, 'update.log')]);
+    // 1.1.3: grava o pedido; o GameZoney.exe abre o instalador quando o servidor for encerrado
+    try { await fsp.writeFile(PENDING, ['GZUPDATE1', m.version, m.file, m.sha256, ''].join('\r\n')); }
+    catch (e) { set({status: 'ready', step: ''}); fail('Não foi possível preparar a instalação: ' + e.message); }
+    store.change(actor, 'atualizacao', `Atualização ${m.version} pronta para instalar (backup feito): aguardando o servidor ser encerrado`, () => {});
+    return set({status: 'waiting', step: ''});
+  }
+  // botão "Encerrar servidor e instalar": fecha com o código 75 (o GameZoney.exe fecha sem aviso de erro e abre o instalador)
+  function closeNow(actor) {
+    if (st.status !== 'waiting' || !fs.existsSync(PENDING)) fail('Clique em Instalar agora primeiro.');
+    store.change(actor, 'atualizacao', `Servidor encerrado para instalar a atualização ${manifest?.version || ''}`, () => {});
     set({step: 'closing'});
     if (options.onExit) setTimeout(() => options.onExit(), 1500);
     return status();
   }
-  return {status, check, download, install, readManifest: t => readManifest(t, publicKey), wait: () => job || Promise.resolve()};
+  function cancel(actor) {
+    if (st.status !== 'waiting') return status();
+    fs.rmSync(PENDING, {force: true});
+    store.change(actor, 'atualizacao', `Instalação da atualização ${manifest?.version || ''} cancelada (o arquivo baixado continua guardado)`, () => {});
+    return set({status: fs.existsSync(path.join(dir, manifest?.file || '-')) ? 'ready' : 'idle', step: ''});
+  }
+  return {status, check, download, install, closeNow, cancel, pendingFile: PENDING, readManifest: t => readManifest(t, publicKey), wait: () => job || Promise.resolve()};
 };
 module.exports.readManifest = readManifest;
 module.exports.cmp = cmp;

@@ -119,20 +119,27 @@ function updateSection() {
   if (U.status === 'checking') { body += '<p class="hint">Verificando em gamezoney.com…</p>'; actions = ''; }
   else if (U.status === 'latest') body += row('Situação', 'Você já está na versão mais nova', 'var(--green)');
   else if (U.status === 'error') body += `<p class="hint" style="color:#ff8793">${esc(U.error)}</p>`;
-  if (a && ['available', 'downloading', 'ready', 'installing', 'error'].includes(U.status)) {
+  if (a && ['available', 'downloading', 'ready', 'installing', 'waiting', 'error'].includes(U.status)) {
     body += row('Nova versão', esc(a.version), 'var(--gold2, #FDD034)') + row('Tamanho', mb(a.size)) + (a.notes ? `<p class="hint" style="white-space:pre-wrap">${esc(a.notes)}</p>` : '');
     if (U.status === 'available') actions = a.canDownload ? '<button class="primary" data-upd="download" style="flex:0 0 auto">Baixar atualização</button><button class="ghost" data-upd="check" style="flex:0 0 auto">Verificar de novo</button>'
       : `<a class="button-link" href="${esc(a.downloadsUrl)}" target="_blank" rel="noopener">Baixar em gamezoney.com</a><button class="ghost" data-upd="check" style="flex:0 0 auto">Verificar de novo</button>`;
     if (U.status === 'available' && !a.canDownload) body += '<p class="hint">A atualização automática faz parte do plano (Standard ou Pro). Entre com a sua conta em Licença, ou baixe o instalador em gamezoney.com › Minha conta › Downloads.</p>';
     if (U.status === 'downloading') { body += `<p class="hint">Baixando e conferindo… ${U.progress || 0}%</p><div class="gz-upd-bar"><i style="width:${U.progress || 0}%"></i></div>`; actions = ''; }
-    if (U.status === 'ready') { body += '<p class="hint">Atualização baixada e conferida (assinatura da GameZoney). Ao instalar: é feito um backup completo, o servidor fecha por alguns minutos, o Windows pede a permissão de administrador e o GameZoney abre de novo sozinho. As sessões em andamento continuam nos PCs e os dados são mantidos.</p>'; actions = '<button class="primary" data-upd="install" style="flex:0 0 auto">Instalar agora</button>'; }
-    if (U.status === 'installing') { body += `<p class="hint">${U.step === 'closing' ? 'Fechando o servidor para instalar… Aceite a permissão de administrador do Windows. O GameZoney abre de novo sozinho.' : 'Fazendo o backup completo antes de instalar…'}</p>`; actions = ''; }
+    if (U.status === 'ready') { body += '<p class="hint">Atualização baixada e conferida (assinatura da GameZoney). Ao clicar em Instalar agora é feito um backup completo; depois é preciso encerrar o servidor para o instalador abrir. As sessões em andamento continuam nos PCs e os dados são mantidos.</p>'; actions = '<button class="primary" data-upd="install" style="flex:0 0 auto">Instalar agora</button>'; }
+    if (U.status === 'installing') { body += '<p class="hint">Fazendo o backup completo antes de instalar…</p>'; actions = ''; }
+    if (U.status === 'waiting') {
+      body += U.step === 'closing'
+        ? '<div class="gz-upd-wait"><strong>Encerrando o servidor…</strong><p class="hint">O instalador da atualização aparece em instantes. Aceite a permissão de administrador do Windows e, no fim, deixe marcado <strong>Abrir GameZoney Servidor</strong>.</p></div>'
+        : `<div class="gz-upd-wait"><strong>É preciso encerrar o servidor para instalar a versão ${esc(a.version)}.</strong><p class="hint">Backup feito. Assim que o servidor for encerrado, o instalador aparece sozinho (o Windows pede a permissão de administrador). Use o botão abaixo ou <strong>Encerrar servidor</strong> no ícone do GameZoney ao lado do relógio. As sessões continuam nos PCs enquanto o servidor estiver fechado.</p></div>`;
+      actions = U.step === 'closing' ? '' : '<button class="primary" data-upd="close" style="flex:0 0 auto">Encerrar servidor e instalar</button><button class="ghost" data-upd="cancel" style="flex:0 0 auto">Cancelar instalação</button>';
+    }
   }
   if (U.checkedAt) body += `<small class="subtext">Última verificação: ${new Date(U.checkedAt).toLocaleString()}</small>`;
   sec.innerHTML = `<h2>Atualização do sistema</h2>${body}${actions ? `<div class="dialog-actions" style="justify-content:flex-start;gap:10px">${actions}</div>` : ''}`;
   sec.querySelectorAll('[data-upd]').forEach(b => b.onclick = async () => {
     const act = b.dataset.upd;
-    if (act === 'install' && !await ask('Instalar a atualização agora? É feito um backup completo, o servidor fecha por alguns minutos (as sessões continuam nos PCs) e abre de novo sozinho.', {ok: 'Instalar agora'})) return;
+    if (act === 'install' && !await ask('Instalar a atualização agora? Primeiro é feito um backup completo; depois é só encerrar o servidor que o instalador aparece.', {ok: 'Instalar agora'})) return;
+    if (act === 'close' && !await ask('Encerrar o servidor agora para instalar a atualização? O painel fecha e o instalador aparece em instantes (as sessões continuam nos PCs).', {ok: 'Encerrar e instalar'})) return;
     b.disabled = true;
     try { gzUpdate = await api('/update/' + act, {}); } catch (e) { toast(e.message); }
     finally { b.disabled = false; updateRefreshView(); }

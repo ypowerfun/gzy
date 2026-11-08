@@ -14,7 +14,7 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.1.2.0")]
+[assembly: AssemblyVersion("1.1.3.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -102,7 +102,8 @@ class Launcher : ApplicationContext {
         Splash.Close();
         if(!silent)ShowPanel();
     }
-    void OnSessionEnding(object sender,SessionEndingEventArgs e){Stop();}
+    void OnSessionEnding(object sender,SessionEndingEventArgs e){SessionEnded=true;Stop();}
+    public static bool SessionEnded,Ran;
     void Stop(){if(stopping)return;stopping=true;try{if(panel!=null)panel.Dispose();if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}if(!child.WaitForExit(15000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");child.Kill();child.WaitForExit(3000);}}}finally{if(tray!=null){tray.Visible=false;tray.Dispose();}}}
     protected override void ExitThreadCore(){SystemEvents.SessionEnding-=OnSessionEnding;if(monitor!=null)monitor.Stop();Stop();base.ExitThreadCore();}
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
@@ -116,10 +117,15 @@ class Launcher : ApplicationContext {
             if(!created){if(Array.IndexOf(args,"/restore")>=0){MessageBox.Show("Encerre o servidor pelo ícone ao lado do relógio antes de restaurar.","GameZoney");return 1;}if(!silent&&!selftest){/* 1.0.7: a 1ª abertura pode estar conferindo os arquivos e iniciando: espera até 90 s o painel ficar pronto */bool shown=false;for(int w=0;w<180&&!shown;w++){shown=PanelHost.SignalRunning(port);if(!shown)Thread.Sleep(500);}if(!shown)OpenPanel("http://127.0.0.1:"+port);}return 0;}
             Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
             if(Array.IndexOf(args,"/restore")>=0){try{Restore(data);}catch(Exception ex){MessageBox.Show(ex.Message,"Falha na restauração");return 1;}return 0;}
-            try{var app=new Launcher(data,port,silent,selftest);if(!selftest)Application.Run(app);}
+            try{var app=new Launcher(data,port,silent,selftest);if(!selftest){Ran=true;Application.Run(app);}}
             catch(Exception e){Splash.Close();MainCode=1;Directory.CreateDirectory(data);File.AppendAllText(Path.Combine(data,"launcher-error.log"),DateTime.Now+" "+e+Environment.NewLine);if(!selftest)MessageBox.Show(e.Message,"GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);}
             mutex.ReleaseMutex();
-        }return MainCode;
+        }
+        // 1.1.3: atualização pendente (Configuração › Atualização do sistema › Instalar agora): o servidor acabou de ser
+        // encerrado (botão do painel ou ícone ao lado do relógio) → oferece o instalador. Fica DEPOIS do using: o mutex precisa
+        // estar fechado, senão o instalador acha que o GameZoney ainda está aberto (AppMutex).
+        if(Ran&&!SessionEnded)PendingUpdate.Offer(data);
+        return MainCode;
     }
 }
 // 3.0.68: painel do servidor em JANELA PRÓPRIA do GameZoney (ícone e nome do GameZoney na barra de tarefas, sem barra de
@@ -307,6 +313,33 @@ class PanelWindow : Form {
 }
 // 1.0.7: janela "Iniciando o GameZoney…" enquanto confere os arquivos e inicia o servidor (na 1ª abertura pode levar alguns
 // segundos); fecha sozinha quando o painel aparece ou se der erro.
+// 1.1.3: instala a atualização baixada quando o servidor é encerrado (substitui o update-helper.ps1 escondido, que às vezes
+// não chegava a rodar: o servidor fechava e nada abria). O servidor grava pending-update.txt (GZUPDATE1, versão, arquivo,
+// SHA-256) na pasta de atualizações; aqui o SHA-256 é conferido de novo e o instalador abre em janela normal (o Windows pede a
+// permissão de administrador). No fim do instalador, "Abrir GameZoney Servidor" abre o servidor novo. Permissão negada = reabre o atual.
+static class PendingUpdate {
+    static void Log(string dir,string text){try{File.AppendAllText(Path.Combine(dir,"update.log"),DateTime.Now.ToString("s")+" "+text+Environment.NewLine);}catch{}}
+    static DialogResult Ask(string text,MessageBoxButtons buttons,MessageBoxIcon icon){using(var owner=new Form{TopMost=true,ShowInTaskbar=false,StartPosition=FormStartPosition.Manual,Location=new Point(-3000,-3000),Size=new Size(1,1),FormBorderStyle=FormBorderStyle.None}){owner.Show();owner.Activate();return MessageBox.Show(owner,text,"GameZoney — atualização",buttons,icon);}}
+    public static void Offer(string data){
+        try{
+            string trimmed=data.TrimEnd('\\','/');
+            string[] dirs={trimmed+"-updates",Path.Combine(Path.GetDirectoryName(trimmed)??trimmed,"updates")};
+            foreach(var dir in dirs){
+                string pending=Path.Combine(dir,"pending-update.txt");if(!File.Exists(pending))continue;
+                string[] l=File.ReadAllLines(pending);
+                if(l.Length<4||l[0]!="GZUPDATE1"||!System.Text.RegularExpressions.Regex.IsMatch(l[2],"^GameZoney-Servidor-\\d+\\.\\d+\\.\\d+-Setup\\.exe$")||!System.Text.RegularExpressions.Regex.IsMatch(l[3],"^[a-f0-9]{64}$")){File.Delete(pending);continue;}
+                string installer=Path.Combine(dir,l[2]);
+                if(!File.Exists(installer)){File.Delete(pending);Log(dir,"Instalador "+l[2]+" não encontrado: pedido apagado.");continue;}
+                string hash;using(var sha=System.Security.Cryptography.SHA256.Create())using(var stream=File.OpenRead(installer))hash=BitConverter.ToString(sha.ComputeHash(stream)).Replace("-","").ToLowerInvariant();
+                if(hash!=l[3]){Log(dir,"SHA-256 não confere: instalador apagado, nada instalado.");try{File.Delete(installer);}catch{}File.Delete(pending);Ask("O instalador da atualização foi alterado neste computador e foi apagado. Nada foi instalado.\n\nAbra o GameZoney e baixe a atualização de novo em Configuração › Atualização do sistema.",MessageBoxButtons.OK,MessageBoxIcon.Warning);return;}
+                if(Ask("O servidor GameZoney foi encerrado.\n\nInstalar agora a atualização "+l[1]+"?\n\nO Windows vai pedir a permissão de administrador. No fim do instalador, deixe marcado \"Abrir GameZoney Servidor\" para o servidor voltar.\n\nNão = instalar depois (o aviso volta na próxima vez que o servidor for encerrado).",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes){Log(dir,"Instalação de "+l[1]+" adiada.");return;}
+                try{Process.Start(new ProcessStartInfo(installer,"/SP-"){UseShellExecute=true,WorkingDirectory=dir});Log(dir,"Instalador "+l[2]+" aberto.");}
+                catch(Exception e){Log(dir,"Instalador não abriu: "+e.Message);Ask("O instalador não abriu (a permissão de administrador foi negada?). O GameZoney vai abrir de novo na versão atual; para tentar outra vez, encerre o servidor de novo.",MessageBoxButtons.OK,MessageBoxIcon.Information);try{Process.Start(new ProcessStartInfo(Application.ExecutablePath){UseShellExecute=true});}catch{}}
+                return;
+            }
+        }catch(Exception e){try{File.AppendAllText(Path.Combine(data,"launcher-error.log"),DateTime.Now+" atualização pendente: "+e+Environment.NewLine);}catch{}}
+    }
+}
 static class Splash {
     static Form form;
     public static void Open(){
