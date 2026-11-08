@@ -35,7 +35,7 @@ if ($guardCode -match 'new EventWaitHandle\(true,EventResetMode\.ManualReset,"Lo
 if ($guardCode -notmatch 'GameZoney\.Pulse\.') { throw 'Falha de seguranca do build: watchdog sem pulso da interface.' }
 if ($guardCode -match '\.Responding') { throw 'Falha de seguranca do build: watchdog nao deve depender da propriedade Responding.' }
 $csharp=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-& $csharp /nologo /target:winexe "/out:$rootPath\GameZoneyCliente.exe" "/win32icon:$rootPath\gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll (Join-Path $rootPath 'Client.cs') (Join-Path $rootPath 'ClientTheme.cs') (Join-Path $rootPath 'RemoteControl.cs') (Join-Path $rootPath 'PasswordRegistration.cs') (Join-Path $rootPath 'SessionCleanup.cs') (Join-Path $rootPath 'SessionSecurity.cs') (Join-Path $rootPath 'SystemMessage.cs')
+& $csharp /nologo /target:winexe "/out:$rootPath\GameZoneyCliente.exe" "/win32icon:$rootPath\gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll (Join-Path $rootPath 'Client.cs') (Join-Path $rootPath 'ClientTheme.cs') (Join-Path $rootPath 'RemoteControl.cs') (Join-Path $rootPath 'PasswordRegistration.cs') (Join-Path $rootPath 'SessionCleanup.cs') (Join-Path $rootPath 'SessionSecurity.cs') (Join-Path $rootPath 'SystemMessage.cs') (Join-Path $rootPath 'PrintControl.cs')
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o cliente.'}
 function Invoke-GzClientTest([string]$Mode,[string]$ResultPath,[string]$Description) {
     Remove-Item -LiteralPath $ResultPath -Force -ErrorAction SilentlyContinue

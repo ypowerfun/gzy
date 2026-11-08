@@ -70,6 +70,10 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 
 ---
 
+- **Impressões aguardando aprovação (1.0.9):** com o Controle de impressão ligado (Configuração), cada documento que o cliente manda imprimir aparece no topo do Painel de controle e **só imprime depois da aprovação**. **Aprovar** libera a impressão; **Aprovar e cobrar** lança o serviço (ex.: Impressão × páginas) como venda no caixa; **Recusar** apaga o documento da fila do PC. O cliente vê na tela "Sua impressão foi enviada para a recepção".
+- **Ligar computadores (1.0.9):** em **Ações dos PCs › Ligar computadores**, **Ligar todos** liga pela rede (Wake-on-LAN) os PCs desligados, e **Ligar específico** liga o PC escolhido. Para funcionar: o PC precisa ter aberto uma vez com o GameZoney Cliente 1.0.7 ou mais novo (ele informa o endereço da placa de rede), estar no **cabo de rede** e ter o **Wake-on-LAN ligado na BIOS** (opção "Wake on LAN", "Power On By PCI-E" ou parecida). "Desligar todas" continua igual.
+- **Aparelhos na TV:** qualquer aparelho ligado na TV pelo **HDMI** (PS5, PS4, Xbox, Switch, retrô, simulador) é controlado do mesmo jeito: no fim do tempo a TV troca de entrada. **VR ligado a um PC** (SteamVR, Quest Link) é controlado pelo GameZoney Cliente. **PS VR2** (imagem vai do PS5 direto para o óculos) e **Meta Quest sozinho** não passam pela TV e não são controlados por ela.
+
 ## 4. TVs (VIDAA e Android)
 
 Cadastre a TV em **Painel de controle > + Nova estação**: nome, tipo **Console**, **IP da TV**, **entrada HDMI** (1 a 4) e o **Sistema da TV**:
@@ -95,6 +99,10 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 - O registro **não processa pagamentos** e não emite nota fiscal.
 
 ---
+
+- **Foto do cliente (1.0.9):** em **Novo cliente** ou **Editar**, **Tirar foto** usa a câmera (webcam) da recepção — clique em **Capturar** — ou **Enviar arquivo** usa uma foto JPG/PNG. **Remover foto** apaga. A foto aparece na lista de clientes e entra no backup completo; ela **não** vai para a planilha de exportação.
+- **Exportar clientes (1.0.9, administrador):** baixa uma planilha Excel com **Nome, Usuário/Nick, CPF, Telefone, E-mail, Tempo (saldo), Medalhas de fidelidade, Observações, Situação e Cadastro** de todos os clientes.
+- **Importar planilha:** aceita as mesmas colunas (CPF, Telefone, E-mail, Observações e Situação são opcionais). Serve para levar os clientes para outro servidor e para **trocar de sistema** (NexCafé, HandyCafé e outros): exporte a lista de clientes do sistema antigo em Excel/CSV e importe aqui — o tempo entra como saldo e as medalhas como saldo inicial de fidelidade. CPF repetido ou inválido e e-mail inválido aparecem como erro na prévia; nicks que já existem não são alterados.
 
 ## 6. Visitante (sem cadastro)
 
@@ -232,6 +240,9 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
   - **Várias filiais numa só conta:** na conta do gestor, em Minha conta › Unidades, clique em **Gerar código** e cole o código (GZU-XXXX-XXXX) em **Código de vínculo do gestor** no servidor de cada loja.
   - Cada loja precisa do seu próprio plano Pro (uma conta = um servidor por vez). Gerar outro código ou remover a unidade no site para de mostrar a loja.
 
+- **Controle de impressão (1.0.9):** marque **Exigir aprovação da recepção para imprimir** e escolha o serviço usado na cobrança (ex.: Impressão). Vale para as impressoras instaladas nos PCs (USB ou rede), com o GameZoney Cliente 1.0.7 ou mais novo. No modo administrador do PC nada é parado. A lista **Últimas impressões** mostra o que foi aprovado, cobrado, recusado ou cancelado no PC.
+- **Boot pela rede (diskless) (1.0.9):** pré-configuração para PCs sem disco que carregam o Windows de um **servidor de imagem** na rede (iSCSI + PXE, como CCBoot ou iCafeCloud, instalado à parte — o GameZoney não substitui esse servidor). Informe o IP do servidor de imagem, a porta iSCSI (3260), o servidor PXE e a imagem, e marque os PCs que dão boot pela rede. **Salvar e conferir** testa se o servidor de imagem responde e se os PCs já têm o MAC para ligar pela rede. O GameZoney Cliente vai instalado dentro da imagem.
+
 ## 16. Backup
 
 - **Configuração > Backup completo do servidor:** backup diário automático (padrão às 03:00) em **Documentos\bkp gamezoney**, mais o botão **Criar backup completo agora**. Cada ZIP leva banco, usuários e senhas protegidas, saldos, histórico, faturas, despesas, fidelidade, configurações, imagens, pareamentos das TVs e a identidade dos PCs.
@@ -266,6 +277,8 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Reparar conexão de rede** — refaz as regras do firewall.
 
 ---
+
+- **Cliente 1.0.7:** informa ao Servidor o endereço das placas de rede (para **Ligar computadores**) e, com o Controle de impressão ligado, **pausa** cada documento enviado para a impressora durante a sessão até a recepção aprovar (aprovado imprime; recusado é apagado). O instalador liga o **Wake-on-LAN** na placa de rede do Windows e desliga a **Inicialização rápida** (o PC passa a desligar por completo, o que permite ligar pela rede). Falta só ativar o Wake-on-LAN na BIOS de cada PC.
 
 ## 18. Quedas de energia, de rede e de internet
 

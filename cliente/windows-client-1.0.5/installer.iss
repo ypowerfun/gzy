@@ -2,7 +2,7 @@
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
-AppVersion=1.0.6
+AppVersion=1.0.7
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyCliente
 DefaultGroupName=GameZoney Cliente
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Cliente-1.0.6-Setup
+OutputBaseFilename=GameZoney-Cliente-1.0.7-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -24,7 +24,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.0.6.0
+VersionInfoVersion=1.0.7.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -64,6 +64,7 @@ Source: "protect-install.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "policy-access.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "uninstall-cleanup.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "autostart.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wol-setup.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "discover.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "transport.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "runtime\node.exe"; DestDir: "{app}\runtime"; Flags: ignoreversion
@@ -102,6 +103,8 @@ Name: "{app}"; Attribs: hidden system
 ; 2.0.29: pre-compila o cliente e o monitor (ngen) para abrir mais rapido no boot (sem compilacao JIT a cada inicio)
 Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\GameZoneyCliente.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "{cm:GzOptimizing}"
 Filename: "{dotnet4064}\ngen.exe"; Parameters: "install ""{app}\MonitorGZ.exe"" /nologo /silent"; Flags: runhidden waituntilterminated skipifdoesntexist; StatusMsg: "{cm:GzOptimizing}"
+; 1.0.7: placa de rede pronta para ligar pela rede (Wake-on-LAN); nunca falha a instalacao
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\wol-setup.ps1"""; Flags: runhidden waituntilterminated; StatusMsg: "{cm:GzOptimizing}"
 Filename: "{app}\MonitorGZ.exe"; Description: "{cm:GzOpenApp}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [Code]

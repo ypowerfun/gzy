@@ -14,7 +14,7 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.0.8.0")]
+[assembly: AssemblyVersion("1.0.9.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -251,6 +251,8 @@ class PanelWindow : Form {
         // 1.0.5: nunca oferecer "Salvar senha" nem preencher campos sozinho (WebView2 Runtime antigo sem essas opções: ignora).
         try{settings.IsPasswordAutosaveEnabled=false;settings.IsGeneralAutofillEnabled=false;}catch(Exception e){host.Log("Painel: não foi possível desligar o salvar senha do WebView2 ("+e.Message+").");}
         core.NewWindowRequested+=OnNewWindow;core.NavigationStarting+=OnNavigation;core.ProcessFailed+=OnProcessFailed;
+        // 1.0.9: foto do cliente pela câmera da recepção — o painel local (127.0.0.1) pode usar a câmera sem perguntar; o resto continua negado/perguntado
+        try{core.PermissionRequested+=(s2,e2)=>{try{var u=new Uri(e2.Uri);if(e2.PermissionKind==Microsoft.Web.WebView2.Core.CoreWebView2PermissionKind.Camera&&u.IsLoopback)e2.State=Microsoft.Web.WebView2.Core.CoreWebView2PermissionState.Allow;}catch{}};}catch(Exception e){host.Log("Painel: permissão da câmera indisponível ("+e.Message+").");}
         if(popup){
             core.WindowCloseRequested+=(s,e)=>Close();
             core.DocumentTitleChanged+=(s,e)=>{string title=web.CoreWebView2.DocumentTitle;Text=String.IsNullOrEmpty(title)?"GameZoney Servidor":title+" — GameZoney";};

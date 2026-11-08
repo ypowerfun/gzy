@@ -1,4 +1,4 @@
-﻿GameZoney CLIENT 1.0.6 — WINDOWS 10/11
+﻿GameZoney CLIENT 1.0.7 — WINDOWS 10/11
 
 Install only on the arena's gaming PCs. The GameZoney Server must be installed on the front-desk PC.
 

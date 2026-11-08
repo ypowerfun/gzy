@@ -9,6 +9,11 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-story-1080x1920.jpg` | Stories, Reels, Status do WhatsApp |
 | `gamezoney-quadrado-1080x1080.jpg` | Facebook, Google (Display e Performance Max) |
 | `gamezoney-paisagem-1200x628.jpg` | Google (Display), link do Facebook |
+| `gamezoney-feed-1080x1350-novidades.jpg` | Feed — novidades (liga PCs, impressão, nota fiscal, várias lojas, foto, importação) |
+| `gamezoney-feed-1080x1350-troca-sistema.jpg` | Feed — para quem já usa outro sistema ("Traga seus clientes") |
+| `gamezoney-story-1080x1920-novidades.jpg` | Stories, Reels, Status do WhatsApp — novidades |
+| `gamezoney-quadrado-1080x1080-novidades.jpg` | Facebook, Google (Display e Performance Max) — novidades |
+| `gamezoney-paisagem-1200x628-novidades.jpg` | Google (Display), link do Facebook — novidades |
 | `gamezoney-logo-quadrado-1200x1200.png` | Logotipo quadrado (Google Ads, foto do perfil) |
 | `gamezoney-logo-horizontal-1200x300.png` | Logotipo horizontal 4:1 (Google Ads) |
 
@@ -53,6 +58,12 @@ No próprio Instagram, publique a peça `feed-1080x1350-recursos` com a legenda 
 **Após 3 a 5 dias:** veja o *Custo por clique no link* e o *CTR*. Pause a peça que estiver pior e coloque o dinheiro na melhor.
 
 ---
+
+### Campanha "Novidades" e "Troca de sistema" (nov/2026)
+- **Novidades** (peças `*-novidades`): texto principal: *O GameZoney agora liga os PCs pela rede, controla as impressões, dá entrada no estoque pela nota fiscal e mostra todas as suas lojas no celular. Teste grátis por 30 dias.* — Título: *Muito além de PCs e consoles*.
+- **Troca de sistema** (peça `feed-1080x1350-troca-sistema`): texto principal: *Vai trocar de sistema? Importe nick, tempo e medalhas de fidelidade dos seus clientes por planilha, em poucos minutos. Nenhum cliente fica para trás.* — Título: *Traga seus clientes para o GameZoney*. Público: interesses de *Lan house* e *Pequenas empresas*.
+- **Não cite outras marcas** (nomes de outros sistemas) no texto ou na imagem do anúncio: Google e Meta podem reprovar por uso de marca de terceiros. Os nomes aparecem só nas Dúvidas frequentes do site.
+- No Google Performance Max, acrescente as peças `quadrado-1080x1080-novidades` e `paisagem-1200x628-novidades` ao mesmo grupo de recursos (não precisa criar campanha nova) e os títulos: *Liga os PCs pela Rede* · *Controle de Impressão* · *Várias Lojas no Celular* · *Troque de Sistema Fácil*.
 
 ## 2. WhatsApp
 

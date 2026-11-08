@@ -7,7 +7,7 @@
 const zlib = require('node:zlib');
 const {id, fail} = require('./store');
 
-const {NICK_PATTERN: NICK, normalizeNick} = require('./store');
+const {NICK_PATTERN: NICK, normalizeNick, cpfDigits, validCpf} = require('./store');
 const MAX_ROWS = 5000, MAX_SECONDS = 1000 * 3600;
 
 // ---------- leitura de .xlsx (zip + xml) sem dependencias ----------
@@ -93,6 +93,13 @@ function detectColumns(rows) {
     h.forEach((t, j) => {
       // 3.0.33: coluna de medalhas de fidelidade (verificada antes de "tempo/saldo" para "saldo de pontos")
       if (col.points === undefined && /(ponto|medalha|fidelidade|points)/.test(t)) col.points = j;
+      // 1.0.9: CPF, telefone e e-mail (verificados antes de nome/nick: "Telefone do cliente", "E-mail do usuário")
+      else if (col.email === undefined && /(e-?mail|correio)/.test(t)) col.email = j;
+      else if (col.cpf === undefined && /(cpf|documento)/.test(t)) col.cpf = j;
+      else if (col.phone === undefined && /(telefone|celular|fone|whats|phone|contato)/.test(t)) col.phone = j;
+      else if (col.notes === undefined && /(observa|^obs)/.test(t)) col.notes = j;
+      else if (col.status === undefined && /(situa|status)/.test(t)) col.status = j;
+      else if (/(cadastr|criado|data)/.test(t)) { /* data do cadastro: só informativa (exportação) */ }
       else if (col.nick === undefined && /(nick|usuario|login|apelido|user)/.test(t)) col.nick = j;
       else if (col.name === undefined && /(nome|cliente|name)/.test(t)) col.name = j;
       else if (col.time === undefined && /(tempo|saldo|hora|minuto|credito|segundo)/.test(t)) { col.time = j; col.unit = /segundo/.test(t) ? 'seconds' : /hora/.test(t) && !/minuto/.test(t) ? 'hours' : 'minutes'; }
@@ -142,23 +149,23 @@ function parse(fileName, data) {
   const out = [];
   for (const r of rows.slice(col.header + 1)) {
     const get = i => i === undefined ? '' : r.cells[i];
-    const raw = [get(col.name), get(col.nick), get(col.time), get(col.points)];
+    const raw = [get(col.name), get(col.nick), get(col.time), get(col.points), get(col.cpf), get(col.phone), get(col.email), get(col.notes)];
     if (raw.every(v => v === '' || v === undefined)) continue;
     const str = v => typeof v === 'object' ? String(v.number) : String(v ?? '').trim();
     const timeRaw = get(col.time), seconds = parseTime(timeRaw, col.unit);
     const pointsRaw = get(col.points), pointsMilli = parsePoints(pointsRaw);
-    out.push({ line: r.line, name: str(get(col.name)), username: str(get(col.nick)), seconds, timeText: typeof timeRaw === 'object' ? (timeRaw.time ? 'hora do Excel' : String(timeRaw.number)) : String(timeRaw ?? '').trim(), pointsMilli, pointsText: str(pointsRaw) });
+    out.push({ line: r.line, name: str(get(col.name)), username: str(get(col.nick)), seconds, timeText: typeof timeRaw === 'object' ? (timeRaw.time ? 'hora do Excel' : String(timeRaw.number)) : String(timeRaw ?? '').trim(), pointsMilli, pointsText: str(pointsRaw), cpf: str(get(col.cpf)), phone: str(get(col.phone)), email: str(get(col.email)), notes: str(get(col.notes)), inactive: /inativ/i.test(str(get(col.status))) });
     if (out.length > MAX_ROWS) fail('A planilha tem mais de ' + MAX_ROWS + ' linhas.');
   }
-  return { columns: { header: col.header + 1, unit: col.unit, points: col.points !== undefined }, rows: out };
+  return { columns: { header: col.header + 1, unit: col.unit, points: col.points !== undefined, cpf: col.cpf !== undefined, phone: col.phone !== undefined, email: col.email !== undefined }, rows: out };
 }
 
 // ---------- validacao e importacao ----------
 function validate(store, rows) {
   const taken = new Map(store.state.members.map(m => [(m.username || '').toLowerCase(), m]));
-  const seen = new Set();
+  const seen = new Set(), cpfs = new Set(store.state.members.map(m => cpfDigits(m.cpf)).filter(Boolean)), seenCpf = new Set();
   return rows.map(r => {
-    const item = { line: r.line, name: String(r.name || '').trim().slice(0, 120), username: normalizeNick(r.username), seconds: r.seconds, timeText: r.timeText, pointsMilli: r.pointsMilli === undefined ? 0 : r.pointsMilli, pointsText: String(r.pointsText ?? '') };
+    const item = { line: r.line, name: String(r.name || '').trim().slice(0, 120), username: normalizeNick(r.username), seconds: r.seconds, timeText: r.timeText, pointsMilli: r.pointsMilli === undefined ? 0 : r.pointsMilli, pointsText: String(r.pointsText ?? ''), cpf: cpfDigits(r.cpf), phone: String(r.phone ?? '').trim().slice(0, 40), email: String(r.email ?? '').trim().slice(0, 120), notes: String(r.notes ?? '').trim().slice(0, 500), inactive: r.inactive === true };
     if (!item.name) item.name = item.username;
     const key = item.username.toLowerCase();
     if (!item.username) item.error = 'Usuário/Nick vazio.';
@@ -168,9 +175,13 @@ function validate(store, rows) {
     else if (item.seconds > MAX_SECONDS) item.error = 'Tempo acima de 1000 horas.';
     else if (item.pointsMilli === null || !Number.isSafeInteger(item.pointsMilli) || item.pointsMilli < 0) item.error = 'Medalhas de fidelidade não reconhecidas: "' + item.pointsText + '". Use um número, ex.: 150 ou 12,5.';
     else if (item.pointsMilli > MAX_POINTS * 1000) item.error = 'Medalhas de fidelidade acima de ' + MAX_POINTS.toLocaleString('pt-BR') + '.';
+    else if (String(r.cpf ?? '').replace(/\D/g, '') && !validCpf(item.cpf)) item.error = 'CPF inválido: "' + String(r.cpf) + '".';
+    else if (item.cpf && !taken.has(key) && (cpfs.has(item.cpf) || seenCpf.has(item.cpf))) item.error = 'CPF já cadastrado para outro cliente.';
+    else if (item.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item.email)) item.error = 'E-mail inválido: "' + item.email + '".';
     else if (taken.has(key)) { item.status = 'exists'; item.note = 'Já cadastrado (' + taken.get(key).name + '): não será alterado.'; }
     if (item.error) item.status = 'error'; else if (!item.status) item.status = 'new';
     if (item.username) seen.add(key);
+    if (item.cpf && item.status === 'new') seenCpf.add(item.cpf);
     return item;
   });
 }
@@ -178,13 +189,13 @@ function validate(store, rows) {
 function importMembers(store, rows, actor) {
   if (!Array.isArray(rows) || !rows.length) fail('Nenhuma linha para importar.');
   if (rows.length > MAX_ROWS) fail('Muitas linhas.');
-  const checked = validate(store, rows.map(r => ({ line: Number(r.line) || 0, name: r.name, username: r.username, seconds: (r.seconds === null || r.seconds === undefined || r.seconds === '') ? null : Number(r.seconds), timeText: String(r.timeText ?? r.seconds), pointsMilli: (r.pointsMilli === undefined || r.pointsMilli === '') ? 0 : r.pointsMilli === null ? null : Number(r.pointsMilli), pointsText: String(r.pointsText ?? r.pointsMilli ?? '') })));
+  const checked = validate(store, rows.map(r => ({ line: Number(r.line) || 0, name: r.name, username: r.username, seconds: (r.seconds === null || r.seconds === undefined || r.seconds === '') ? null : Number(r.seconds), timeText: String(r.timeText ?? r.seconds), pointsMilli: (r.pointsMilli === undefined || r.pointsMilli === '') ? 0 : r.pointsMilli === null ? null : Number(r.pointsMilli), pointsText: String(r.pointsText ?? r.pointsMilli ?? ''), cpf: r.cpf, phone: r.phone, email: r.email, notes: r.notes, inactive: r.inactive === true })));
   const ok = checked.filter(r => r.status === 'new');
   if (!ok.length) fail('Nenhum cliente novo válido para importar.');
   const total = ok.reduce((a, r) => a + r.seconds, 0), points = ok.reduce((a, r) => a + r.pointsMilli, 0), now = Date.now(), stamp = new Date(now).toLocaleDateString('pt-BR');
   store.change(actor, 'membro', `Importação de planilha: ${ok.length} cliente(s) cadastrado(s), ${Math.round(total / 60)} minuto(s) de saldo inicial, ${(points / 1000).toLocaleString('pt-BR')} medalha(s) de fidelidade. Senhas serão criadas no primeiro acesso.`, () => {
     for (const r of ok) {
-      const m = { id: id(), creditSeconds: r.seconds, pointsMilli: r.pointsMilli, createdAt: now, name: r.name, username: r.username, cpf: '', phone: '', notes: 'Importado da planilha em ' + stamp + '.', active: true, importedAt: now, importedSeconds: r.seconds, importedPointsMilli: r.pointsMilli };
+      const m = { id: id(), creditSeconds: r.seconds, pointsMilli: r.pointsMilli, createdAt: now, name: r.name, username: r.username, cpf: r.cpf, phone: r.phone, email: r.email, notes: (r.notes ? r.notes + ' • ' : '') + 'Importado da planilha em ' + stamp + '.', active: !r.inactive, importedAt: now, importedSeconds: r.seconds, importedPointsMilli: r.pointsMilli };
       store.state.members.push(m);
       // pontos importados aparecem no extrato de medalhas (Fidelidade) como saldo inicial
       if (r.pointsMilli > 0) (store.state.loyaltyLedger ??= []).push({ id: id(), memberId: m.id, amount: r.pointsMilli, reason: 'Importação de planilha (saldo inicial de medalhas)', reference: 'import', at: now });

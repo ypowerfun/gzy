@@ -69,4 +69,4 @@ class Store{
  async backup(){const dir=path.join(this.directory,'backups');fs.mkdirSync(dir,{recursive:true});const target=path.join(dir,'gamezoney-'+new Date().toISOString().replace(/[:.]/g,'-')+'.sqlite');await backup(this.db,target);return target}
  close(){this.db.close()}
 }
-module.exports={Store,id,text,integer,fail,passwordHash,memberPasswordHash,verify,MEMBER_PASSWORD_MIN,MEMBER_PASSWORD_MAX,NICK_PATTERN,normalizeNick};
+module.exports={Store,id,text,integer,fail,cpfDigits,validCpf,passwordHash,memberPasswordHash,verify,MEMBER_PASSWORD_MIN,MEMBER_PASSWORD_MAX,NICK_PATTERN,normalizeNick};
