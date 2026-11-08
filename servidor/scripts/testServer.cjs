@@ -14,7 +14,7 @@ if (process.platform !== 'win32') throw Error('Esta suíte contém testes nativo
 // 3.0.66: o teste nativo compila o cliente de referência que vai junto no código do servidor (pasta ../cliente/windows-client-1.0.5 do repositório GameZoney).
 if (!fs.existsSync(path.join(client, 'Client.cs'))) throw Error('Pasta do cliente de referência não encontrada: ' + client + '. Extraia o código do servidor completo (com a pasta windows-client-2.0.49 ao lado de server) e rode de novo.');
 const compiler = path.join(process.env.WINDIR || 'C:\\Windows', 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe');
-const sources = ['Client.cs', 'ClientTheme.cs', 'RemoteControl.cs', 'PasswordRegistration.cs', 'SessionCleanup.cs', 'SessionSecurity.cs', 'SystemMessage.cs'];
+const sources = ['Client.cs', 'ClientTheme.cs', 'RemoteControl.cs', 'PasswordRegistration.cs', 'SessionCleanup.cs', 'SessionSecurity.cs', 'SystemMessage.cs', 'PrintControl.cs', 'SelfService.cs'];  // mesma lista do build.ps1 do Cliente (1.0.7: PrintControl, 1.0.8: SelfService)
 const build = cp.spawnSync(compiler, ['/nologo', '/target:winexe', '/out:GameZoneyCliente.exe', '/win32icon:gamezoney.ico',
   '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.Security.dll',
   '/reference:System.Web.Extensions.dll', ...sources], {cwd: client, stdio: 'inherit', windowsHide: true});
