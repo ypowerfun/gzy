@@ -11,6 +11,17 @@ for(const name of ['package.json','package-lock.json']){
   if(data.packages?.[''])data.packages[''].version=VERSION;
   fs.writeFileSync(file,JSON.stringify(data,null,2)+'\n');
 }
+// 1.1.2: BOM duplicado no início (EF BB BF EF BB BF) faz o Inno Setup não reconhecer o "#define GzRole" da 1ª linha
+// ("Undeclared identifier: GzRole"). Corrige sozinho nos arquivos do Servidor, do Cliente e do instalador único.
+for(const dir of [root,path.resolve(root,'..'),path.resolve(root,'..','..','cliente','windows-client-1.0.5'),path.resolve(root,'..','..','unico')]){
+  if(!fs.existsSync(dir))continue;
+  for(const name of fs.readdirSync(dir)){
+    if(!/\.(iss|cs|ps1|cmd|txt|md|js|cjs)$/i.test(name))continue;
+    const file=path.join(dir,name);let data=fs.readFileSync(file),fixed=false;
+    while(data.length>=6&&data[0]===0xEF&&data[1]===0xBB&&data[2]===0xBF&&data[3]===0xEF&&data[4]===0xBB&&data[5]===0xBF){data=data.subarray(3);fixed=true;}
+    if(fixed){fs.writeFileSync(file,data);console.log('Corrigido início duplicado (BOM) em '+path.relative(path.resolve(root,'..','..'),file));}
+  }
+}
 const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
   'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'CheckIntegrity();','--disable-sigusr1','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],

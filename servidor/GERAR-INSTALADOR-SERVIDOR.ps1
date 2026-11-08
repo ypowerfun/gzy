@@ -1,4 +1,4 @@
-﻿﻿# GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
+﻿# GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
 # Gera o instalador GameZoney-Servidor-1.1.2-Setup.exe na pasta outputs\.
 # Uso: dois cliques em GERAR-INSTALADOR-SERVIDOR.cmd (ou botão direito neste arquivo -> "Executar com o PowerShell").
 # Precisa de internet na primeira vez, para o npm.

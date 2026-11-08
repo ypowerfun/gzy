@@ -1,4 +1,4 @@
-﻿﻿#define GzRole "server"
+﻿#define GzRole "server"
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
