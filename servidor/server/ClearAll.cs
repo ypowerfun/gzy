@@ -5,6 +5,11 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Reflection;
 [assembly: AssemblyTitle("GameZoney ClearAll")]
+[assembly: System.Reflection.AssemblyCompany("GameZoney")]
+[assembly: System.Reflection.AssemblyProduct("GameZoney")]
+[assembly: System.Reflection.AssemblyDescription("GameZoney - limpeza de registros")]
+[assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
+[assembly: System.Reflection.AssemblyTrademark("GameZoney")]
 [assembly: AssemblyVersion("3.0.34.0")]
 // 3.0.34: ClearAll.exe - apaga todos os registros do servidor (clientes, contas, recargas, sessoes,
 // produtos, vendas, caixas, estoque, log...) e mantem as estacoes com o pareamento das TVs e computadores.

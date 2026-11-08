@@ -62,7 +62,10 @@ try {
   Write-Host ''; Write-Host '3/3  Juntando os dois no instalador único' -ForegroundColor Cyan
   $saida = Join-Path $root 'saida'
   New-Item -ItemType Directory -Force -Path $saida | Out-Null
-  & $inno "/DServidorVersao=$sv" "/DClienteVersao=$cv" "/DServidorSetup=$servidorSetup" "/DClienteSetup=$clienteSetup" "/O$saida" (Join-Path $PSScriptRoot 'instalador-unico.iss')
+  # 1.1.3: assinatura digital (só com certificado configurado em assinatura\config.ps1; sem ele nada muda)
+  $gzSignScript = Join-Path $PSScriptRoot '..\assinatura\assinar.ps1'
+  if (Test-Path -LiteralPath $gzSignScript) { . $gzSignScript } else { function Invoke-GzSign([string[]]$Files) {}; function Get-GzInnoSignArgs { @() } }
+  & $inno @(Get-GzInnoSignArgs) "/DServidorVersao=$sv" "/DClienteVersao=$cv" "/DServidorSetup=$servidorSetup" "/DClienteSetup=$clienteSetup" "/O$saida" (Join-Path $PSScriptRoot 'instalador-unico.iss')
   if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar o instalador único.' }
   $final = Join-Path $saida "GameZoney-Instalador-Servidor-$sv-Cliente-$cv.exe"
   if (!(Test-Path -LiteralPath $final)) { throw 'O instalador único não foi gerado. Veja as mensagens acima.' }

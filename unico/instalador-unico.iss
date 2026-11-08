@@ -14,6 +14,18 @@ AppName=GameZoney
 AppVersion={#ServidorVersao}
 AppVerName=GameZoney (Servidor {#ServidorVersao} / Cliente {#ClienteVersao})
 AppPublisher=GameZoney
+; 1.1.3: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
+AppPublisherURL=https://gamezoney.com
+AppSupportURL=https://gamezoney.com/atendimento
+AppUpdatesURL=https://gamezoney.com/atualizacoes
+VersionInfoCompany=GameZoney
+VersionInfoCopyright=© 2026 GameZoney. Todos os direitos reservados.
+VersionInfoProductName=GameZoney
+; assinatura digital: só quando o gerador acha um certificado (assinatura\config.ps1) e passa /DGzSign
+#ifdef GzSign
+SignTool=gz
+SignedUninstaller=yes
+#endif
 VersionInfoVersion={#ServidorVersao}.0
 VersionInfoDescription=GameZoney - Instalador (Servidor {#ServidorVersao} / Cliente {#ClienteVersao})
 ; O instalador único não fica instalado: quem fica são o Servidor e/ou o Cliente, cada um com o seu desinstalador.

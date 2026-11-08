@@ -27,6 +27,8 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 
 **Idioma do instalador**: os instaladores (Servidor, Cliente e o instalador único) abrem em **inglês** por padrão. A primeira tela pergunta o idioma: mantenha **English** ou troque para **Português (Brasil)**. No instalador único, o idioma escolhido vale também para o instalador do Servidor e do Cliente que ele abre. O desinstalador usa o mesmo idioma da instalação. Os nomes dos atalhos do menu Iniciar continuam em português (ex.: **Reparar conexao de rede**).
 
+**Aviso azul "O Windows protegeu o computador" (Fornecedor desconhecido)**: aparece em qualquer programa baixado da internet **sem assinatura digital de código**. O GameZoney é seguro: os programas e instaladores levam **Empresa: GameZoney** (Propriedades › Detalhes) e só são publicados em gamezoney.com. Clique em **Executar assim mesmo** (em algumas versões do Windows, antes em **Mais informações**). Quando a GameZoney tiver o certificado de assinatura de código (veja `assinatura\LEIA-ME-ASSINATURA.md` no código-fonte), os instaladores passam a sair assinados e o Windows mostra **Fornecedor: GameZoney**.
+
 **Servidor (PC da recepção)** — Windows 10/11 de 64 bits.
 1. Execute o instalador (ou o instalador único e marque **Instalar Servidor**). Ele já leva o motor (Node), o banco e as ferramentas; não baixa nada.
 2. O instalador configura o firewall do Windows (somente rede local) para as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (descoberta dos PCs). Se precisar repetir: menu Iniciar > GameZoney > **Reparar conexão de rede**.

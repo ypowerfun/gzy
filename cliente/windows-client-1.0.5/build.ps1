@@ -34,6 +34,9 @@ if ($guardCode -match 'new EventWaitHandle\(true,EventResetMode\.ManualReset,"Lo
 }
 if ($guardCode -notmatch 'GameZoney\.Pulse\.') { throw 'Falha de seguranca do build: watchdog sem pulso da interface.' }
 if ($guardCode -match '\.Responding') { throw 'Falha de seguranca do build: watchdog nao deve depender da propriedade Responding.' }
+# 1.1.3: assinatura digital (só com certificado configurado em assinatura\config.ps1; sem ele nada muda)
+$gzSignScript = Join-Path $rootPath '..\..\assinatura\assinar.ps1'
+if (Test-Path -LiteralPath $gzSignScript) { . $gzSignScript } else { function Invoke-GzSign([string[]]$Files) {}; function Get-GzInnoSignArgs { @() } }
 $csharp=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 & $csharp /nologo /target:winexe "/out:$rootPath\GameZoneyCliente.exe" "/win32icon:$rootPath\gamezoney.ico" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll (Join-Path $rootPath 'Client.cs') (Join-Path $rootPath 'ClientTheme.cs') (Join-Path $rootPath 'RemoteControl.cs') (Join-Path $rootPath 'PasswordRegistration.cs') (Join-Path $rootPath 'SessionCleanup.cs') (Join-Path $rootPath 'SessionSecurity.cs') (Join-Path $rootPath 'SystemMessage.cs') (Join-Path $rootPath 'PrintControl.cs') (Join-Path $rootPath 'SelfService.cs')
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o cliente.'}
@@ -73,5 +76,6 @@ Invoke-GzClientTest '/selftest' $selfResult 'Autoteste do cliente'
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o monitor do cliente.'}
 New-Item -ItemType Directory -Force (Join-Path $rootPath 'runtime') | Out-Null
 Copy-Item -LiteralPath (Get-Command node.exe).Source -Destination (Join-Path $rootPath 'runtime\node.exe')
-& $InnoCompiler (Join-Path $rootPath 'installer.iss')
+Invoke-GzSign @((Join-Path $rootPath 'GameZoneyCliente.exe'),(Join-Path $rootPath 'MonitorGZ.exe'))
+& $InnoCompiler @(Get-GzInnoSignArgs) (Join-Path $rootPath 'installer.iss')
 if($LASTEXITCODE -ne 0){throw 'Falha ao gerar o instalador do cliente.'}

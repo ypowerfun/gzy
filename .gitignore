@@ -20,3 +20,8 @@ servidor/tools/npm-cache/
 # Zips de entrega gerados com git archive (não vão para o repositório)
 gamezoney-site.zip
 gamezoney-codigo-fonte.zip
+
+# Assinatura digital: configuração e certificados ficam só no PC que gera os instaladores
+assinatura/config.ps1
+*.pfx
+*.p12

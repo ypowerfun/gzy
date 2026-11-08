@@ -14,6 +14,11 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
+[assembly: System.Reflection.AssemblyCompany("GameZoney")]
+[assembly: System.Reflection.AssemblyProduct("GameZoney")]
+[assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
+[assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
+[assembly: System.Reflection.AssemblyTrademark("GameZoney")]
 [assembly: AssemblyVersion("1.1.3.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;

@@ -4,7 +4,12 @@ using System.Diagnostics;
 using System.Threading;
 using System.Reflection;
 [assembly: AssemblyTitle("MonitorGZ")]
-[assembly: AssemblyVersion("1.0.9.0")]
+[assembly: System.Reflection.AssemblyCompany("GameZoney")]
+[assembly: System.Reflection.AssemblyProduct("GameZoney")]
+[assembly: System.Reflection.AssemblyDescription("GameZoney Cliente - monitor")]
+[assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
+[assembly: System.Reflection.AssemblyTrademark("GameZoney")]
+[assembly: AssemblyVersion("1.0.10.0")]
 class ClientGuard {
  static void Log(string message){try{string dir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoneyCliente");Directory.CreateDirectory(dir);string file=Path.Combine(dir,"monitor.log");if(File.Exists(file)&&new FileInfo(file).Length>262144)File.Delete(file);File.AppendAllText(file,DateTime.UtcNow.ToString("o")+" "+message+Environment.NewLine);}catch{}}
  static int Main(string[] args){try{try{Process.GetCurrentProcess().PriorityClass=ProcessPriorityClass.High;}catch{}

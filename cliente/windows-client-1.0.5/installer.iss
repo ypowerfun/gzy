@@ -2,8 +2,21 @@
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
-AppVersion=1.0.9
+AppVersion=1.0.10
 AppPublisher=GameZoney
+; 1.1.3: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
+AppPublisherURL=https://gamezoney.com
+AppSupportURL=https://gamezoney.com/atendimento
+AppUpdatesURL=https://gamezoney.com/atualizacoes
+VersionInfoCompany=GameZoney
+VersionInfoCopyright=© 2026 GameZoney. Todos os direitos reservados.
+VersionInfoProductName=GameZoney Cliente
+VersionInfoDescription=GameZoney Cliente - instalador
+; assinatura digital: só quando o gerador acha um certificado (assinatura\config.ps1) e passa /DGzSign
+#ifdef GzSign
+SignTool=gz
+SignedUninstaller=yes
+#endif
 DefaultDirName={localappdata}\Programs\GameZoneyCliente
 DefaultGroupName=GameZoney Cliente
 PrivilegesRequired=admin
@@ -12,7 +25,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Cliente-1.0.9-Setup
+OutputBaseFilename=GameZoney-Cliente-1.0.10-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -24,7 +37,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.0.9.0
+VersionInfoVersion=1.0.10.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt

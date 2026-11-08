@@ -9,6 +9,9 @@ $serverRoot = Join-Path $projectRoot 'server'
 $outputRoot = Join-Path $projectRoot 'outputs'
 $node = (Get-Command node.exe -ErrorAction Stop).Source
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+# 1.1.3: assinatura digital (só com certificado configurado em assinatura\config.ps1; sem ele nada muda)
+$gzSignScript = Join-Path $projectRoot '..\assinatura\assinar.ps1'
+if (Test-Path -LiteralPath $gzSignScript) { . $gzSignScript } else { function Invoke-GzSign([string[]]$Files) {}; function Get-GzInnoSignArgs { @() } }
 if (!(Test-Path -LiteralPath $InnoCompiler)) { throw 'Informe o caminho do ISCC.exe do Inno Setup (7 ou 6) com -InnoCompiler.' }
 Push-Location $serverRoot
 try {
@@ -58,7 +61,8 @@ try {
             & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.cs
             if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador protegido.' }
         } finally { Pop-Location }
-        & $InnoCompiler "/O$outputRoot" (Join-Path $stage 'installer.iss')
+        Invoke-GzSign @('GameZoney.exe','BackupTool.exe','CertTool.exe','ClearAll.exe' | ForEach-Object { Join-Path $stage $_ })
+        & $InnoCompiler @(Get-GzInnoSignArgs) "/O$outputRoot" (Join-Path $stage 'installer.iss')
         if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar instalador do servidor.' }
     } finally {
         $resolvedStage = [IO.Path]::GetFullPath($stage)

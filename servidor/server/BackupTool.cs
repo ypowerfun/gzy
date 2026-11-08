@@ -4,6 +4,12 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Collections.Generic;
 using System.Web.Script.Serialization;
+[assembly: System.Reflection.AssemblyTitle("GameZoney BackupTool")]
+[assembly: System.Reflection.AssemblyCompany("GameZoney")]
+[assembly: System.Reflection.AssemblyProduct("GameZoney")]
+[assembly: System.Reflection.AssemblyDescription("GameZoney - backup completo")]
+[assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
+[assembly: System.Reflection.AssemblyTrademark("GameZoney")]
 class BackupFile { public string path; public long bytes; public string sha256; }
 class BackupManifest { public string format; public int schema; public BackupFile[] files; }
 class BackupTool {
