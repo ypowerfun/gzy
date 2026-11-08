@@ -28,14 +28,14 @@ async function boot(t, {serverKey} = {}) {
 test('1.0.6: Verificar atualização — manifesto assinado, download só com plano, SHA-256 conferido, backup antes e instalador rodado pelo helper', {skip: !createApp && 'site não encontrado'}, async t => {
   const s = await boot(t);
   let U = await s.call('/api/update/check', {}); assert.equal(U.status, 'latest');
-  // o administrador publica 1.0.8 no site
-  const bytes = crypto.randomBytes(300000), name = 'GameZoney-Servidor-1.0.8-Setup.exe'; fs.writeFileSync(path.join(s.dl, name), bytes);
+  // o administrador publica 1.0.9 no site
+  const bytes = crypto.randomBytes(300000), name = 'GameZoney-Servidor-1.0.9-Setup.exe'; fs.writeFileSync(path.join(s.dl, name), bytes);
   fs.writeFileSync(path.join(s.dl, 'GameZoney-Servidor-1.0.5-Setup.exe'), 'velho');
-  const files = (await s.dono('/api/admin/updates')).files; assert.ok(files.some(f => f.file === name && f.version === '1.0.8'));
+  const files = (await s.dono('/api/admin/updates')).files; assert.ok(files.some(f => f.file === name && f.version === '1.0.9'));
   await s.dono('/api/admin/updates/publish', {file: '../../etc/passwd'}, 404);
   const pub = (await s.dono('/api/admin/updates/publish', {file: name, notes: 'Plano na conta'})).published; assert.equal(pub.sha256, crypto.createHash('sha256').update(bytes).digest('hex'));
   // sem plano: vê a versão nova mas não baixa
-  U = await s.call('/api/update/check', {}); assert.equal(U.status, 'available'); assert.equal(U.available.version, '1.0.8'); assert.equal(U.available.canDownload, false); assert.equal(U.available.notes, 'Plano na conta');
+  U = await s.call('/api/update/check', {}); assert.equal(U.status, 'available'); assert.equal(U.available.version, '1.0.9'); assert.equal(U.available.canDownload, false); assert.equal(U.available.notes, 'Plano na conta');
   assert.match((await s.call('/api/update/download', {}, 400)).error, /faz parte do plano/);
   // com plano: baixa, confere e instala
   const ana = s.web(); await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'});

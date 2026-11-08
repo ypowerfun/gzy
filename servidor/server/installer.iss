@@ -1,8 +1,8 @@
-﻿#define GzRole "server"
+﻿﻿#define GzRole "server"
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
-AppVersion=1.0.7
+AppVersion=1.0.8
 AppPublisher=GameZoney
 DefaultDirName={localappdata}\Programs\GameZoneyServidor
 DefaultGroupName=GameZoney
@@ -12,7 +12,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.0.7-Setup
+OutputBaseFilename=GameZoney-Servidor-1.0.8-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -24,7 +24,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.0.7.0
+VersionInfoVersion=1.0.8.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -74,6 +74,9 @@ Source: "update-helper.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "balance.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "import.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "shop.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "nfe.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "app-manager.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "units.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "cash.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "stats.js"; DestDir: "{app}"; Flags: ignoreversion
 

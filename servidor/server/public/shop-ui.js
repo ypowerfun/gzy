@@ -10,7 +10,7 @@ const reais = c => ((c || 0) / 100).toFixed(2);
 function shopFind(q) {
   const t = String(q || '').trim().toLowerCase(); if (!t || !shopData) return [];
   const items = [...shopData.products.map(p => ({...p, kind: 'product'})), ...shopData.services.map(s => ({...s, kind: 'service', category: 'Serviço'}))];
-  return items.filter(i => i.name.toLowerCase().includes(t) || (i.barcode && i.barcode === t)).slice(0, 12);
+  return items.filter(i => i.name.toLowerCase().includes(t) || (i.barcode && i.barcode === t) || (i.code && String(i.code) === t)).slice(0, 12);
 }
 function cartTotal() { return cart.reduce((a, l) => a + l.priceCents * l.qty, 0); }
 function addToCart(item) {
@@ -47,7 +47,7 @@ async function renderShop() {
   cart = cart.filter(l => (l.kind === 'product' ? shopData.products : shopData.services).some(i => i.id === l.id))
     .map(l => { const src = (l.kind === 'product' ? shopData.products : shopData.services).find(i => i.id === l.id); return {...l, name: src.name, priceCents: src.priceCents, stock: l.kind === 'product' ? src.stock : null}; });
   const actions = (kind, id) => admin ? `<td class="actions-cell"><button class="icon-btn" data-shop-edit="${kind}" data-id="${id}" title="Editar">${ICON.edit}</button><button class="icon-btn del" data-shop-remove="${kind}" data-id="${id}" title="Remover">${ICON.del}</button></td>` : '<td></td>';
-  const productTable = `<table><thead><tr><th>Nome</th><th>Categoria</th>${admin ? '<th>P. Custo</th><th>Margem</th>' : ''}<th>P. Venda</th><th>Cód. Barras</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>${shopData.products.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.category)}</td>${admin ? `<td>${money(p.costCents)}</td><td>${p.marginPercent != null ? String(p.marginPercent).replace('.', ',') + '%' : '—'}</td>` : ''}<td>${money(p.priceCents)}</td><td>${esc(p.barcode || '—')}</td><td>${p.stock <= 0 ? '<span class="badge red">SEM ESTOQUE</span>' : p.stock + ' un'}</td>${actions('product', p.id)}</tr>`).join('') || `<tr><td colspan="${admin ? 8 : 6}">Nenhum produto cadastrado.</td></tr>`}</tbody></table>`;
+  const productTable = `<table><thead><tr><th>Cód.</th><th>Nome</th><th>Categoria</th>${admin ? '<th>P. Custo</th><th>Margem</th>' : ''}<th>P. Venda</th><th>Cód. Barras</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>${shopData.products.map(p => `<tr><td>${p.code || '—'}</td><td>${esc(p.name)}</td><td>${esc(p.category)}</td>${admin ? `<td>${money(p.costCents)}</td><td>${p.marginPercent != null ? String(p.marginPercent).replace('.', ',') + '%' : '—'}</td>` : ''}<td>${money(p.priceCents)}</td><td>${esc(p.barcode || '—')}</td><td>${p.stock <= 0 ? '<span class="badge red">SEM ESTOQUE</span>' : p.stock + ' un'}</td>${actions('product', p.id)}</tr>`).join('') || `<tr><td colspan="${admin ? 9 : 7}">Nenhum produto cadastrado.</td></tr>`}</tbody></table>`;
   const serviceTable = `<table><thead><tr><th>Nome do Serviço</th><th>Preço por Unidade</th><th>Ações</th></tr></thead><tbody>${shopData.services.map(s => `<tr><td>${esc(s.name)}</td><td>${money(s.priceCents)}</td>${actions('service', s.id)}</tr>`).join('') || '<tr><td colspan="3">Nenhum serviço cadastrado.</td></tr>'}</tbody></table>`;
   // 1.0.5: três áreas — Vendas (só o PDV, primeira opção), Gerenciamento de Produtos e Gerenciamento de Serviços
   const tabs = gzTabs(shopTab === 'sales' ? 'caixa' : 'produtos'); // 1.0.5: Vendas fica em Caixa
@@ -80,7 +80,7 @@ async function renderShop() {
   };
   search.oninput = showResults;
   // leitor de codigo de barras digita o codigo e envia Enter
-  search.onkeydown = e => { if (e.key !== 'Enter') return; e.preventDefault(); const t = search.value.trim(); const found = shopFind(t); const exact = found.find(i => i.barcode && i.barcode === t) || (found.length === 1 ? found[0] : null); if (exact) { if (exact.kind === 'product' && exact.stock <= 0) toast('Produto sem estoque.'); else addToCart(exact); } };
+  search.onkeydown = e => { if (e.key !== 'Enter') return; e.preventDefault(); const t = search.value.trim(); const found = shopFind(t); const exact = found.find(i => (i.barcode && i.barcode === t) || (i.kind === 'product' && String(i.code) === t)) || (found.length === 1 ? found[0] : null); if (exact) { if (exact.kind === 'product' && exact.stock <= 0) toast('Produto sem estoque.'); else addToCart(exact); } };
   document.querySelectorAll('input[name="pdv-pay"]').forEach(r => r.onchange = () => shopPay = r.value);
   pdvMix = payMix($('#pdv-paymix'), cartTotal, on => document.querySelectorAll('.pdv-pay .pay-opt').forEach(o => { o.classList.toggle('hidden', on); o.querySelector('input').disabled = on; }));
   $('#pdv-confirm').onclick = askFinishSale;

@@ -10,7 +10,7 @@
 <body class="account account-pending">
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 <header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Planos</a><a href="/atendimento.html">Atendimento</a><a href="/atualizacoes.html">Atualizações</a><a href="/entrar.html" data-guest>Entrar</a><a class="btn outline small" href="/entrar.html?criar=1&amp;next=/conta" data-guest>Testar grátis</a><a class="btn outline small hidden" href="/conta" data-member>Minha conta</a></nav></div></header>
-<p class="account-loading wrap" role="status">Carregando sua conta…</p><main class="page account-page" id="conteudo"><div class="wrap account-layout"><aside class="account-sidebar"><p class="eyebrow">Central da arena</p><nav aria-label="Minha conta"><a href="#visao-geral" data-account-link>Visão geral</a><a href="#downloads" data-account-link>Downloads</a><a href="#licencas" data-account-link>Licenças</a><a href="#comprar" data-account-link>Meu plano</a><a href="#pedidos" data-account-link>Pedidos</a><a href="#suporte" data-account-link>Suporte</a><a href="#avaliar" data-account-link>Avaliar</a><a href="#perfil" data-account-link>Meus dados</a><a href="/guia">Guia de instalação ↗</a></nav><div class="sidebar-end"><a href="/admin" id="admin-link" class="hidden">Admin</a><button class="btn small ghost" id="logout">Sair da conta</button></div></aside><div class="dash account-content">
+<p class="account-loading wrap" role="status">Carregando sua conta…</p><main class="page account-page" id="conteudo"><div class="wrap account-layout"><aside class="account-sidebar"><p class="eyebrow">Central da arena</p><nav aria-label="Minha conta"><a href="#visao-geral" data-account-link>Visão geral</a><a href="#downloads" data-account-link>Downloads</a><a href="#licencas" data-account-link>Licenças</a><a href="#comprar" data-account-link>Meu plano</a><a href="#unidades" data-account-link>Unidades</a><a href="#pedidos" data-account-link>Pedidos</a><a href="#suporte" data-account-link>Suporte</a><a href="#avaliar" data-account-link>Avaliar</a><a href="#perfil" data-account-link>Meus dados</a><a href="/guia">Guia de instalação ↗</a></nav><div class="sidebar-end"><a href="/admin" id="admin-link" class="hidden">Admin</a><button class="btn small ghost" id="logout">Sair da conta</button></div></aside><div class="dash account-content">
   <div class="msg" id="verify-box" style="display:none"></div>
   <div><h1 id="hello" >Minha conta</h1><p class="note" id="hello-sub"></p></div>
 
@@ -24,6 +24,12 @@
     <h3><span>Licenças</span><a class="btn small" href="#comprar">Meu plano</a></h3>
     <div id="license-list"></div>
     <p class="note" style="margin-top:12px">Para ativar: no GameZoney Servidor, abra <b>Configuração › Licença › Ativar licença</b> e digite a chave. Trocou o computador da recepção? Clique em <b>Liberar</b> e ative a chave no computador novo.</p>
+  </section>
+
+  <section class="card" id="unidades">
+    <h3><span>Unidades</span><span class="pill">Pro</span></h3>
+    <p class="note">Acompanhe à distância o faturamento, o caixa, os PCs em uso e as estatísticas de cada loja (Multi-Unidade). Os dados chegam do GameZoney Servidor de cada unidade a cada 5 minutos.</p>
+    <div id="units-box" aria-live="polite"><p class="note">Carregando…</p></div>
   </section>
 
   <section class="card" id="comprar">
@@ -91,6 +97,6 @@
 <script src="/i18n-site.js?v=20261107-3"></script>
 <script src="/site.js?v=20261107-3"></script>
 <script src="/premium.js?v=20261107-3"></script>
-<script src="/conta.js?v=20261107-3"></script>
+<script src="/conta.js?v=20261107-3"></script><script src="/unidades.js?v=20261108-1"></script>
 <script src="/tracking.js?v=20261107-3"></script></body>
 </html>

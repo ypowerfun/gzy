@@ -126,6 +126,16 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 
 ---
 
+- **Código do produto (1.0.8):** cada produto ganha um número (coluna **Cód.** em Gerenciamento de Produtos). No PDV, digitar o código e apertar Enter adiciona o produto, como o código de barras.
+- **Notas Fiscais (1.0.8, plano Pro):** aba **Notas Fiscais** em Produtos/Serviços, para dar entrada no estoque com a nota do fornecedor.
+  - **+ Importar XML da nota:** escolha o arquivo XML da NF-e que o fornecedor envia (pode escolher vários). A mesma nota não entra duas vezes.
+  - Os itens são **vinculados sozinhos** pelo código de barras (EAN) ou pelo vínculo já usado com aquele fornecedor. Os que ficarem **SEM VÍNCULO** pedem o **código do produto** (ou o código de barras): digite e clique em **Vincular**. Produto que ainda não existe: cadastre em Gerenciamento de Produtos e use o código dele.
+  - **Converter em UN:** quando o item vem em caixa, pacote, fardo ou dúzia (CX, PCT, FD, DZ…), aparece **"Converter CX em UN"** com o campo **UN por CX**: informe quantas unidades vêm em cada embalagem (ex.: caixa com 12 latas = 12) e clique em **Vincular**. A entrada só libera depois disso, e o estoque entra em unidades. Itens em UN usam o campo **Un. por embalagem** (normalmente 1). O sistema lembra a conversão para as próximas notas do mesmo fornecedor.
+  - **Dar entrada no estoque** só libera com todos os itens vinculados: soma o estoque e atualiza o **preço de custo** (o preço de venda não muda).
+  - **Descartar:** nota ainda sem entrada sai da lista sem mexer no estoque.
+  - **Cancelar entrada:** pede o **motivo** e a **senha do administrador** que está cancelando. O estoque que entrou é retirado (se parte já foi vendida, fica registrado o que faltou) e o custo volta ao anterior. Tudo fica no **Log** (tipo "nota").
+  - O painel mostra as notas aguardando entrada, as entradas do mês (quantidade e valor), os fornecedores e as canceladas, com busca por número, fornecedor, CNPJ ou chave.
+
 ## 9. Faturas (administrador)
 
 - Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
@@ -211,6 +221,16 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar.
 
 ---
+
+- **Gerenciamento do App (1.0.8, plano Pro):** deixa tudo pronto para o servidor funcionar também na nuvem e o gestor acompanhar a arena de fora da loja.
+  - Preencha o **domínio** (ex.: arena.minhaloja.com.br), o **certificado HTTPS**, a **hospedagem/VPS** (provedor, IP, sistema e usuário — **nunca a senha**), o **acesso remoto do gestor** e o contato (**ID do AnyDesk** e WhatsApp).
+  - **Salvar e conferir** mostra o que falta (inclusive se o domínio já aponta para a VPS).
+  - **Pedir configuração ao suporte** envia esses dados (sem senhas) para a GameZoney, que finaliza pelo AnyDesk.
+  - Enquanto o servidor não estiver na nuvem, o painel continua acessível **só na rede local**.
+- **Multi-Unidade (1.0.8, plano Pro):** acompanhe faturamento, caixa, PCs em uso e estatísticas de cada loja à distância, em **gamezoney.com › Minha conta › Unidades** (celular ou computador).
+  - Dê um **nome à unidade**, marque **Enviar o resumo desta unidade** e clique em **Salvar**. O resumo vai a cada 5 minutos (não vão nomes, CPF ou telefone de clientes). Começa **desligado**.
+  - **Várias filiais numa só conta:** na conta do gestor, em Minha conta › Unidades, clique em **Gerar código** e cole o código (GZU-XXXX-XXXX) em **Código de vínculo do gestor** no servidor de cada loja.
+  - Cada loja precisa do seu próprio plano Pro (uma conta = um servidor por vez). Gerar outro código ou remover a unidade no site para de mostrar a loja.
 
 ## 16. Backup
 

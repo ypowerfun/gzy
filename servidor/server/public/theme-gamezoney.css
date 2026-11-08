@@ -320,3 +320,12 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
 #license-section .subtext{display:block;margin-top:10px;word-break:break-all}
 /* 1.0.6: barra de progresso do download da atualização */
 .gz-upd-bar{height:8px;background:#1c222c;border-radius:4px;overflow:hidden;margin:6px 0 10px}.gz-upd-bar i{display:block;height:100%;background:linear-gradient(90deg,#FDD034,#F0B11E);transition:width .4s}
+
+/* 1.0.8: Notas Fiscais (Pro) */
+.nfe-link{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.nfe-link input{width:125px;min-width:0}.nfe-link input[data-nfe-factor]{width:70px}
+.nfe-detail .table-wrap{max-height:55vh;overflow:auto}
+#modal:has(.nfe-detail){max-width:min(1100px,96vw);width:96vw}
+.am-form h3{margin:18px 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.am-status .balance strong{max-width:60%;overflow-wrap:anywhere}
+label.check{display:flex;align-items:flex-start;gap:4px;margin:8px 0;text-transform:none;letter-spacing:0;font-weight:500}
+.nfe-factor{display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;text-transform:none;letter-spacing:0}.nfe-factor input{width:70px}.nfe-factor span{font-size:12px;color:#ffb84d}

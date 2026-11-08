@@ -218,7 +218,10 @@ module.exports = function license(store, options = {}) {
     saveMarker();
     return status();
   }
-  return {status, guard, activate, login, logout, refresh, expired, REFRESH_EVERY, publicKey, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
+  // 1.0.8: recursos só do plano Pro (Notas fiscais de entrada, Gerenciamento do App, Multi-Unidade)
+  const isPro = () => { const st = status(); return (st.mode === 'plan' || st.mode === 'plan-grace') && st.plan === 'pro'; };
+  const planToken = () => (planCert() ? s.license.planToken : null);
+  return {status, guard, activate, login, logout, refresh, expired, isPro, planToken, REFRESH_EVERY, publicKey, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
 };
 module.exports.normalizeKey = normalizeKey;
 module.exports.verifyToken = verifyToken;

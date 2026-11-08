@@ -19,6 +19,9 @@ function init(store) {
       s.services.push({id: id(), name, priceCents: price, active: true, createdAt: now, example: true});
     s.shopSeeded = true;
   }
+  // 1.0.8: código do produto (número sequencial, nunca reaproveitado) — usado para vincular os itens da nota fiscal de entrada
+  s.productSequence ??= 0;
+  for (const p of [...s.products].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))) if (!p.code) p.code = ++s.productSequence;
 }
 
 const cents = (v, label, min = 0) => integer(v, min, 100000000, label);
@@ -47,7 +50,7 @@ function saveProduct(store, input, actor) {
   if (barcode && store.state.products.some(p => p.active && p.id !== existing?.id && p.barcode === barcode)) fail('Este código de barras já está em outro produto.');
   if (store.state.products.some(p => p.active && p.id !== existing?.id && p.name.toLowerCase() === name.toLowerCase())) fail('Já existe um produto com este nome.');
   return store.change(actor, 'produto', (existing ? 'Produto atualizado: ' : 'Produto cadastrado: ') + name + ` • estoque ${stock}`, () => {
-    const p = existing || {id: id(), createdAt: Date.now(), active: true};
+    const p = existing || {id: id(), createdAt: Date.now(), active: true, code: ++store.state.productSequence};
     if (!existing) store.state.products.push(p);
     const before = existing ? existing.stock : 0;
     if (stock !== before) (store.state.stockMoves ??= []).push({id: id(), at: Date.now(), actor, productId: p.id, productName: name, type: existing ? 'ajuste' : 'cadastro', qty: stock - before, stockAfter: stock, reason: existing ? 'Ajuste no cadastro do produto' : 'Estoque inicial'});
