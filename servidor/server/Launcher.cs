@@ -14,7 +14,7 @@ using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyTitle("GameZoney Servidor")]
-[assembly: AssemblyVersion("1.0.9.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;

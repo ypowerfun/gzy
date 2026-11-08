@@ -44,7 +44,7 @@ function saveProduct(store, input, actor) {
   const priceCents = margin === null ? cents(input.priceCents, 'Preço de venda', 1) : marginPrice(costCents, margin);
   if (priceCents < 1) fail('Preço de venda: com margem de lucro, informe um preço de custo maior que zero.');
   const barcode = String(input.barcode ?? '').trim();
-  if (barcode && !/^[0-9A-Za-z-]{3,48}$/.test(barcode)) fail('Código de barras inválido.');
+  if (barcode && !/^[\x20-\x7E]{3,200}$/.test(barcode)) fail('Código de barras/QR Code inválido (3 a 200 caracteres, sem acentos).'); /* 1.1.0: aceita também o texto de QR Code */
   const stock = integer(input.stock, 0, 1000000, 'Quantidade em estoque');
   const existing = input.id ? store.state.products.find(p => p.id === input.id) || fail('Produto não encontrado.') : null;
   if (barcode && store.state.products.some(p => p.active && p.id !== existing?.id && p.barcode === barcode)) fail('Este código de barras já está em outro produto.');

@@ -144,6 +144,13 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
   - **Cancelar entrada:** pede o **motivo** e a **senha do administrador** que está cancelando. O estoque que entrou é retirado (se parte já foi vendida, fica registrado o que faltou) e o custo volta ao anterior. Tudo fica no **Log** (tipo "nota").
   - O painel mostra as notas aguardando entrada, as entradas do mês (quantidade e valor), os fornecedores e as canceladas, com busca por número, fornecedor, CNPJ ou chave.
 
+- **Importar produtos (1.1.0):** em **Gerenciamento de Produtos › Importar planilha**, use Excel (.xlsx) ou CSV com **Código, Nome, Categoria, Custo, Preço de venda e Margem (%)** (opcionais: Código de barras e Estoque). Clique em **Baixar modelo** para ver o formato. A prévia mostra cada linha como **NOVO**, **ATUALIZA** ou **ERRO** antes de confirmar. O produto que já tem o mesmo código (Cód.), código de barras ou nome é atualizado; os outros são cadastrados. Com margem, o preço de venda é calculado (custo + margem, arredondado para cima no real). Categorias novas são criadas. Sem a coluna Estoque, o estoque não muda. O código de outro sistema (ou o EAN) vira o código de barras do produto.
+- **Leitor de código de barras e de QR Code (1.1.0):** qualquer leitor USB ou Bluetooth que funcione como teclado (o padrão desses aparelhos; configure com **Enter no final**) é reconhecido em qualquer tela, sem precisar clicar num campo:
+  - em **Vendas (PDV)**, o bipe adiciona o produto ao carrinho;
+  - em **Gerenciamento de Produtos** e **Estoque**, abre o produto para editar; código novo oferece **cadastrar** com o código já preenchido;
+  - nas outras telas, mostra nome, preço e estoque (consulta de preço).
+  O campo **Código de barras / QR Code** do produto aceita também o texto de um QR Code. Um QR Code com endereço também é aceito quando termina com o código cadastrado. Se o leitor estiver no modo serial (COM), mude para o modo **USB HID / teclado** (código no manual do leitor). Leitores com idioma do teclado diferente podem trocar símbolos em QR Codes com endereço: números e letras saem sempre certos.
+
 ## 9. Faturas (administrador)
 
 - Escolha **Diário, Mensal ou Anual**, a data e, se quiser, um **Usuário/Nick**, e clique em **Atualizar**. Na mesma linha: **Exportar relatório CSV** e **+ Despesa**.
@@ -243,6 +250,12 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Controle de impressão (1.0.9):** marque **Exigir aprovação da recepção para imprimir** e escolha o serviço usado na cobrança (ex.: Impressão). Vale para as impressoras instaladas nos PCs (USB ou rede), com o GameZoney Cliente 1.0.7 ou mais novo. No modo administrador do PC nada é parado. A lista **Últimas impressões** mostra o que foi aprovado, cobrado, recusado ou cancelado no PC.
 - **Boot pela rede (diskless) (1.0.9):** pré-configuração para PCs sem disco que carregam o Windows de um **servidor de imagem** na rede (iSCSI + PXE, como CCBoot ou iCafeCloud, instalado à parte — o GameZoney não substitui esse servidor). Informe o IP do servidor de imagem, a porta iSCSI (3260), o servidor PXE e a imagem, e marque os PCs que dão boot pela rede. **Salvar e conferir** testa se o servidor de imagem responde e se os PCs já têm o MAC para ligar pela rede. O GameZoney Cliente vai instalado dentro da imagem.
 
+- **Autoatendimento no PC (1.1.0):** com o GameZoney Cliente 1.0.8 ou mais novo, a tela de login do PC ganha **Criar conta** e **Recarregar com PIX**.
+  - **Permitir que o cliente crie a própria conta no PC:** o cliente informa nome, nick, telefone (opcional) e a senha, e já entra com ela.
+  - **Recarga por PIX no PC:** o cliente digita o nick e a senha, escolhe o pacote (os **valores** configurados e, se marcado, as **promoções** ativas), paga o QR Code (ou o PIX copia e cola) no app do banco e, assim que o pagamento é aprovado, o tempo entra sozinho e o PC **já entra na sessão** — sem fila no balcão. O PIX expira em 15 minutos.
+  - O PIX cai na conta **Mercado Pago da arena**: cole o **Access Token de produção** (APP_USR-…) do Mercado Pago da arena. Ele fica guardado só neste servidor e não aparece de novo na tela; **Remover o Access Token** apaga.
+  - A recarga entra como **venda PIX no caixa aberto** (operador "pix-automatico"). Com o caixa fechado, o PIX no PC fica indisponível. O servidor confere os pagamentos no Mercado Pago a cada poucos segundos, inclusive se o PC for desligado no meio. **Últimos PIX no PC** mostra cada pagamento (aguardando, pago, expirado). Se aparecer "Pago • lance manual", lance a recarga na recepção.
+
 ## 16. Backup
 
 - **Configuração > Backup completo do servidor:** backup diário automático (padrão às 03:00) em **Documentos\bkp gamezoney**, mais o botão **Criar backup completo agora**. Cada ZIP leva banco, usuários e senhas protegidas, saldos, histórico, faturas, despesas, fidelidade, configurações, imagens, pareamentos das TVs e a identidade dos PCs.
@@ -279,6 +292,8 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 ---
 
 - **Cliente 1.0.7:** informa ao Servidor o endereço das placas de rede (para **Ligar computadores**) e, com o Controle de impressão ligado, **pausa** cada documento enviado para a impressora durante a sessão até a recepção aprovar (aprovado imprime; recusado é apagado). O instalador liga o **Wake-on-LAN** na placa de rede do Windows e desliga a **Inicialização rápida** (o PC passa a desligar por completo, o que permite ligar pela rede). Falta só ativar o Wake-on-LAN na BIOS de cada PC.
+
+- **Cliente 1.0.8:** botões **Criar conta** e **Recarregar com PIX** na tela de login (aparecem só quando ligados no Servidor, em Configuração › Autoatendimento no PC).
 
 ## 18. Quedas de energia, de rede e de internet
 

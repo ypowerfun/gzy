@@ -1,4 +1,4 @@
-﻿GameZoney — SERVER 1.0.9 INSTALLATION
+﻿GameZoney — SERVER 1.1.0 INSTALLATION
 
 GameZoney — management for gaming arenas: PCs, TVs and consoles. Proprietary software of GameZoney. All rights reserved.
 
