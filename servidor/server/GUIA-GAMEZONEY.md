@@ -253,6 +253,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Autoatendimento no PC (1.1.0):** com o GameZoney Cliente 1.0.8 ou mais novo, a tela de login do PC ganha **Criar conta** e **Recarregar com PIX**.
   - **Permitir que o cliente crie a própria conta no PC:** o cliente informa nome, nick, telefone (opcional) e a senha, e já entra com ela.
   - **Recarga por PIX no PC:** o cliente digita o nick e a senha, escolhe o pacote (os **valores** configurados e, se marcado, as **promoções** ativas), paga o QR Code (ou o PIX copia e cola) no app do banco e, assim que o pagamento é aprovado, o tempo entra sozinho e o PC **já entra na sessão** — sem fila no balcão. O PIX expira em 15 minutos.
+  - **Outro valor (1.1.1, Cliente 1.0.9):** marque **Permitir que o cliente digite o valor que quiser** e informe o **Valor mínimo** (ex.: 5,00 = aceita PIX de R$ 5,00 para cima) e o **Valor máximo**. No PC aparece **Outro valor** na lista de pacotes; o cliente digita quanto quer pagar e vê na hora quanto tempo ganha (calculado pelo valor da hora). Os pacotes prontos e as promoções continuam aparecendo.
   - O PIX cai na conta **Mercado Pago da arena**: cole o **Access Token de produção** (APP_USR-…) do Mercado Pago da arena. Ele fica guardado só neste servidor e não aparece de novo na tela; **Remover o Access Token** apaga.
   - A recarga entra como **venda PIX no caixa aberto** (operador "pix-automatico"). Com o caixa fechado, o PIX no PC fica indisponível. O servidor confere os pagamentos no Mercado Pago a cada poucos segundos, inclusive se o PC for desligado no meio. **Últimos PIX no PC** mostra cada pagamento (aguardando, pago, expirado). Se aparecer "Pago • lance manual", lance a recarga na recepção.
 
@@ -293,6 +294,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 - **Cliente 1.0.7:** informa ao Servidor o endereço das placas de rede (para **Ligar computadores**) e, com o Controle de impressão ligado, **pausa** cada documento enviado para a impressora durante a sessão até a recepção aprovar (aprovado imprime; recusado é apagado). O instalador liga o **Wake-on-LAN** na placa de rede do Windows e desliga a **Inicialização rápida** (o PC passa a desligar por completo, o que permite ligar pela rede). Falta só ativar o Wake-on-LAN na BIOS de cada PC.
 
+- **Cliente 1.0.9:** opção **Outro valor** na recarga por PIX (o cliente digita o valor, a partir do mínimo configurado no Servidor).
 - **Cliente 1.0.8:** botões **Criar conta** e **Recarregar com PIX** na tela de login (aparecem só quando ligados no Servidor, em Configuração › Autoatendimento no PC).
 
 ## 18. Quedas de energia, de rede e de internet

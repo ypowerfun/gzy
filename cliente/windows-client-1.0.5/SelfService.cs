@@ -3,6 +3,7 @@
 //  - Criar conta: o cliente faz o próprio cadastro (nome, nick, telefone opcional e senha).
 //  - Recarregar com PIX: nick + senha, escolhe o pacote, paga o QR Code na tela e, aprovado, o tempo entra sozinho e o PC
 //    já entra na sessão. A senha digitada fica só na memória até o login automático (nunca é gravada).
+// 1.0.9: "Outro valor" — o cliente digita quanto quer pagar (a partir do mínimo configurado no Servidor).
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -48,12 +49,16 @@ public sealed class PixForm : SelfForm {
  readonly TextBox nick,password;readonly ListBox options=new ListBox();readonly GzButton generate=new GzButton("Gerar PIX",GzButtonKind.Primary),cancel=new GzButton("Cancelar",GzButtonKind.Ghost),copy=new GzButton("Copiar código",GzButtonKind.Neutral);
  readonly PictureBox qr=new PictureBox();readonly TextBox code=new TextBox();readonly Label info=new Label(),status=new Label();readonly Timer poll=new Timer{Interval=3000};
  readonly List<string> ids=new List<string>();string chargeId;DateTime expires;
+ readonly Label customLabel=new Label();readonly TextBox customValue=new TextBox();int customMin,customMax,hourCents;
  public string Username{get;private set;}public string Password{get;private set;}
  public PixForm(SelfPost post,string presetNick):base(post,"Recarregar com PIX",600){
   nick=Field("Usuário/Nick",62,false,32);nick.Text=presetNick??"";password=Field("Senha",116,true,20);
   Controls.Add(new Label{Text="Escolha o pacote",Left=22,Top=172,Width=410,Height=22,ForeColor=Color.FromArgb(200,200,205)});
-  options.SetBounds(22,196,410,250);options.BackColor=Color.FromArgb(10,10,12);options.ForeColor=Color.White;options.BorderStyle=BorderStyle.FixedSingle;options.Font=new Font("Segoe UI",12);options.ItemHeight=28;Controls.Add(options);
-  error.SetBounds(22,452,410,70);generate.SetBounds(22,536,200,44);cancel.SetBounds(232,536,200,44);Controls.Add(generate);Controls.Add(cancel);AcceptButton=generate;
+  options.SetBounds(22,196,410,200);options.BackColor=Color.FromArgb(10,10,12);options.ForeColor=Color.White;options.BorderStyle=BorderStyle.FixedSingle;options.Font=new Font("Segoe UI",12);options.ItemHeight=28;Controls.Add(options);
+  error.SetBounds(22,462,410,66);
+  customLabel.SetBounds(22,402,410,22);customLabel.ForeColor=Color.FromArgb(200,200,205);customLabel.Visible=false;Controls.Add(customLabel);
+  customValue.SetBounds(22,426,150,30);customValue.MaxLength=10;customValue.Font=new Font("Segoe UI",12);customValue.BackColor=Color.FromArgb(10,10,12);customValue.ForeColor=Color.White;customValue.BorderStyle=BorderStyle.FixedSingle;customValue.Visible=false;Controls.Add(customValue);
+  options.SelectedIndexChanged+=(s,e)=>ToggleCustom();customValue.TextChanged+=(s,e)=>UpdateCustomHint();generate.SetBounds(22,536,200,44);cancel.SetBounds(232,536,200,44);Controls.Add(generate);Controls.Add(cancel);AcceptButton=generate;
   qr.SetBounds(95,62,270,270);qr.SizeMode=PictureBoxSizeMode.Zoom;qr.BackColor=Color.White;qr.Visible=false;Controls.Add(qr);
   info.SetBounds(22,340,410,50);info.Font=new Font("Segoe UI",11,FontStyle.Bold);info.TextAlign=ContentAlignment.MiddleCenter;info.Visible=false;Controls.Add(info);
   code.SetBounds(22,394,300,28);code.ReadOnly=true;code.BackColor=Color.FromArgb(10,10,12);code.ForeColor=Color.White;code.Visible=false;Controls.Add(code);
@@ -63,11 +68,18 @@ public sealed class PixForm : SelfForm {
   poll.Tick+=async(s,e)=>await Check();FormClosed+=(s,e)=>poll.Stop();
   Shown+=async(s,e)=>{Activate();if(nick.Text.Length>0)password.Focus();else nick.Focus();await LoadOptions();};
  }
- async Task LoadOptions(){try{var r=await post("pix/options",new {});options.Items.Clear();ids.Clear();var list=r.ContainsKey("options")?r["options"] as IEnumerable:null;if(list!=null)foreach(var o in list){var d=o as Dictionary<string,object>;if(d==null)continue;ids.Add(V(d,"id"));int cents=Convert.ToInt32(d["cents"]),minutes=Convert.ToInt32(d["minutes"]);options.Items.Add(V(d,"label")+"  —  "+(cents/100.0).ToString("C",new System.Globalization.CultureInfo("pt-BR"))+"  •  "+Hours(minutes));}if(options.Items.Count>0)options.SelectedIndex=0;else error.Text="Nenhum pacote disponível. Procure a recepção.";}catch(Exception e){error.Text=Clean(e);}}
+ async Task LoadOptions(){try{var r=await post("pix/options",new {});options.Items.Clear();ids.Clear();var list=r.ContainsKey("options")?r["options"] as IEnumerable:null;if(list!=null)foreach(var o in list){var d=o as Dictionary<string,object>;if(d==null)continue;ids.Add(V(d,"id"));int cents=Convert.ToInt32(d["cents"]),minutes=Convert.ToInt32(d["minutes"]);options.Items.Add(V(d,"label")+"  —  "+(cents/100.0).ToString("C",new System.Globalization.CultureInfo("pt-BR"))+"  •  "+Hours(minutes));}var k=r.ContainsKey("custom")?r["custom"] as Dictionary<string,object>:null;if(k!=null){customMin=Convert.ToInt32(k["min"]);customMax=Convert.ToInt32(k["max"]);hourCents=Convert.ToInt32(k["hourCents"]);ids.Add("custom");options.Items.Add("Outro valor (a partir de "+Brl(customMin)+")");}
+  if(options.Items.Count>0)options.SelectedIndex=0;else error.Text="Nenhum pacote disponível. Procure a recepção.";}catch(Exception e){error.Text=Clean(e);}}
+ static string Brl(int cents){return (cents/100.0).ToString("C",new System.Globalization.CultureInfo("pt-BR"));}
+ bool IsCustom(){return options.SelectedIndex>=0&&options.SelectedIndex<ids.Count&&ids[options.SelectedIndex]=="custom";}
+ void ToggleCustom(){bool c=IsCustom();customLabel.Visible=c;customValue.Visible=c;if(c){UpdateCustomHint();customValue.Focus();}}
+ int CustomCents(){decimal v;var t=customValue.Text.Replace("R$","").Trim().Replace(".",",");if(!decimal.TryParse(t,System.Globalization.NumberStyles.Number,new System.Globalization.CultureInfo("pt-BR"),out v))return -1;return (int)Math.Round(v*100);}
+ void UpdateCustomHint(){int c=CustomCents();customLabel.Text="Valor em reais (de "+Brl(customMin)+" a "+Brl(customMax)+")"+(c>=customMin&&c<=customMax&&hourCents>0?"  =  "+Hours((int)Math.Round(c*60.0/hourCents)):"");}
  static string Hours(int m){return m>=60?(m/60)+"h"+(m%60>0?(m%60).ToString("00"):"")+" de jogo":m+" min de jogo";}
  async Task Generate(){if(busy)return;error.Text="";if(nick.Text.Trim().Length==0||password.Text.Length==0){error.Text="Digite o seu nick e a sua senha.";return;}if(options.SelectedIndex<0){error.Text="Escolha um pacote.";return;}
+  int cents=0;if(IsCustom()){cents=CustomCents();if(cents<customMin||cents>customMax){error.Text="Digite um valor de "+Brl(customMin)+" a "+Brl(customMax)+".";customValue.Focus();return;}}
   busy=true;generate.Enabled=false;
-  try{var r=await post("pix/create",new {username=nick.Text.Trim(),password=password.Text,option=ids[options.SelectedIndex]});Username=nick.Text.Trim();Password=password.Text;chargeId=V(r,"id");
+  try{var r=await post("pix/create",new {username=nick.Text.Trim(),password=password.Text,option=ids[options.SelectedIndex],cents=cents});Username=nick.Text.Trim();Password=password.Text;chargeId=V(r,"id");
    try{expires=DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(r["expiresAt"])).LocalDateTime;}catch{expires=DateTime.Now.AddMinutes(15);}
    ShowQr(V(r,"qr"),V(r,"copy"),Convert.ToInt32(r["cents"]),V(r,"label"));poll.Start();}
   catch(Exception e){error.Text=Clean(e);generate.Enabled=true;}finally{busy=false;}

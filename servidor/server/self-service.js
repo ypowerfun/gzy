@@ -14,6 +14,8 @@ const EXPIRE_MIN = 15;
 module.exports = function selfService(store, options = {}) {
   const s = store.state;
   s.settings.selfService ??= {signup: false, pix: false, values: [500, 1000, 2000], promotions: true, payerEmail: ''};
+  s.settings.selfService.customMinCents ??= 500;   // 1.1.1: valor livre digitado pelo cliente (mínimo configurável)
+  s.settings.selfService.customMaxCents ??= 20000;
   s.secrets ??= {};                 // fora de settings: não vai no estado do painel
   s.pixCharges ??= [];
   const fetchImpl = options.fetch || ((...a) => fetch(...a));
@@ -43,6 +45,16 @@ module.exports = function selfService(store, options = {}) {
     if (hour > 0) for (const v of c.values || []) list.push({id: 'v:' + v, label: 'R$ ' + (v / 100).toFixed(2).replace('.', ','), cents: v, minutes: Math.round(v * 60 / hour)});
     return list;
   }
+  // 1.1.1: "Outro valor" — o cliente digita quanto quer recarregar (entre o mínimo e o máximo da Configuração)
+  function custom() { const c = cfg(), hour = Number(s.settings.hourCents) || 0; return c.custom && hour > 0 ? {min: c.customMinCents, max: c.customMaxCents, hourCents: hour} : null; }
+  function customOption(cents) {
+    const k = custom(); if (!k) fail('O valor livre está desligado. Escolha um dos pacotes.');
+    const v = Math.round(Number(cents));
+    if (!Number.isInteger(v) || v < k.min) fail('O valor mínimo para recarga por PIX é ' + brl(k.min) + '.');
+    if (v > k.max) fail('O valor máximo para recarga por PIX é ' + brl(k.max) + '.');
+    return {id: 'c:' + v, label: brl(v), cents: v, minutes: Math.round(v * 60 / k.hourCents)};
+  }
+  const brl = v => 'R$ ' + (v / 100).toFixed(2).replace('.', ',');
   function member(body) {
     const nick = String(body.username ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
     const m = s.members.find(x => !x.guest && (x.username || '').toLowerCase() === nick);
@@ -55,7 +67,7 @@ module.exports = function selfService(store, options = {}) {
     const f = flags(); if (!f.pix) fail('A recarga por PIX no PC está desligada. Procure a recepção.');
     const m = member(body);
     require('./cash').requireOpen(store, 'recarregar por PIX');
-    const opt = options_().find(o => o.id === String(body.option || '')) || fail('Escolha um pacote.');
+    const opt = String(body.option || '') === 'custom' ? customOption(body.cents) : options_().find(o => o.id === String(body.option || '')) || fail('Escolha um pacote.');
     const open = s.pixCharges.filter(c => c.memberId === m.id && c.status === 'pending' && c.expiresAt > now());
     if (open.length >= 2) fail('Você já tem PIX aguardando pagamento. Pague ou espere expirar.');
     const c = {id: crypto.randomUUID(), memberId: m.id, username: m.username, stationId: station.id, stationName: station.name, option: opt.id, label: opt.label, cents: opt.cents, minutes: opt.minutes,
@@ -112,19 +124,23 @@ module.exports = function selfService(store, options = {}) {
   if (!options.noTimer) setInterval(() => { sweep().catch(() => {}); }, 5000).unref();
 
   // ---------- painel ----------
-  function settings() { const c = cfg(); return {...c, tokenSet: !!s.secrets.mpToken, options: options_(), charges: s.pixCharges.slice(-30).reverse().map(c => ({...publicCharge(c), qr: undefined, copy: undefined, stationName: c.stationName, createdAt: c.createdAt, paidAt: c.paidAt, error: c.error}))}; }
+  function settings() { const c = cfg(); return {...c, tokenSet: !!s.secrets.mpToken, options: options_(), customInfo: custom(), charges: s.pixCharges.slice(-30).reverse().map(c => ({...publicCharge(c), qr: undefined, copy: undefined, stationName: c.stationName, createdAt: c.createdAt, paidAt: c.paidAt, error: c.error}))}; }
   function save(input, actor) {
     const values = String(input.values ?? '').split(/[;,\s]+/).filter(Boolean).map(v => Math.round(Number(v.replace(',', '.')) * 100));
     if (values.some(v => !Number.isInteger(v) || v < 100 || v > 100000)) fail('Valores do PIX: use reais entre 1 e 1000 separados por vírgula (ex.: 5, 10, 20).');
     const token = String(input.token ?? '').trim();
     if (token && !/^(APP_USR|TEST)-[0-9a-f-]{8,}[A-Za-z0-9-]*$/i.test(token)) fail('Access Token do Mercado Pago inválido (começa com APP_USR-).');
     const email = String(input.payerEmail ?? '').trim(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('E-mail inválido.');
-    const next = {signup: input.signup === true, pix: input.pix === true, values: [...new Set(values)].sort((a, b) => a - b).slice(0, 8), promotions: input.promotions !== false, payerEmail: email};
+    const reais = (v, d) => { const t = String(v ?? '').trim(); if (!t) return d; const n = Math.round(Number(t.replace(/r\$|\s/gi, '').replace(',', '.')) * 100); if (!Number.isInteger(n) || n < 100 || n > 100000) fail('Valor livre: use reais entre 1 e 1000 (ex.: 5,00).'); return n; };
+    const old = cfg(), customMinCents = reais(input.customMin, old.customMinCents ?? 500), customMaxCents = reais(input.customMax, old.customMaxCents ?? 20000);
+    if (customMaxCents < customMinCents) fail('Valor livre: o máximo precisa ser maior ou igual ao mínimo.');
+    const next = {signup: input.signup === true, pix: input.pix === true, values: [...new Set(values)].sort((a, b) => a - b).slice(0, 8), promotions: input.promotions !== false, payerEmail: email, custom: input.custom === true, customMinCents, customMaxCents};
     if (next.pix && !token && !s.secrets.mpToken) fail('Cole o Access Token do Mercado Pago da arena para ligar o PIX no PC.');
-    store.change(actor, 'config', `Autoatendimento no PC: cadastro ${next.signup ? 'ligado' : 'desligado'}, PIX ${next.pix ? 'ligado' : 'desligado'}${token ? ' (Access Token atualizado)' : ''}${input.removeToken ? ' (Access Token removido)' : ''}`, () => {
+    if (next.pix && !next.values.length && !next.custom && !(next.promotions && s.promotions.some(p => p.active && !p.removedAt && p.cents > 0))) fail('Deixe pelo menos um pacote, uma promoção ou o valor livre para o PIX no PC.');
+    store.change(actor, 'config', `Autoatendimento no PC: cadastro ${next.signup ? 'ligado' : 'desligado'}, PIX ${next.pix ? 'ligado' : 'desligado'}, valor livre ${next.custom ? 'a partir de ' + brl(customMinCents) + ' até ' + brl(customMaxCents) : 'desligado'}${token ? ' (Access Token atualizado)' : ''}${input.removeToken ? ' (Access Token removido)' : ''}`, () => {
       s.settings.selfService = next; if (token) s.secrets.mpToken = token; if (input.removeToken === true) { delete s.secrets.mpToken; next.pix = false; } return null;
     });
     return settings();
   }
-  return {flags, signup, options: options_, create, status, cancel, check, sweep, settings, save};
+  return {flags, signup, options: options_, custom, create, status, cancel, check, sweep, settings, save};
 };

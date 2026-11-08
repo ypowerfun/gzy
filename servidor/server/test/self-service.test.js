@@ -9,7 +9,7 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
   const fetch = async (url, init = {}) => {
     calls.push({url, init});
     if (init.method === 'POST') { const body = JSON.parse(init.body); mpAmount = body.transaction_amount; return {ok: true, status: 201, json: async () => ({id: 987, status: 'pending', point_of_interaction: {transaction_data: {qr_code: '000201PIXCOPIAECOLA', qr_code_base64: 'iVBORw0KGgo='}}})}; }
-    return {ok: true, status: 200, json: async () => ({id: 987, status: mpStatus, transaction_amount: mpAmount, external_reference: calls.find(c => c.init.method === 'POST') && JSON.parse(calls.find(c => c.init.method === 'POST').init.body).external_reference})};
+    return {ok: true, status: 200, json: async () => ({id: 987, status: mpStatus, transaction_amount: mpAmount, external_reference: calls.findLast(c => c.init.method === 'POST') && JSON.parse(calls.findLast(c => c.init.method === 'POST').init.body).external_reference})};
   };
   try {
     const ss = selfService(store, {fetch, noTimer: true}), pc = store.state.stations.find(s => s.kind === 'computer');
@@ -46,6 +46,18 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     // valor diferente do cobrado não libera
     const c2 = await ss.create(pc, {username: 'ana', password: '1234', option: 'v:500'}); mpAmount = 1; mpStatus = 'approved';
     await ss.check(store.state.pixCharges.find(x => x.id === c2.id), true); assert.equal(store.state.pixCharges.find(x => x.id === c2.id).credited, undefined);
+    // 1.1.1: valor livre (Outro valor) com mínimo configurável
+    await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 700}), /desligado/);
+    assert.throws(() => ss.save({signup: true, pix: true, values: '5', custom: true, customMin: '10', customMax: '5'}, 'admin'), /máximo/);
+    conf = ss.save({signup: true, pix: true, values: '5', custom: true, customMin: '5,00', customMax: '100'}, 'admin');
+    assert.equal(conf.customMinCents, 500); assert.equal(conf.customMaxCents, 10000); assert.equal(conf.tokenSet, true); assert.equal(ss.custom().min, 500);
+    await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 499}), /mínimo.*5,00/);
+    await assert.rejects(ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 10001}), /máximo/);
+    for (const x of store.state.pixCharges) x.status = 'expired';
+    mpStatus = 'pending';
+    const c3 = await ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 1350}); assert.equal(c3.cents, 1350); assert.equal(mpAmount, 13.5);
+    const before = ana.creditSeconds; mpStatus = 'approved'; await ss.check(store.state.pixCharges.find(x => x.id === c3.id), true);
+    assert.equal(ana.creditSeconds - before, Math.round(1350 * 60 / store.state.settings.hourCents) * 60);
   } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
 });
 
