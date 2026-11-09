@@ -3,7 +3,7 @@
 // Confere se TODAS as declarações de versão estão iguais (VERSION) antes de gerar o instalador.
 // Acerta package.json/package-lock.json e confere o resto.
 const fs=require('node:fs'),path=require('node:path');
-const VERSION='1.1.9';
+const VERSION='1.2.0';
 const root=path.resolve(__dirname,'..','server');
 for(const name of ['package.json','package-lock.json']){
   const file=path.join(root,name),data=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -26,8 +26,9 @@ const required={
   'server.js':[`version:'${VERSION}'`,`GameZoney SERVER ${VERSION}`,"require('./network-guard')"],
   'Launcher.cs':[`AssemblyVersion("${VERSION}.0")`,'CheckIntegrity();','--disable-sigusr1','class PanelHost','class PanelWindow','PanelHost.SignalRunning(port)','SetProcessDPIAware','GetManifestResourceStream("gamezoney.ico")'],
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
-  'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
-  'INSTALACAO-en.txt':[`SERVER ${VERSION}`],
+  // 1.2.0: a descrição do instalador não mostra mais a versão (só para a equipe)
+  'INSTALACAO.txt':['INSTALAÇÃO DO SERVIDOR','Gerenciamento NF-e'],
+  'INSTALACAO-en.txt':['SERVER INSTALLATION','NF-e management'],
   'shop.js':['marginPrice','Margem de lucro'],
   'public/shop-ui.js':['askFinishSale','marginPriceCents','Deseja realmente finalizar a venda?'],
   'public/app.js':['toggle-cash','gz-caixa-oculto','Ativar programa fidelidade','loyaltyEnabled'],

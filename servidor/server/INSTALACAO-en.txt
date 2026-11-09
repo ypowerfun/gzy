@@ -1,21 +1,27 @@
-﻿GameZoney — SERVER 1.1.9 INSTALLATION
+﻿GameZoney — SERVER INSTALLATION
 
-GameZoney — management for gaming arenas: PCs, TVs and consoles. Proprietary software of GameZoney. All rights reserved.
+GameZoney — management for gaming arenas, LAN houses and cyber cafés: PCs, TVs, consoles, VR and simulators. Proprietary software of GameZoney. All rights reserved.
 
 This installer includes everything the Server needs (Node engine, database, tools and the panel in its own window). Install it on the front-desk PC, in the Windows account that will use the system. The data is stored in %LOCALAPPDATA%\GameZoney\data.
 
 The Server starts automatically when the account signs in to Windows (icon near the clock). The panel opens in its own GameZoney window; closing the window only hides the panel.
 
-30-day free trial with all features, starting at the first launch. To keep using it after the trial, buy the lifetime license at gamezoney.com and activate it in Settings > License.
+Plans:
+  - Free: 30-day free trial with all features, starting at the first launch, no credit card.
+  - Standard: all everyday features (sessions, cash register, sales, customers, loyalty, overnight events, PIX on the PC, print control, waking PCs over the network and more).
+  - Pro: everything in Standard + NF-e management, Manage App and Multi-Unit.
+Unlimited PCs, consoles, VR and simulators on every plan. Subscribe at gamezoney.com and sign in with your account in Settings > License. Your trial data is kept when you subscribe.
 
-On first access, create the administrator user and password. In Settings, check this PC's network address (used by the TVs). The panel language can be changed in Profile > Language.
+On first access, create the administrator user and password. In Settings > Server IP, check this PC's network address (used by the TVs and PCs). The panel language can be changed in Profile > Language.
 
 TVs: the Server is ready to control VIDAA TVs (Hisense/Toshiba) and Android TVs (Android TV / Google TV). Register each TV in Control panel > + New station, type Console (TV IP, HDMI input and "TV system": VIDAA or Android) and use Pair TV:
   - VIDAA: the TV shows a 4-digit PIN; type it in the panel.
   - Android: on the TV, enable "Network debugging/ADB" (Developer options) and, when pairing, accept "Allow debugging" on the TV (check "Always allow"). The TV needs a browser installed to show the session summary.
 
-Computers: install GameZoney Client on each gaming PC and authorize the PC in the panel.
+Computers: install GameZoney Client on each gaming PC (with this same installer, GameZoney Client option) and authorize the PC in the panel.
 
 The installer configures the GameZoney firewall rules (local network only). If needed, use the "Reparar conexao de rede" (repair network connection) shortcut in the Start menu.
+
+To update, install the latest GameZoney-Instalador.exe over the current one: your data is kept.
 
 If this PC already has another arena management system: stop and uninstall its server first (both would use the same ports). Full backups from previous GameZoney versions can be restored from Start menu > Restaurar backup GameZoney.

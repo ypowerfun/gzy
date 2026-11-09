@@ -130,12 +130,12 @@ document.addEventListener('click', async e => {
 // 1.0.5: CAIXA = Caixa atual / Vendas / Caixas fechados; PRODUTOS/SERVIÇOS = Estoque / Gerenciamento de Produtos / Gerenciamento de Serviços.
 // Vendas (PDV) continua na tela "shop" e Estoque na tela "cash"; as abas e o menu mostram cada uma no grupo certo.
 function gzActiveTab() { return view === 'cash' ? 'cash:' + cashTab : view === 'shop' ? 'shop:' + shopTab : view === 'nfe' ? 'nfe:main' : ''; }
-function gzNavView() { if (view === 'nfe') return 'shop'; if (view === 'cash') return cashTab === 'stock' ? 'shop' : 'cash'; if (view === 'shop') return shopTab === 'sales' ? 'cash' : 'shop'; return view; }
+function gzNavView() { if (view === 'nfe') return 'nfe'; if (view === 'cash') return cashTab === 'stock' ? 'shop' : 'cash'; if (view === 'shop') return shopTab === 'sales' ? 'cash' : 'shop'; return view; }
 function gzTabs(group) {
   const a = gzActiveTab(), t = (key, label) => `<button data-gz-tab="${key}" class="${a === key ? 'active' : ''}">${label}</button>`;
   return group === 'caixa'
     ? `<div class="shop-tabs">${t('cash:current', '▣ Caixa atual')}${t('shop:sales', ICON.cart + ' Vendas')}${t('cash:history', '◷ Caixas fechados')}</div>`
-    : `<div class="shop-tabs">${t('cash:stock', '▤ Estoque')}${t('shop:products', ICON.box + ' Gerenciamento de Produtos')}${t('shop:services', ICON.gear + ' Gerenciamento de Serviços')}${t('shop:categories', ICON.box + ' Gerenciamento de Categoria')}${state?.pro ? t('nfe:main', ICON.box + ' Notas Fiscais') : ''}</div>`;
+    : `<div class="shop-tabs">${t('cash:stock', '▤ Estoque')}${t('shop:products', ICON.box + ' Gerenciamento de Produtos')}${t('shop:services', ICON.gear + ' Gerenciamento de Serviços')}${t('shop:categories', ICON.box + ' Gerenciamento de Categoria')}</div>`;
 }
 // Clique no menu: Caixa abre em "Caixa atual" (se estava no Estoque); Produtos/Serviços abre no Estoque (primeira aba).
 function gzNavFix() { if (view === 'cash' && cashTab === 'stock') cashTab = 'current'; if (view === 'shop') { view = 'cash'; cashTab = 'stock'; } }

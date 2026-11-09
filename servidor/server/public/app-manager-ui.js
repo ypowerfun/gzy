@@ -60,15 +60,22 @@ function unitsSection(u) {
   if (send) send.onclick = async () => { send.disabled = true; try { sec.replaceWith(unitsSection(await api('/units/send', {}))); toast('Resumo enviado.'); } catch (err) { toast(err.message); const res = await api('/units').catch(() => null); if (res) sec.replaceWith(unitsSection(res)); } };
   return sec;
 }
+// 1.2.0: Gerenciar App tem item próprio no menu (abaixo do Ranking, só Pro); Multi-Unidade continua na Configuração.
+async function renderAppManager() {
+  const node = $('#view'); $('#view-title').textContent = 'Gerenciar App';
+  if (!isAdmin() || !state?.pro) { node.innerHTML = '<div class="panel"><h2>Gerenciar App</h2><p class="hint">Recurso do plano Pro.</p></div>'; return; }
+  const r = await api('/app-manager'); if (view !== 'app') return;
+  node.innerHTML = ''; node.append(appManagerSection(r));
+}
 (function () {
   const original = renderSettings;
   renderSettings = function () {
     original.apply(this, arguments);
     if (!isAdmin() || !state?.pro) return;
-    Promise.all([api('/app-manager'), api('/units')]).then(([r, u]) => {
-      if (view !== 'settings') return; $('#app-manager-section')?.remove(); $('#units-section')?.remove();
-      const am = appManagerSection(r), us = unitsSection(u), anchor = $('#net-section');
-      if (anchor) { anchor.after(am); am.after(us); } else { $('#view').append(am); $('#view').append(us); }
+    api('/units').then(u => {
+      if (view !== 'settings') return; $('#units-section')?.remove();
+      const us = unitsSection(u), anchor = $('#net-section');
+      if (anchor) anchor.after(us); else $('#view').append(us);
     }).catch(() => {});
   };
 })();

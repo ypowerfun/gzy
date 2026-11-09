@@ -247,7 +247,8 @@ nav button:hover{background:#17140c}
 .pdv-wide .pdv-total strong{font-size:22px}
 .pdv-wide .pdv-finish{font-size:15px;padding:13px 8px}
 /* 1.0.5: traço dourado separando os grupos do menu */
-nav .nav-sep{height:1px;margin:10px 14px;background:linear-gradient(90deg,transparent,var(--red2) 18%,var(--red2) 82%,transparent);opacity:.85}
+/* 1.2.0: a linha dourada nunca encolhe (o menu é coluna flexível: sem flex:none ela ia a 0 px quando os itens não cabiam) e não some com o zoom automático */
+nav .nav-sep{flex:none;min-height:1px;height:max(1px,calc(1px / var(--fit-zoom,1)));margin:10px 14px;background:linear-gradient(90deg,transparent,var(--red2) 18%,var(--red2) 82%,transparent);opacity:.85}
 /* 1.0.5: caixa de confirmação do painel (no lugar da janela do navegador, que mostrava o endereço do servidor) */
 #ask{width:min(480px,94vw)}
 #ask .confirm-question{white-space:pre-line}

@@ -138,7 +138,7 @@ Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a 
 ---
 
 - **Código do produto:** cada produto ganha um número (coluna **Cód.** em Gerenciamento de Produtos). No PDV, digitar o código e apertar Enter adiciona o produto, como o código de barras.
-- **Notas Fiscais (plano Pro):** aba **Notas Fiscais** em Produtos/Serviços, para dar entrada no estoque com a nota do fornecedor.
+- **Gerenciamento NF-e (plano Pro):** item próprio no menu, logo abaixo de **Produtos/Serviços**, para dar entrada no estoque com a nota do fornecedor (só aparece com o plano Pro ou no teste grátis).
   - **+ Importar XML da nota:** escolha o arquivo XML da NF-e que o fornecedor envia (pode escolher vários). A mesma nota não entra duas vezes.
   - Os itens são **vinculados sozinhos** pelo código de barras (EAN) ou pelo vínculo já usado com aquele fornecedor. Os que ficarem **SEM VÍNCULO** pedem o **código do produto** (ou o código de barras): digite e clique em **Vincular**. Produto que ainda não existe: cadastre em Gerenciamento de Produtos e use o código dele.
   - **Converter em UN:** quando o item vem em caixa, pacote, fardo ou dúzia (CX, PCT, FD, DZ…), aparece **"Converter CX em UN"** com o campo **UN por CX**: informe quantas unidades vêm em cada embalagem (ex.: caixa com 12 latas = 12) e clique em **Vincular**. A entrada só libera depois disso, e o estoque entra em unidades. Itens em UN usam o campo **Un. por embalagem** (normalmente 1). O sistema lembra a conversão para as próximas notas do mesmo fornecedor.
@@ -220,9 +220,9 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
   - **Trocar o PC da recepção:** faça o backup completo, instale o Servidor no computador novo, restaure o backup e entre com a conta. Reinstalar o Servidor no mesmo computador não reinicia o teste.
   - **Licença vitalícia antiga (chave GZ-…):** virou plano **Standard por 12 meses** sem custo. O Servidor que já estava ativado continua funcionando e passa sozinho para o plano da conta quando tiver internet; dá para entrar com a conta a qualquer momento.
   - **O que cada plano libera:**
-    - **Free (teste grátis de 30 dias):** todas as funções, inclusive Notas Fiscais (NF-e) e Gerenciamento do App; PCs e consoles ilimitados; sem cartão de crédito; os dados ficam guardados ao assinar.
+    - **Free (teste grátis de 30 dias):** todas as funções, inclusive Gerenciamento NF-e e Gerenciar App; PCs e consoles ilimitados; sem cartão de crédito; os dados ficam guardados ao assinar.
     - **Standard:** todas as funções do dia a dia — PCs, consoles, VR e simuladores ilimitados (VR/simulador em PC usa o GameZoney Cliente; ligado na TV pelo HDMI é controlado pela TV), layout personalizado do login (Servidor/Cliente), **PIX integrado no PC (autoatendimento)**, **Controle de impressão**, avisos automáticos, Wake-on-LAN, fidelidade, Corujão/Viradão, caixa, estoque e PDV, suporte completo.
-    - **Pro:** tudo do Standard + **Gerenciamento do App** (servidor também na nuvem) + **Gerenciamento de NF-e** (notas fiscais de entrada) + **Multi-Unidade** (acompanhar várias lojas em Minha conta).
+    - **Pro:** tudo do Standard + **Gerenciar App** (servidor também na nuvem) + **Gerenciamento de NF-e** (notas fiscais de entrada) + **Multi-Unidade** (acompanhar várias lojas em Minha conta).
     - Nenhum plano mostra anúncios.
 - **Proteção do sistema:** ao abrir, o GameZoney confere todos os seus arquivos. Se algum foi alterado, trocado ou apagado (por exemplo, por um antivírus ou por alguém tentando burlar a licença), aparece "Os arquivos do GameZoney Servidor foram alterados ou estão corrompidos": reinstale pelo instalador de gamezoney.com (os dados são mantidos). Se alguém tentar mexer no sistema em funcionamento (depurador), o painel mostra "Proteção do GameZoney ativada" e bloqueia recargas, sessões novas e vendas até fechar e abrir o GameZoney de novo.
 - **Servidor reinstalado:** se o GameZoney Servidor for desinstalado e instalado de novo **sem restaurar o backup**, ele ganha uma identidade nova e os PCs não o reconhecem mais como o mesmo. Agora cada PC percebe isso sozinho: se em 90 segundos só aparecer na rede esse servidor novo (e nenhum com a identidade antiga), o PC pede autorização a ele. Aprove em **Computadores › solicitações** e confirme o código na tela do PC, como na primeira instalação. Uma sessão em andamento **não é interrompida**: o PC espera ela terminar para pedir. Se o servidor antigo voltar antes da aprovação, o PC volta para ele sozinho. Com vários servidores desconhecidos na rede, o PC não escolhe nenhum. Para não precisar aprovar os PCs de novo, ao reinstalar use **Restaurar backup GameZoney** (menu Iniciar) com o backup de Documentos\bkp gamezoney: a identidade antiga volta junto e os PCs reconectam sozinhos.
@@ -243,7 +243,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-- **Gerenciamento do App (plano Pro):** deixa tudo pronto para o servidor funcionar também na nuvem e o gestor acompanhar a arena de fora da loja.
+- **Gerenciar App (plano Pro):** item próprio no menu, abaixo do **Ranking** (só aparece com o plano Pro ou no teste grátis, para administradores). Todas as configurações do app ficam ali: deixa tudo pronto para o servidor funcionar também na nuvem e o gestor acompanhar a arena de fora da loja.
   - Preencha o **domínio** (ex.: arena.minhaloja.com.br), o **certificado HTTPS**, a **hospedagem/VPS** (provedor, IP, sistema e usuário — **nunca a senha**), o **acesso remoto do gestor** e o contato (**ID do AnyDesk** e WhatsApp).
   - **Salvar e conferir** mostra o que falta (inclusive se o domínio já aponta para a VPS).
   - **Pedir configuração ao suporte** envia esses dados (sem senhas) para a GameZoney, que finaliza pelo AnyDesk.

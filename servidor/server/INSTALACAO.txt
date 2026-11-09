@@ -1,21 +1,27 @@
-﻿GameZoney — INSTALAÇÃO DO SERVIDOR 1.1.9
+﻿GameZoney — INSTALAÇÃO DO SERVIDOR
 
-GameZoney — gestão de arenas gamer: PCs, TVs e consoles. Software proprietário da GameZoney. Todos os direitos reservados.
+GameZoney — gestão de arenas gamer, lan houses e cyber cafés: PCs, TVs, consoles, VR e simuladores. Software proprietário da GameZoney. Todos os direitos reservados.
 
 Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, ferramentas e o painel em janela própria). Instale no PC da recepção, na conta do Windows que vai usar o sistema. Os dados ficam em %LOCALAPPDATA%\GameZoney\data.
 
 O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre numa janela própria do GameZoney; fechar a janela só esconde o painel.
 
-Teste grátis de 30 dias com todas as funções, a partir da primeira abertura. Para continuar depois do teste, compre a licença vitalícia em gamezoney.com e ative em Configuração > Licença.
+Planos:
+  - Free: teste grátis de 30 dias com todas as funções, a partir da primeira abertura, sem cartão de crédito.
+  - Standard: todas as funções do dia a dia (sessões, caixa, vendas, clientes, fidelidade, Corujão/Viradão, PIX no PC, controle de impressão, ligar os PCs pela rede e mais).
+  - Pro: tudo do Standard + Gerenciamento NF-e, Gerenciar App e Multi-Unidade.
+PCs, consoles, VR e simuladores ilimitados em todos os planos. Assine em gamezoney.com e entre com a sua conta em Configuração > Licença. Os dados do teste continuam guardados ao assinar.
 
-No primeiro acesso, crie o usuário administrador e a senha. Em Configurações, confira o endereço deste PC na rede (usado pelas TVs).
+No primeiro acesso, crie o usuário administrador e a senha. Em Configuração > Servidor IP, confira o endereço deste PC na rede (usado pelas TVs e pelos PCs).
 
 TVs: o Servidor já vem pronto para controlar TVs VIDAA (Hisense/Toshiba) e TVs Android (Android TV / Google TV). Cadastre cada TV em Painel de controle > + Nova estação, tipo Console (IP da TV, entrada HDMI e "Sistema da TV": VIDAA ou Android) e use Parear TV:
   - VIDAA: a TV mostra um PIN de 4 números; digite no painel.
   - Android: ative na TV "Depuração de rede/ADB" (Opções do desenvolvedor) e, ao parear, aceite "Permitir depuração" na TV (marque "Sempre permitir"). A TV precisa de um navegador instalado para mostrar o resumo da sessão.
 
-Computadores: instale o GameZoney Cliente em cada PC gamer e autorize o PC no painel.
+Computadores: instale o GameZoney Cliente em cada PC gamer (com este mesmo instalador, opção GameZoney Cliente) e autorize o PC no painel.
 
 O instalador configura as regras de firewall do GameZoney (somente a rede local). Se necessário, use "Reparar conexão de rede" no menu Iniciar.
+
+Para atualizar, instale por cima com o GameZoney-Instalador.exe mais recente: os dados são mantidos.
 
 Se este PC já tem outro sistema de gestão de arena: encerre e desinstale o servidor dele antes (os dois usariam as mesmas portas). Backups completos de versões anteriores do GameZoney podem ser restaurados pelo menu Iniciar > Restaurar backup GameZoney.
