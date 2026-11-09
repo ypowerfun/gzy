@@ -61,7 +61,8 @@ Este repositório é só do **GameZoney**. A PRIME ARENA tem repositório e chat
 - **Queda de internet/rede não encerra sessão**: PC sem conexão fica vermelho, a sessão continua e o tempo segue contando; servidor reiniciado espera 5 min pelos PCs (`pc.js`).
 
 ## Testes
-- `cd servidor/server && npm ci && node --test test/*.test.js` — 2 testes só passam no Windows (backup completo e PC HTTPS: precisam de BackupTool.exe/cliente compilado).
+- `cd servidor/server && npm ci && node --test test/*.test.js` — 7 testes só passam no Windows (backups, discovery, heartbeat, network-guard servidor real, password-registration, pc-admin, pc: precisam de CertTool.exe/BackupTool.exe e do cliente compilado). No Linux o normal é 7 falhas por `ENOENT CertTool.exe/BackupTool.exe`.
+- **Testes no Windows pelo Codex**: prompt em `testes/PROMPT-CODEX-WINDOWS.md` (copiar entre as linhas =====; roda no PC Windows, não altera arquivos, devolve o bloco `RELATORIO-GAMEZONEY-WINDOWS`). **Última validação (2026-11-09, Servidor 1.1.7 + Cliente 1.0.14, Windows 11 25H2, Node 24.21, PowerShell 5.1, csc 4.8)**: site 36/36, servidor 116/116 (0 pulados), Cliente `/selftest` e `/policy-test` PASS. Falhas "fetch failed" no site só aparecem dentro do sandbox do Codex (sem rede/localhost); fora dele passam todas — não é bug.
 - C#: compila com o csc do .NET Framework 4 (no Linux: `mcs -langversion:5`).
 - `scripts/testServer.cjs` (gerador no Windows) roda os testes **sem** as variáveis `NODE_*`/`UV_*` do PC (igual ao GameZoney.exe).
 - Proteção 1.0.7 (`license.js` `DANGER`): só `--require/-r/--import/--loader/--experimental-loader/--inspect/--inspect-brk/--inspect-wait/--debug*`; **não** `--inspect-port`/`--inspect-publish-uid` (o Node 24 repassa esses padrões aos processos de `node --test`; isso reprovou 15 testes no rcti2). Testar também com Node 24 antes de entregar.
