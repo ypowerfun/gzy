@@ -2,11 +2,11 @@
 [Setup]
 AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
-; 1.1.8: sem número de versão nas telas do instalador (a versão continua nos detalhes do arquivo, para a equipe)
+; 1.1.9: sem número de versão nas telas do instalador (a versão continua nos detalhes do arquivo, para a equipe)
 AppVerName=GameZoney Servidor
-AppVersion=1.1.8
+AppVersion=1.1.9
 AppPublisher=GameZoney
-; 1.1.8: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
+; 1.1.9: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
 AppSupportURL=https://gamezoney.com/atendimento
 AppUpdatesURL=https://gamezoney.com/atualizacoes
@@ -27,7 +27,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.1.8-Setup
+OutputBaseFilename=GameZoney-Servidor-1.1.9-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -39,7 +39,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.1.8.0
+VersionInfoVersion=1.1.9.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt

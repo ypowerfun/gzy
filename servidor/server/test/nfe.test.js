@@ -11,7 +11,7 @@ const xml = (key = KEY) => `<?xml version="1.0" encoding="UTF-8"?><nfeProc xmlns
 <det nItem="2"><prod><cProd>BISC-01</cProd><cEAN>SEM GTIN</cEAN><xProd>BISCOITO RECHEADO 140G</xProd><uCom>UN</uCom><qCom>10.0000</qCom><vUnCom>2.0000000000</vUnCom><vProd>20.00</vProd><vDesc>2.00</vDesc><cEANTrib>SEM GTIN</cEANTrib></prod></det>
 <total><ICMSTot><vNF>78.00</vNF></ICMSTot></total></infNFe></NFe><protNFe versao="4.00"><infProt><chNFe>${key}</chNFe><cStat>100</cStat><nProt>113260000000001</nProt></infProt></protNFe></nfeProc>`;
 
-test('1.0.8: notas fiscais de entrada (Pro) — importar XML, vincular pelo código, dar entrada e cancelar com motivo e senha', async t => {
+test('1.0.8/1.1.9: notas fiscais de entrada (Pro e teste grátis; Standard não) — importar XML, vincular pelo código, dar entrada e cancelar com motivo e senha', async t => {
   const {publicKey, privateKey} = crypto.generateKeyPairSync('ed25519');
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-nfe-'));
   const inst = createServer({directory, noTimer: true, license: {publicKey: publicKey.export({type: 'spki', format: 'pem'})}});
@@ -21,10 +21,12 @@ test('1.0.8: notas fiscais de entrada (Pro) — importar XML, vincular pelo cód
   await call('/api/setup', {name: 'Dono', username: 'admin', password: 'senha123'}); await call('/api/login', {username: 'admin', password: 'senha123'});
   const S = inst.store.state, plan = p => { S.license.planToken = sign({v: 2, kind: 'plan', uid: 'u1', email: 'dono@arena.com', plan: p, planName: p === 'pro' ? 'Pro' : 'Standard', period: 'mensal', installId: S.runtime.installId, paidUntil: Date.now() + 20 * 86400000, graceUntil: Date.now() + 27 * 86400000, issuedAt: Date.now()}, privateKey); };
 
-  // sem Pro (teste grátis e Standard): recurso bloqueado e a aba não aparece
-  assert.equal((await call('/api/state')).pro, false);
-  assert.match((await call('/api/nfe', undefined, 400)).error, /plano Pro/);
+  // 1.1.9: teste grátis (Free) libera todas as funções, inclusive a NF-e; Standard não tem NF-e
+  assert.equal((await call('/api/state')).pro, true); await call('/api/nfe');
   plan('standard'); assert.equal((await call('/api/state')).pro, false); await call('/api/nfe/import', {xml: xml()}, 400);
+  assert.match((await call('/api/nfe', undefined, 400)).error, /plano Pro/);
+  // Standard: PIX no PC (autoatendimento) e Controle de impressão funcionam
+  await call('/api/self-service'); await call('/api/prints'); await call('/api/pc-notices');
   plan('pro'); assert.equal((await call('/api/state')).pro, true);
 
   // produtos com código sequencial; a Coca tem o EAN da nota
