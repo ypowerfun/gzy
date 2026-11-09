@@ -4,7 +4,7 @@ const {createServer}=require('../server');
 test('Fluxo completo autenticado: promoção, TV, recarga, expiração, relatório e permissões',async t=>{
  const commands=[];let failHdmi=false,failPage=false;
  class FakeTV{constructor(tv){this.tv=tv}async hdmi(){if(failHdmi)throw Error('TV offline');commands.push(['hdmi',this.tv.id])}async openClientPage(url){if(failPage)throw Error('TV offline');commands.push(['page',url])}disconnect(){}}
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-api-'));const instance=createServer({directory,Vidaa:FakeTV,noTimer:true});await new Promise(r=>instance.server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+instance.server.address().port;let cookie='';
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gz-api-'));const instance=createServer({directory,Vidaa:FakeTV,noTimer:true});require('./legacy-loyalty')(instance.store);await new Promise(r=>instance.server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+instance.server.address().port;let cookie='';
  t.after(async()=>{await instance.close();fs.rmSync(directory,{recursive:true,force:true})});
  async function call(url,body,status=200,headers={}){const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie,...headers},body:body===undefined?undefined:JSON.stringify(body)});assert.equal(r.status,status,await r.clone().text());if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const text=await r.text();return text?JSON.parse(text):null}
  await call('/api/state',undefined,401);assert.equal((await call('/api/auth')).setup,true);

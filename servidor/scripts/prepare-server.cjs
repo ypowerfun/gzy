@@ -3,7 +3,7 @@
 // Confere se TODAS as declarações de versão estão iguais (VERSION) antes de gerar o instalador.
 // Acerta package.json/package-lock.json e confere o resto.
 const fs=require('node:fs'),path=require('node:path');
-const VERSION='1.1.3';
+const VERSION='1.1.4';
 const root=path.resolve(__dirname,'..','server');
 for(const name of ['package.json','package-lock.json']){
   const file=path.join(root,name),data=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -11,7 +11,7 @@ for(const name of ['package.json','package-lock.json']){
   if(data.packages?.[''])data.packages[''].version=VERSION;
   fs.writeFileSync(file,JSON.stringify(data,null,2)+'\n');
 }
-// 1.1.3: BOM duplicado no início (EF BB BF EF BB BF) faz o Inno Setup não reconhecer o "#define GzRole" da 1ª linha
+// 1.1.4: BOM duplicado no início (EF BB BF EF BB BF) faz o Inno Setup não reconhecer o "#define GzRole" da 1ª linha
 // ("Undeclared identifier: GzRole"). Corrige sozinho nos arquivos do Servidor, do Cliente e do instalador único.
 for(const dir of [root,path.resolve(root,'..'),path.resolve(root,'..','..','cliente','windows-client-1.0.5'),path.resolve(root,'..','..','unico')]){
   if(!fs.existsSync(dir))continue;

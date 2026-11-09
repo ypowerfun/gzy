@@ -73,6 +73,9 @@ public class SessionCleanup {
   if(ignored.Count>0)Note("Limpeza concluída. Processos protegidos sem janela, que o Windows não deixou fechar, ficaram abertos: "+String.Join(", ",ignored.ToArray())+".");
   if(File.Exists(Marker))File.Delete(Marker);state=null;baseline.Clear();
  }
+ // 1.0.11: a limpeza não conseguiu fechar algum programa (anticheat/administrador ou janela que não fecha): em vez de
+ // bloquear o PC, libera o login e anota no log. O próximo cliente entra normalmente e pode fechar o programa na tela.
+ public void Release(string reason){lock(sync){if(state==null)return;Note("PC liberado com programas da sessão anterior ainda abertos: "+reason);try{if(File.Exists(Marker))File.Delete(Marker);}catch{}state=null;baseline.Clear();}}
  List<CleanupProcess> Remaining(){var result=new List<CleanupProcess>();foreach(var p in snapshot())if(Selected(p))result.Add(p);return result;}
  void Note(string message){try{Directory.CreateDirectory(directory);string file=Path.Combine(directory,"session-cleanup.log");if(File.Exists(file)&&new FileInfo(file).Length>262144)File.Delete(file);File.AppendAllText(file,DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")+" "+message+Environment.NewLine);}catch{}}
  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Auto)]struct ProcessEntry {public uint size,usage,pid;public IntPtr heap;public uint module,threads,parent;public int priority;public uint flags;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)]public string exe;}

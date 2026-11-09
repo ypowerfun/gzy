@@ -65,6 +65,35 @@ test('1.1.0: criar conta no PC e recarregar com PIX — o tempo entra sozinho qu
     const c3 = await ss.create(pc, {username: 'ana', password: '1234', option: 'custom', cents: 1350}); assert.equal(c3.cents, 1350); assert.equal(mpAmount, 13.5);
     const before = ana.creditSeconds; mpStatus = 'approved'; await ss.check(store.state.pixCharges.find(x => x.id === c3.id), true);
     assert.equal(ana.creditSeconds - before, Math.round(1350 * 60 / store.state.settings.hourCents) * 60);
+    // 1.1.4: OBS (nome da organização) e "+ Tempo" na sessão
+    ss.save({signup: true, pix: true, promotionIds: [p10.id], payeeName: 'Arena Centro <b>', custom: true, customMin: '5', customMax: '100'}, 'admin');
+    assert.equal(ss.payee(), 'Arena Centro b');
+    await assert.rejects(ss.create(pc, {mode: 'session', option: 'p:' + p10.id}), /Nenhuma sessão/);
+    for (const x of store.state.pixCharges) x.status = 'expired';
+    store.start(pc.id, ana.id, 'admin');
+    const t = await ss.create(pc, {mode: 'session', option: 'p:' + p10.id}); assert.equal(t.payee, 'Arena Centro b'); assert.equal(t.username, 'ana');
+    const sess = store.activeForStation(pc.id), before2 = sess.allocatedSeconds; mpStatus = 'approved';
+    await ss.check(store.state.pixCharges.find(x => x.id === t.id), true);
+    assert.ok(store.activeForStation(pc.id).allocatedSeconds >= before2 + 180 * 60, '+ Tempo entra na sessão');
+    await assert.rejects(ss.create(pc, {mode: 'guest', email: 'x@y.com', option: 'p:' + p10.id}), /sessão em andamento/);
+  } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
+});
+
+test('1.1.4: Pagar via PIX sem conta (só e-mail) libera o PC como visitante', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-self3-')), store = new Store(dir); let ref = null, status = 'pending';
+  const fetch = async (url, init = {}) => init.method === 'POST' ? (ref = JSON.parse(init.body), {ok: true, status: 201, json: async () => ({id: 5, status: 'pending', point_of_interaction: {transaction_data: {qr_code: 'C', qr_code_base64: 'Q'}}})})
+    : {ok: true, status: 200, json: async () => ({id: 5, status, transaction_amount: ref.transaction_amount, external_reference: ref.external_reference})};
+  try {
+    const started = [];
+    const ss = selfService(store, {fetch, noTimer: true, startGuest: async (stationId, input, who, extra) => { const m = {id: 'g1', guest: true, active: true, creditSeconds: 0, pointsMilli: 0, name: 'Visitante', username: '', email: extra.email}; store.state.members.push(m); const sale = store.credit(m.id, input, who); const session = store.start(stationId, m.id, who); started.push({stationId, extra}); return {sale, session}; }});
+    const pc = store.state.stations.find(s => s.kind === 'computer'); store.state.promotions.push({id: 'a', name: '1h', cents: 500, minutes: 60, active: true});
+    ss.save({pix: true, token: 'APP_USR-1234567890123456-abcdef', promotionIds: ['a']}, 'admin'); cash.open(store, {openingCents: 0}, 'admin');
+    await assert.rejects(ss.create(pc, {mode: 'guest', email: 'invalido', option: 'p:a'}), /e-mail válido/);
+    const c = await ss.create(pc, {mode: 'guest', email: 'joao@x.com', option: 'p:a'}); assert.equal(ref.payer.email, 'joao@x.com'); assert.match(c.username, /joao@x\.com/);
+    status = 'approved'; await ss.check(store.state.pixCharges[0], true); await ss.check(store.state.pixCharges[0], true);
+    assert.equal(started.length, 1, 'libera uma vez só'); assert.equal(started[0].extra.email, 'joao@x.com');
+    assert.equal(store.activeForStation(pc.id).memberId, 'g1'); assert.equal((await ss.status(pc, {id: c.id})).status, 'approved');
+    assert.equal(store.state.sales.at(-1).paymentMethod, 'pix');
   } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
 });
 
