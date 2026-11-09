@@ -41,7 +41,7 @@ function renderPlans() {
     // Free = teste grátis de 30 dias: leva direto para os downloads (quem não está logado entra e volta para lá)
     if (p.free) return `<article class="plan-card free"><div class="plan-body"><div class="plan-head"><h3>${esc(p.name)}</h3><span class="plan-badge free">30 dias grátis</span></div><p class="plan-old empty">&nbsp;</p>
       <p class="plan-price"><strong>${money(0)}</strong><span>/30 dias</span></p><a class="btn outline plan-btn" href="/conta#downloads">Escolher plano</a>
-      <p class="plan-terms">Baixe e use todas as funções por 30 dias, sem cartão. Depois, escolha o Standard ou o Pro.</p>
+      <p class="plan-terms">Baixe e use as funções essenciais e o autoatendimento por 30 dias, sem cartão. Depois, escolha o Standard ou o Pro.</p>
       <ul class="plan-feats">${p.features.map(f => `<li>${PLAN_ICON}<span>${esc(f)}</span></li>`).join('')}</ul></div></article>`;
     return `<article class="plan-card${p.popular ? ' popular' : ''}">${p.popular ? '<div class="plan-ribbon">Mais popular</div>' : ''}<div class="plan-body">
       <div class="plan-head"><h3>${esc(p.name)}</h3>${v.badge ? `<span class="plan-badge">${esc(v.badge)}</span>` : ''}</div>

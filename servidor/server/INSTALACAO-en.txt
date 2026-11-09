@@ -7,7 +7,7 @@ This installer includes everything the Server needs (Node engine, database, tool
 The Server starts automatically when the account signs in to Windows (icon near the clock). The panel opens in its own GameZoney window; closing the window only hides the panel.
 
 Plans:
-  - Free: 30-day free trial with all features, starting at the first launch, no credit card.
+  - Free: 30-day free trial, starting at the first launch, no credit card: essential features and self-service on the PC (PIX). Print control, NF-e, Manage App and Multi-Unit are unlocked when you sign in with the plan account.
   - Standard: all everyday features (sessions, cash register, sales, customers, loyalty, overnight events, PIX on the PC, print control, waking PCs over the network and more).
   - Pro: everything in Standard + NF-e management, Manage App and Multi-Unit.
 Unlimited PCs, consoles, VR and simulators on every plan. Subscribe at gamezoney.com and sign in with your account in Settings > License. Your trial data is kept when you subscribe.

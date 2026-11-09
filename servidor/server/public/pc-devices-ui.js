@@ -48,11 +48,14 @@ document.addEventListener('click', async e => {
 // ---------- Configuração ----------
 function printSettingsSection(data, services) {
   const c = data.settings || {}, sec = document.createElement('section'); sec.id = 'print-section'; sec.className = 'panel';
-  sec.innerHTML = `<h2>Controle de impressão</h2><p class="hint">Ligado, todo documento que o cliente manda imprimir fica <strong>parado no PC</strong> até a recepção aprovar no Painel de controle (com ou sem cobrança). Evita desperdício de papel e tinta. Vale para as impressoras instaladas nos PCs, com o GameZoney Cliente atualizado. No modo administrador nada é parado.</p>
+  // 1.2.8: só nos planos Standard e Pro (teste grátis sem conta: bloqueado)
+  const locked = data.allowed === false;
+  sec.innerHTML = `<h2>Controle de impressão</h2>${locked ? '<p class="hint" style="color:#ffb84d">🔒 Disponível nos planos Standard e Pro. Entre com a sua conta gamezoney.com em Configuração › Licença para liberar.</p>' : ''}<p class="hint">Ligado, todo documento que o cliente manda imprimir fica <strong>parado no PC</strong> até a recepção aprovar no Painel de controle (com ou sem cobrança). Evita desperdício de papel e tinta. Vale para as impressoras instaladas nos PCs, com o GameZoney Cliente atualizado. No modo administrador nada é parado.</p>
     <form id="print-form"><label class="check"><input type="checkbox" name="enabled" ${c.enabled ? 'checked' : ''}> Exigir aprovação da recepção para imprimir</label>
     <label>Serviço usado na cobrança<select name="serviceId"><option value="">Escolher na hora</option>${services.map(s => `<option value="${esc(s.id)}" ${c.serviceId === s.id ? 'selected' : ''}>${esc(s.name)} — ${money(s.priceCents)}</option>`).join('')}</select></label>
     <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button></div></form>
     ${(data.history || []).length ? `<h3 style="margin-top:18px">Últimas impressões</h3><div class="table-wrap"><table><thead><tr><th>Data</th><th>PC</th><th>Documento</th><th>Páginas</th><th>Situação</th><th>Por</th></tr></thead><tbody>${data.history.slice(0, 20).map(h => `<tr><td>${datetime(h.decidedAt)}</td><td>${esc(h.stationName)}</td><td>${esc(h.document)}</td><td>${h.pages || '?'}</td><td>${esc(h.result)}${h.cents ? ' • ' + money(h.cents) : ''}</td><td>${esc(h.by)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+  if (locked) sec.querySelectorAll('#print-form input, #print-form select, #print-form button').forEach(x => x.disabled = true);
   sec.querySelector('#print-form').onsubmit = async e => { e.preventDefault(); const b = e.submitter; b.disabled = true; try { await api('/prints/settings', {enabled: e.target.enabled.checked, serviceId: e.target.serviceId.value}); toast(e.target.enabled.checked ? 'Controle de impressão ligado.' : 'Controle de impressão desligado.'); await refresh(true); } catch (err) { toast(err.message); } finally { b.disabled = false; } };
   return sec;
 }

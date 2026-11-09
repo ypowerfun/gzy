@@ -13,11 +13,11 @@ const DAY = 86400000, GRACE = 7 * DAY;
 const PLAN_IDS = ['free', 'standard', 'pro'], PAID = ['standard', 'pro'], PERIODS = {mensal: 1, anual: 12};
 const DEFAULT_PLANS = {
   free: {name: 'Free', monthly: 0, monthlyList: 0, annual: 0, annualList: 0, badge: '', popular: false, free: true,
-    features: ['Todas as funções por 30 dias', 'PCs e consoles ilimitados', 'Sem cartão de crédito', 'Seus dados ficam guardados ao assinar', 'Sem anúncios']},
+    features: ['Funções essenciais por 30 dias', 'Autoatendimento no PC (PIX)', 'PCs e consoles ilimitados', 'Sem cartão de crédito', 'Seus dados ficam guardados ao assinar', 'Sem anúncios']},
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Suporte completo (24 horas)', 'Sem anúncios']},
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Suporte completo (24 horas)', 'Sem anúncios']}
+    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Multi-Unidade', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
 
@@ -40,10 +40,11 @@ module.exports = function plans(app, ctx) {
 
   // 2.10: listas de itens dos planos definidas pelo dono (Free / Standard / Pro). Se o /admin já tinha salvo listas antigas, troca
   // UMA vez só os itens (preços, selo e "mais popular" salvos continuam). Depois disso, o que for editado no /admin vale.
-  if (!setting('plans_features_v2')) {
+  // 2.12: o teste grátis não tem mais todas as funções (NF-e, App, Multi-Unidade e Impressão dependem do plano): troca de novo uma vez
+  if (!setting('plans_features_v3')) {
     const saved = setting('plans');
     if (saved) { for (const id of PLAN_IDS) if (saved[id]) saved[id].features = [...DEFAULT_PLANS[id].features]; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Itens dos planos Free/Standard/Pro atualizados para a lista nova'); }
-    saveSetting('plans_features_v2', {at: Date.now()});
+    saveSetting('plans_features_v3', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};

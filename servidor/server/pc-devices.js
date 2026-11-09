@@ -16,6 +16,9 @@ const magicPacket = mac => { const m = Buffer.from(mac, 'hex'), b = Buffer.alloc
 module.exports = function pcDevices(store, options = {}) {
   const s = store.state;
   s.settings.printControl ??= {enabled: false, serviceId: ''};
+  // 1.2.8: Controle de impressão só nos planos Standard e Pro. Sem o plano (teste grátis), os PCs não retêm nada.
+  const allowed = () => (typeof options.allowed === 'function' ? !!options.allowed() : true);
+  const on = () => !!s.settings.printControl.enabled && allowed();
   s.prints ??= [];
   const queues = new Map(); // stationId -> Map(jobId -> job)
   const queue = stationId => { if (!queues.has(stationId)) queues.set(stationId, new Map()); return queues.get(stationId); };
@@ -51,7 +54,7 @@ module.exports = function pcDevices(store, options = {}) {
       }
       // 1.2.1: a fila fica na memória; só grava quando o histórico de impressões mudou (antes: estado inteiro a cada consulta de cada PC)
       if (changed) store.persist();
-      out.printControl = {enabled: !!pc.enabled, decisions: [...q.values()].filter(j => j.decision).map(j => ({id: j.id, action: j.decision}))};
+      out.printControl = {enabled: on(), decisions: [...q.values()].filter(j => j.decision).map(j => ({id: j.id, action: j.decision}))};
     }
     return out;
   }
@@ -62,6 +65,7 @@ module.exports = function pcDevices(store, options = {}) {
     return list.sort((a, b) => a.at - b.at);
   }
   function decide(input, actor, sell) {
+    if (!allowed()) fail('Controle de impressão: disponível nos planos Standard e Pro.');
     let job = null; for (const q of queues.values()) for (const j of q.values()) if (j.key === String(input.key || '')) job = j;
     if (!job || job.decision) fail('Esta impressão já foi decidida ou não está mais na fila do PC.');
     const action = input.action === 'approve' ? 'approve' : input.action === 'reject' ? 'reject' : fail('Ação inválida.');
@@ -78,6 +82,7 @@ module.exports = function pcDevices(store, options = {}) {
   }
   function saveSettings(input, actor) {
     const enabled = input.enabled === true || input.enabled === 'true';
+    if (enabled && !allowed()) fail('Controle de impressão: disponível nos planos Standard e Pro. Entre com a sua conta gamezoney.com em Configuração › Licença.');
     const serviceId = String(input.serviceId || '');
     if (serviceId && !s.services.some(x => x.id === serviceId && x.active)) fail('Serviço não encontrado.');
     return store.change(actor, 'config', `Controle de impressão ${enabled ? 'LIGADO' : 'desligado'}`, () => { s.settings.printControl = {enabled, serviceId}; return s.settings.printControl; });
@@ -124,7 +129,7 @@ module.exports = function pcDevices(store, options = {}) {
     }
   }
 
-  return {receive, pending, decide, saveSettings, wake, history: () => s.prints.slice(-50).reverse()};
+  return {receive, pending, decide, saveSettings, wake, active: on, allowed, history: () => s.prints.slice(-50).reverse()};
 };
 module.exports.magicPacket = magicPacket;
 module.exports.broadcastOf = broadcastOf;

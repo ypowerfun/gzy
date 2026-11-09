@@ -53,12 +53,15 @@ test('1.0.9: PC informa as placas; impressão fica parada até aprovar/recusar; 
 
 test('1.0.9: painel — aprovar e cobrar entra no caixa; ligar exige administrador', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-dev-api-')), sent = [];
-  const inst = createServer({directory, noTimer: true, wakeSend: async n => sent.push(...n)});
+  const {license, plan} = require('./plan-helper')();
+  const inst = createServer({directory, noTimer: true, license, wakeSend: async n => sent.push(...n)});
   await new Promise(r => inst.server.listen(0, '127.0.0.1', r)); const base = 'http://127.0.0.1:' + inst.server.address().port; let cookie = '';
   t.after(async () => { await inst.close(); fs.rmSync(directory, {recursive: true, force: true}); });
   const call = async (url, body, status = 200) => { const r = await fetch(base + url, {method: body === undefined ? 'GET' : 'POST', headers: {'Content-Type': 'application/json', Cookie: cookie}, body: body === undefined ? undefined : JSON.stringify(body)}); const text = await r.text(); assert.equal(r.status, status, url + ' ' + text); if (r.headers.get('set-cookie')) cookie = r.headers.get('set-cookie').split(';')[0]; return text ? JSON.parse(text) : null; };
   await call('/api/setup', {name: 'Dono', username: 'admin', password: 'senha123'}); await call('/api/login', {username: 'admin', password: 'senha123'});
-  await call('/api/prints/settings', {enabled: true});
+  // 1.2.8: no teste grátis (sem conta) o controle de impressão fica bloqueado
+  assert.match((await call('/api/prints/settings', {enabled: true}, 400)).error, /Standard e Pro/);
+  plan(inst, 'standard'); await call('/api/prints/settings', {enabled: true});
   const S = inst.store.state, pc = S.stations.find(s => s.kind === 'computer');
   pc.network = {list: [{mac: '001122334455', ip: '', mask: ''}], at: Date.now()};
   // simula o PC informando um documento (mesma função que a rota /state do PC usa)

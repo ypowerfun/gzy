@@ -220,11 +220,15 @@ module.exports = function license(store, options = {}) {
   }
   // 1.0.8: recursos só do plano Pro (Notas fiscais de entrada, Gerenciamento do App, Multi-Unidade)
   const isPro = () => { const st = status(); return (st.mode === 'plan' || st.mode === 'plan-grace') && st.plan === 'pro'; };
+  // 1.2.8: recursos por plano (pedido do dono). Teste grátis (sem entrar na conta) = Free: só o essencial + Autoatendimento.
+  //  Standard: + Controle de impressão. Pro: + NF-e, Gerenciar App e Multi-Unidade. Licença vitalícia antiga = Standard.
+  const features = () => { const st = status(); if (st.mode === 'plan' || st.mode === 'plan-grace') return st.plan === 'pro' ? {print: true, nfe: true, app: true, units: true} : {print: true}; if (st.mode === 'licensed') return {print: true}; return {}; };
+  // (1.1.9 deixava o teste grátis com tudo; desfeito na 1.2.8)
   // 1.1.9: o plano Free (teste de 30 dias) libera TODAS as funções, inclusive as do Pro que rodam só no servidor (Notas Fiscais e
   // Gerenciamento do App). Multi-Unidade continua exigindo o Pro de verdade (o site confere o certificado do plano).
-  const proFeatures = () => isPro() || status().mode === 'trial';
+  const proFeatures = () => isPro();
   const planToken = () => (planCert() ? s.license.planToken : null);
-  return {status, guard, activate, login, logout, refresh, expired, isPro, proFeatures, planToken, REFRESH_EVERY, publicKey, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
+  return {status, guard, activate, login, logout, refresh, expired, isPro, proFeatures, features, planToken, REFRESH_EVERY, publicKey, verifyToken: t => verifyToken(t, s.runtime.installId, publicKey)};
 };
 module.exports.normalizeKey = normalizeKey;
 module.exports.verifyToken = verifyToken;
