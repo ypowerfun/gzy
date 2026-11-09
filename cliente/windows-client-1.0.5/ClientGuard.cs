@@ -9,10 +9,18 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Cliente - monitor")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.0.13.0")]
+[assembly: AssemblyVersion("1.0.14.0")]
 class ClientGuard {
  static void Log(string message){try{string dir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoneyCliente");Directory.CreateDirectory(dir);string file=Path.Combine(dir,"monitor.log");if(File.Exists(file)&&new FileInfo(file).Length>262144)File.Delete(file);File.AppendAllText(file,DateTime.UtcNow.ToString("o")+" "+message+Environment.NewLine);}catch{}}
+ // 1.0.14: MANUTENÇÃO DO WINDOWS. Ao entrar no Windows o MonitorGZ é aberto pela entrada de inicialização (HKLM Run) e pela
+ // tarefa agendada "GameZoney Cliente", as duas com /autostart. Se o administrador DESABILITAR "GameZoneyCliente" em
+ // Gerenciador de Tarefas › Inicializar (ou em Configurações › Aplicativos › Inicialização), o Windows grava isso em
+ // HKLM\...\Explorer\StartupApproved\Run (só administrador consegue mudar entradas do HKLM; o cliente comum não) e aqui o
+ // MonitorGZ fecha sem abrir o GameZoney Cliente. Antes, a tarefa agendada abria o cliente mesmo com a entrada desabilitada.
+ // Aberto pelo atalho (sem /autostart) funciona normal. Para voltar: Habilitar de novo a entrada (ou reinstalar o Cliente).
+ static bool StartupDisabled(){try{using(var hklm=Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine,Environment.Is64BitOperatingSystem?Microsoft.Win32.RegistryView.Registry64:Microsoft.Win32.RegistryView.Default))foreach(var sub in new[]{"Run","Run32"})using(var k=hklm.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\"+sub)){var b=k==null?null:k.GetValue("GameZoneyCliente") as byte[];if(b!=null&&b.Length>0&&(b[0]&1)==1)return true;}}catch{}return false;}
  static int Main(string[] args){try{try{Process.GetCurrentProcess().PriorityClass=ProcessPriorityClass.High;}catch{}
+  if(args.Length==1&&args[0]=="/autostart"){if(StartupDisabled()){Log("Inicialização do GameZoney Cliente DESABILITADA no Windows (Gerenciador de Tarefas › Inicializar): o cliente não abre (manutenção). Para voltar, habilite a entrada GameZoneyCliente.");return 0;}args=new string[0];}
   if(args.Length>1||args.Length==1&&args[0]!="/reconfigure")return 1;
   bool created;using(var mutex=new Mutex(true,"Local\\GameZoney.Supervisor",out created)){
    if(!created)return 0;

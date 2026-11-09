@@ -297,6 +297,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - No PC, **Acesso administrativo (recepção)** com uma conta Administrador do servidor: a barra mostra ADMIN, as restrições ficam suspensas e não há consumo de saldo. **Sair do administrador** reaplica tudo. **Fechar aplicativo** fecha o cliente (para atualizar).
 - Sem servidor, a **senha de manutenção** local do PC dá o mesmo acesso.
 - Os PCs também podem ser liberados em modo administrador pelo painel (Ações dos PCs).
+- **Manutenção do Windows sem o cliente abrir (Cliente 1.0.14):** entre no PC como administrador (modo administrador › **Fechar aplicativo**), abra o **Gerenciador de Tarefas › Inicializar** (ou Configurações › Aplicativos › Inicialização) e **Desabilite** a entrada **GameZoneyCliente** (MonitorGZ). Ao reiniciar, o GameZoney Cliente **não abre** (fica anotado no `monitor.log`). Terminada a manutenção, **Habilite** a entrada de novo (ou reinstale o Cliente, que reativa sozinho) e reinicie. Só um administrador do Windows consegue desabilitar essa entrada; a conta dos clientes não. Pelo atalho da área de trabalho o cliente continua abrindo normalmente.
 
 **Atalhos no menu Iniciar > GameZoney Cliente:**
 - **Reconfigurar conexão com o servidor** — quando o servidor mudou de identidade ou o PC foi removido.
@@ -307,6 +308,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 - **Cliente 1.0.7:** informa ao Servidor o endereço das placas de rede (para **Ligar computadores**) e, com o Controle de impressão ligado, **pausa** cada documento enviado para a impressora durante a sessão até a recepção aprovar (aprovado imprime; recusado é apagado). O instalador liga o **Wake-on-LAN** na placa de rede do Windows e desliga a **Inicialização rápida** (o PC passa a desligar por completo, o que permite ligar pela rede). Falta só ativar o Wake-on-LAN na BIOS de cada PC.
 
+- **Cliente 1.0.14:** desabilitar a entrada GameZoneyCliente em Gerenciador de Tarefas › Inicializar impede o cliente de abrir com o Windows (manutenção). Antes a tarefa agendada abria o cliente mesmo assim.
 - **Cliente 1.0.13:** aviso na tela (Enviar Mensagem e avisos automáticos de tempo e fidelidade) com letras menores.
 - **Cliente 1.0.12:** corrigido "Configuração inválida." em Criar conta e os pacotes do PIX que não carregavam (o transporte do PC não liberava as ações do autoatendimento).
 - **Cliente 1.0.11:** botões **Entrar · Criar conta · Pagar via PIX** (corrigido: não apareciam), PIX sem conta só com e-mail, **+ Tempo** na sessão, OBS com o nome da organização em cima do QR Code e limpeza que não bloqueia mais o login.

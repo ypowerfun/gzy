@@ -2,7 +2,7 @@
 [Setup]
 AppId={{62070551-BB3B-4C84-BC6F-86E680D40437}
 AppName=GameZoney Cliente
-AppVersion=1.0.13
+AppVersion=1.0.14
 AppPublisher=GameZoney
 ; 1.1.3: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
@@ -25,7 +25,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Cliente-1.0.13-Setup
+OutputBaseFilename=GameZoney-Cliente-1.0.14-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -37,7 +37,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.0.13.0
+VersionInfoVersion=1.0.14.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -97,7 +97,7 @@ Name: "{group}\Restaurar acessos do Windows (administrador)"; Filename: "{app}\G
 Name: "{autodesktop}\GameZoney Cliente"; Filename: "{app}\MonitorGZ.exe"; IconFilename: "{app}\GameZoneyCliente.exe"
 
 [Registry]
-Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "GameZoneyCliente"; ValueData: """{app}\MonitorGZ.exe"""; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "GameZoneyCliente"; ValueData: """{app}\MonitorGZ.exe"" /autostart"; Flags: uninsdeletevalue
 ; 2.0.29: inicializacao rapida. Reativa a entrada caso tenha sido desativada no Gerenciador de Tarefas
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"; ValueType: none; ValueName: "GameZoneyCliente"; Flags: deletevalue
 ; e remove o atraso que o Windows aplica aos programas de inicializacao (StartupDelayInMSec / WaitForIdleState)

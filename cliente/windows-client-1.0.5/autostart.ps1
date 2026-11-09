@@ -42,14 +42,15 @@ try {
 
     $users = 'S-1-5-32-545'
     try { $users = ([Security.Principal.SecurityIdentifier]'S-1-5-32-545').Translate([Security.Principal.NTAccount]).Value } catch {}
-    $actionObj = New-ScheduledTaskAction -Execute $monitor -WorkingDirectory $root
+    # 1.0.14: /autostart = o MonitorGZ respeita a entrada GameZoneyCliente desabilitada no Gerenciador de Tarefas (manutenção)
+    $actionObj = New-ScheduledTaskAction -Execute $monitor -Argument '/autostart' -WorkingDirectory $root
     $trigger = New-ScheduledTaskTrigger -AtLogOn
     $principal = New-ScheduledTaskPrincipal -GroupId $users -RunLevel Limited
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -Priority 4
     Register-ScheduledTask -TaskName $taskName -Action $actionObj -Trigger $trigger -Principal $principal -Settings $settings -Description 'Abre o GameZoney Cliente (MonitorGZ) imediatamente ao entrar no Windows.' -Force | Out-Null
     $task = Get-ScheduledTask -TaskName $taskName -ErrorAction Stop
     if ($task.State -eq 'Disabled') { Enable-ScheduledTask -TaskName $taskName | Out-Null }
-    if (@($task.Triggers).Count -lt 1 -or $task.Actions[0].Execute -ne $monitor) { throw 'Tarefa registrada com dados incorretos.' }
+    if (@($task.Triggers).Count -lt 1 -or $task.Actions[0].Execute -ne $monitor -or $task.Actions[0].Arguments -ne '/autostart') { throw 'Tarefa registrada com dados incorretos.' }
     Write-InstallLog "OK: tarefa '$taskName' registrada para $monitor (grupo $users)"
     exit 0
 } catch {
