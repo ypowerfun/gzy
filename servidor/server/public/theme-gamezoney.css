@@ -292,7 +292,7 @@ input[data-secret]{-webkit-text-security:disc;text-security:disc;font-family:inh
  .sidebar-bottom{margin-top:6px}
 }
 @media(min-width:701px) and (max-height:820px){
- nav button{padding:7px 12px}.nav-sep{margin:6px 14px}
+ nav button{padding:5px 12px}.nav-sep{margin:5px 14px} /* 1.2.0: menu com NF-e e Gerenciar App cabe inteiro de 701 a 820 px */
  .brand{padding:0 0 8px;margin-bottom:6px}.brand .brand-logo{width:104px}.nav-label{margin:2px 8px 6px}
  .sidebar-bottom{padding-top:8px}.sidebar-bottom #operator-name{margin:4px 0 6px}
 }
