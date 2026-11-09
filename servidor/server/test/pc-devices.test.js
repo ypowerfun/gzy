@@ -42,7 +42,7 @@ test('1.0.9: PC informa as placas; impressão fica parada até aprovar/recusar; 
     const res = await d.wake({scope: 'all'}, 'admin', () => false);
     assert.equal(res.success, 1); assert.equal(sent[0].mac, 'AABBCCDDEEFF');
     store.state.stations.push({id: '9', name: 'PC Novo', kind: 'computer', active: true});
-    const r2 = await d.wake({scope: 'all'}, 'admin', id => id === pc.id); assert.equal(r2.skipped, 1); assert.equal(r2.failed, 1); assert.match(r2.results.find(x => x.name === 'PC Novo').message, /1\.0\.7/);
+    const r2 = await d.wake({scope: 'all'}, 'admin', id => id === pc.id); assert.equal(r2.skipped, 1); assert.equal(r2.failed, 1); assert.match(r2.results.find(x => x.name === 'PC Novo').message, /GameZoney Cliente atualizado/);
     // diskless: pré-configuração e conferência
     assert.throws(() => diskless.save(store, {serverIp: '999.1.1.1'}, 'admin'), /IP do servidor de imagem inválido/);
     diskless.save(store, {enabled: true, serverIp: '127.0.0.1', port: 9, stations: [pc.id, 'nao-existe'], image: 'Win11'}, 'admin');

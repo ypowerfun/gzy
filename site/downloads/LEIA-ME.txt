@@ -1,1 +1,1 @@
-Coloque aqui os instaladores (.exe) para aparecerem em Minha conta > Downloads (ex.: GameZoney-Instalador-Servidor-1.0.5-Cliente-1.0.5.exe).
+Coloque aqui os instaladores (.exe) para aparecerem em Minha conta > Downloads (ex.: GameZoney-Instalador.exe).

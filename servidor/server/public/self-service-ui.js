@@ -1,9 +1,9 @@
 'use strict';
-// 1.1.0: Configuração › Autoatendimento no PC — o cliente cria a conta e recarrega por PIX no próprio PC (Cliente 1.0.8+).
+// 1.1.0: Configuração › Autoatendimento no PC — o cliente cria a conta e recarrega por PIX no próprio PC .
 const PIX_STATUS = {pending: 'Aguardando pagamento', approved: 'Pago • tempo liberado', expired: 'Expirado', cancelled: 'Cancelado no PC', error: 'Pago • lance manual'};
 function selfServiceSection(d) {
   const sec = document.createElement('section'); sec.id = 'self-section'; sec.className = 'panel';
-  sec.innerHTML = `<h2>Autoatendimento no PC</h2><p class="hint">Com o GameZoney Cliente 1.0.11 ou mais novo, a tela de login do PC ganha <strong>Criar conta</strong> e <strong>Pagar via PIX</strong> (ao lado do Entrar) e, durante a sessão, o botão <strong>+ Tempo</strong>. Pagar via PIX sem conta pede só o e-mail e libera o PC como visitante. O cliente paga o PIX na tela e o tempo entra sozinho quando o pagamento é aprovado — o PC já entra na sessão, sem fila no balcão. A recarga entra como venda PIX no caixa aberto (com o caixa fechado, o PIX no PC fica indisponível).</p>
+  sec.innerHTML = `<h2>Autoatendimento no PC</h2><p class="hint">Com o GameZoney Cliente atualizado, a tela de login do PC ganha <strong>Criar conta</strong> e <strong>Pagar via PIX</strong> (ao lado do Entrar) e, durante a sessão, o botão <strong>+ Tempo</strong>. Pagar via PIX sem conta pede só o e-mail e libera o PC como visitante. O cliente paga o PIX na tela e o tempo entra sozinho quando o pagamento é aprovado — o PC já entra na sessão, sem fila no balcão. A recarga entra como venda PIX no caixa aberto (com o caixa fechado, o PIX no PC fica indisponível).</p>
     <form id="self-form" class="am-form">
       <label class="check"><input type="checkbox" name="signup" ${d.signup ? 'checked' : ''}> Permitir que o cliente crie a própria conta no PC</label>
       <label class="check"><input type="checkbox" name="pix" ${d.pix ? 'checked' : ''}> Permitir recarga por PIX no PC (liberação automática)</label>

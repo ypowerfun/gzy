@@ -94,7 +94,7 @@ module.exports = function pcDevices(store, options = {}) {
     for (const st of targets) {
       if (input.scope !== 'one' && connected(st.id)) { results.push({name: st.name, ok: true, skipped: true, message: 'Já está ligado.'}); continue; }
       const nics = st.network?.list || [];
-      if (!nics.length) { results.push({name: st.name, ok: false, message: 'Endereço da placa de rede (MAC) ainda desconhecido: abra o PC uma vez com o GameZoney Cliente 1.0.7 ou mais novo.'}); continue; }
+      if (!nics.length) { results.push({name: st.name, ok: false, message: 'Endereço da placa de rede (MAC) ainda desconhecido: abra o PC uma vez com o GameZoney Cliente atualizado.'}); continue; }
       for (const n of nics) packets.push(n);
       results.push({name: st.name, ok: true, message: 'Sinal para ligar enviado (' + nics.map(n => n.mac.match(/../g).join(':')).join(', ') + ').'});
     }

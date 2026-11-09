@@ -4,14 +4,13 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>Administração | GameZoney</title>
 <link rel="icon" href="/favicon.ico">
-<link rel="stylesheet" href="/site.css?v=20261107-3"><link rel="stylesheet" href="/premium.css?v=20261107-3">
+<link rel="stylesheet" href="/site.css?v=20261107-3"><link rel="stylesheet" href="/premium.css?v=20261109-1">
 </head>
 <body data-no-chat>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="topbar"><div class="wrap"><a class="logo" href="/"><img src="/logo-gamezoney.png" alt="GameZoney"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Administração"><a href="#planos">Planos</a><a href="#atualizacao">Atualização</a><a href="#oferta">Preço</a><a href="#anuncios">Anúncios</a><a href="#design">Design</a><a href="#comunicados">Comunicados</a><a href="#chat">Chat <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes">Avaliações</a><a href="#pedidos">Pedidos</a><a href="#licencas">Licenças</a><a href="#chamados">Chamados</a><a href="#clientes">Clientes</a><a href="#feedback">Feedback</a><a class="btn small ghost" href="/conta">Minha conta</a></nav></div></header>
-<main id="conteudo" class="page"><div class="wrap dash">
-  <h1 style="font-size:32px;text-transform:uppercase">Administração</h1>
-  <div class="stats" id="stats"></div>
+<header class="topbar"><div class="wrap"><a class="logo" href="/" aria-label="GameZoney — início"><img src="/logo-gamezoney.png" alt="GameZoney" width="960" height="253"></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation"><span class="menu-lines" aria-hidden="true"></span><span>Menu</span></button><nav class="nav" id="site-navigation" aria-label="Navegação principal"><a href="/#recursos">Recursos</a><a href="/#telas">Demonstração</a><a href="/#precos">Planos</a><a href="/atendimento.html">Atendimento</a><a href="/atualizacoes.html">Atualizações</a><a class="btn outline small" href="/conta">Minha conta</a></nav></div></header>
+<main id="conteudo" class="page account-page"><div class="wrap account-layout"><aside class="account-sidebar admin-sidebar"><p class="eyebrow">Administração</p><nav aria-label="Administração"><a href="#visao-geral" data-account-link>Visão geral</a><a href="#planos" data-account-link>Planos</a><a href="#oferta" data-account-link>Faixa do topo</a><a href="#anuncios" data-account-link>Anúncios</a><a href="#design" data-account-link>Design do site</a><a href="#comunicados" data-account-link>Comunicados</a><a href="#chat" data-account-link>Chat ao vivo <span id="chat-badge" class="pill wait hidden"></span></a><a href="#avaliacoes" data-account-link>Avaliações</a><a href="#emitir" data-account-link>Emitir licença</a><a href="#pedidos" data-account-link>Pedidos</a><a href="#licencas" data-account-link>Licenças</a><a href="#chamados" data-account-link>Chamados</a><a href="#clientes" data-account-link>Clientes</a><a href="#feedback" data-account-link>Feedback</a><a href="#registro" data-account-link>Registro</a></nav><div class="sidebar-end"><a href="/conta">Minha conta</a></div></aside><div class="dash account-content">
+  <section class="card" id="visao-geral"><h3>Administração</h3><div class="stats" id="stats"></div></section>
   <section class="card" id="planos"><h3><span>Planos e assinaturas</span><small class="note" id="plans-stats"></small></h3>
     <p class="note">Preços em reais. Preço "de" vazio = sem preço riscado. O selo vazio mostra o desconto calculado (ex.: "17% de desconto"). Um item por linha. O que você salvar aparece na hora na página inicial e no carrinho; assinaturas já feitas continuam com o valor delas.</p>
     <form id="plans-form"><div class="plans-admin" id="plans-admin"></div><div class="row" style="gap:10px;margin-top:12px"><button class="btn">Salvar planos</button></div></form>
@@ -19,11 +18,6 @@
     <h4 style="margin:22px 0 6px">Dar plano de cortesia</h4>
     <form id="grant-form" class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="flex:2;min-width:200px">E-mail da conta<input name="email" type="email" required></label><label style="flex:1;min-width:120px">Plano<select name="plan"><option value="standard">Standard</option><option value="pro">Pro</option></select></label><label style="flex:1;min-width:100px">Meses<input name="months" type="number" min="1" max="60" value="1" required></label><label style="flex:2;min-width:180px">Observação<input name="note" maxlength="200" placeholder="Ex.: parceiro, troca, teste"></label><button class="btn">Dar plano</button></form>
     <h4 style="margin:22px 0 6px">Assinaturas</h4><div id="subs-list"></div></section>
-  <section class="card" id="atualizacao"><h3><span>Atualização do GameZoney Servidor</span><small class="note">O botão Verificar atualização do Servidor usa o que for publicado aqui.</small></h3>
-    <p class="note">1) Coloque o instalador na pasta de downloads do site (como hoje), com o nome <b>GameZoney-Servidor-X.Y.Z-Setup.exe</b>. 2) Escolha o arquivo abaixo e clique em <b>Publicar</b>: o site calcula a impressão digital (SHA-256) e assina. O Servidor só instala se a assinatura e a impressão digital baterem. Se trocar o arquivo na pasta, publique de novo.</p>
-    <div id="upd-current"></div>
-    <form id="upd-form" class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="flex:2;min-width:260px">Instalador<select name="file" required></select></label><label style="flex:3;min-width:260px">O que mudou (aparece no Servidor)<textarea name="notes" rows="2" maxlength="1500" placeholder="Ex.: Plano na sua conta, correções no caixa…"></textarea></label><button class="btn">Publicar</button></form>
-    <p role="status" aria-live="polite" class="msg" id="upd-msg"></p></section>
   <section class="card" id="oferta"><h3>Faixa do topo</h3>
     <p class="note">O texto aparece na faixa no topo do site assim que você salvar. Deixe vazio para tirar a faixa.</p>
     <form id="offer-form" class="row" style="align-items:flex-end">
@@ -73,7 +67,7 @@
         <form id="admin-send" class="hidden"><textarea name="text" placeholder="Responder… (Enter envia, Shift+Enter quebra linha)"></textarea>
           <div class="row"><label style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" name="email" style="width:auto"> enviar também por e-mail</label><button class="btn small" style="margin-left:auto">Enviar</button><button type="button" class="btn small ghost" id="chat-close">Encerrar conversa</button></div></form></div></div></section>
   <section class="card" id="avaliacoes"><h3>Avaliações</h3><p class="note">Escolha a posição (1, 2 ou 3) das avaliações que aparecem na página inicial. "—" tira da página inicial. Ocultar esconde a avaliação.</p><div class="table" id="reviews"></div></section>
-  <section class="card"><h3>Emitir licença (cortesia / venda fora do site)</h3>
+  <section class="card" id="emitir"><h3>Emitir licença (cortesia / venda fora do site)</h3>
     <form id="issue-form" class="row" style="align-items:flex-end"><label style="flex:2;min-width:220px">E-mail da conta do cliente<input name="email" type="email" required></label><label style="flex:2;min-width:200px">Observação<input name="note" maxlength="200" placeholder="Ex.: venda no WhatsApp"></label><button class="btn">Emitir</button></form>
     <p role="status" aria-live="polite" class="msg" id="issue-msg"></p></section>
   <section class="card" id="pedidos"><h3>Pedidos</h3><div class="table" id="orders"></div></section>
@@ -84,8 +78,8 @@
     <p role="status" aria-live="polite" class="msg" id="ticket-msg"></p></section>
   <section class="card" id="clientes"><h3>Clientes</h3><div class="table" id="users"></div></section>
   <section class="card" id="feedback"><h3>Feedback dos servidores</h3><div class="table" id="feedbacks"></div></section>
-  <section class="card"><h3>Registro</h3><div class="table" id="audit"></div></section>
-</div></main>
+  <section class="card" id="registro"><h3>Registro</h3><div class="table" id="audit"></div></section>
+</div></div></main>
 <script src="/site.js?v=20261107-3"></script>
 <script src="/premium.js?v=20261107-3"></script>
 <script src="/admin.js?v=20261107-3"></script>

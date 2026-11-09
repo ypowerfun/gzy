@@ -63,7 +63,7 @@ const STATS_RENDER = {
     return `<div class="stats">${tile('Funcionários', d.rows.length, 'que usaram máquinas clientes')}${tile('Vezes', d.rows.reduce((a, r) => a + r.count, 0), 'acessos administrativos/manutenção')}${tile('Tempo total', hm(d.rows.reduce((a, r) => a + r.seconds, 0)), 'no período')}</div>
     <div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Vezes</th><th style="width:40%">Tempo total</th><th>Máquinas</th></tr></thead><tbody>${d.rows.map(r => `<tr><td>${esc(r.username)}</td><td>${r.count}</td><td>${bar(r.seconds, max, hm(r.seconds))}</td><td>${esc(r.stations.join(', '))}</td></tr>`).join('') || '<tr><td colspan="4">Nenhum uso de funcionário no período.</td></tr>'}</tbody></table></div>
     <h3 style="margin-top:22px">Acessos registrados</h3><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Máquina</th><th>Tipo</th><th>Início</th><th>Fim</th><th>Duração</th></tr></thead><tbody>${d.records.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.stationName)}</td><td>${esc(u.kind)}</td><td>${datetime(u.startedAt)}</td><td>${u.endedAt ? datetime(u.endedAt) : 'Em uso'}</td><td>${hm(((u.endedAt || Date.now()) - u.startedAt) / 1000)}</td></tr>`).join('') || '<tr><td colspan="6">Nenhum registro.</td></tr>'}</tbody></table></div>
-    <p class="hint">Conta o tempo em que a máquina cliente ficou em modo administrador, manutenção ou liberada pela recepção. Registro iniciado na versão 3.0.31.</p>`;
+    <p class="hint">Conta o tempo em que a máquina cliente ficou em modo administrador, manutenção ou liberada pela recepção.</p>`;
   },
   clients(d) {
     const max = Math.max(1, ...d.rows.map(r => r.spentCents));

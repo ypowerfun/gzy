@@ -48,7 +48,7 @@ document.addEventListener('click', async e => {
 // ---------- Configuração ----------
 function printSettingsSection(data, services) {
   const c = data.settings || {}, sec = document.createElement('section'); sec.id = 'print-section'; sec.className = 'panel';
-  sec.innerHTML = `<h2>Controle de impressão</h2><p class="hint">Ligado, todo documento que o cliente manda imprimir fica <strong>parado no PC</strong> até a recepção aprovar no Painel de controle (com ou sem cobrança). Evita desperdício de papel e tinta. Vale para as impressoras instaladas nos PCs, com o GameZoney Cliente 1.0.7 ou mais novo. No modo administrador nada é parado.</p>
+  sec.innerHTML = `<h2>Controle de impressão</h2><p class="hint">Ligado, todo documento que o cliente manda imprimir fica <strong>parado no PC</strong> até a recepção aprovar no Painel de controle (com ou sem cobrança). Evita desperdício de papel e tinta. Vale para as impressoras instaladas nos PCs, com o GameZoney Cliente atualizado. No modo administrador nada é parado.</p>
     <form id="print-form"><label class="check"><input type="checkbox" name="enabled" ${c.enabled ? 'checked' : ''}> Exigir aprovação da recepção para imprimir</label>
     <label>Serviço usado na cobrança<select name="serviceId"><option value="">Escolher na hora</option>${services.map(s => `<option value="${esc(s.id)}" ${c.serviceId === s.id ? 'selected' : ''}>${esc(s.name)} — ${money(s.priceCents)}</option>`).join('')}</select></label>
     <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button></div></form>

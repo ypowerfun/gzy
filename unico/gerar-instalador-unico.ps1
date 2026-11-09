@@ -67,10 +67,11 @@ try {
   if (Test-Path -LiteralPath $gzSignScript) { . $gzSignScript } else { function Invoke-GzSign([string[]]$Files) {}; function Get-GzInnoSignArgs { @() } }
   & $inno @(Get-GzInnoSignArgs) "/DServidorVersao=$sv" "/DClienteVersao=$cv" "/DServidorSetup=$servidorSetup" "/DClienteSetup=$clienteSetup" "/O$saida" (Join-Path $PSScriptRoot 'instalador-unico.iss')
   if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar o instalador único.' }
-  $final = Join-Path $saida "GameZoney-Instalador-Servidor-$sv-Cliente-$cv.exe"
+  # 1.1.8: um arquivo só, sem versão no nome (vai assim para Minha conta › Downloads)
+  $final = Join-Path $saida "GameZoney-Instalador.exe"
   if (!(Test-Path -LiteralPath $final)) { throw 'O instalador único não foi gerado. Veja as mensagens acima.' }
   Write-Host ''
-  Write-Host "Instalador único gerado: $final" -ForegroundColor Green
+  Write-Host "Instalador único gerado: $final  (Servidor $sv + Cliente $cv)" -ForegroundColor Green
   Write-Host ('SHA-256: ' + (Get-FileHash $final -Algorithm SHA256).Hash.ToLower())
   Start-Process explorer.exe $saida
 } catch {

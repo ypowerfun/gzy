@@ -3,7 +3,7 @@
 // Confere se TODAS as declarações de versão estão iguais (VERSION) antes de gerar o instalador.
 // Acerta package.json/package-lock.json e confere o resto.
 const fs=require('node:fs'),path=require('node:path');
-const VERSION='1.1.7';
+const VERSION='1.1.8';
 const root=path.resolve(__dirname,'..','server');
 for(const name of ['package.json','package-lock.json']){
   const file=path.join(root,name),data=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -11,7 +11,7 @@ for(const name of ['package.json','package-lock.json']){
   if(data.packages?.[''])data.packages[''].version=VERSION;
   fs.writeFileSync(file,JSON.stringify(data,null,2)+'\n');
 }
-// 1.1.7: BOM duplicado no início (EF BB BF EF BB BF) faz o Inno Setup não reconhecer o "#define GzRole" da 1ª linha
+// 1.1.8: BOM duplicado no início (EF BB BF EF BB BF) faz o Inno Setup não reconhecer o "#define GzRole" da 1ª linha
 // ("Undeclared identifier: GzRole"). Corrige sozinho nos arquivos do Servidor, do Cliente e do instalador único.
 for(const dir of [root,path.resolve(root,'..'),path.resolve(root,'..','..','cliente','windows-client-1.0.5'),path.resolve(root,'..','..','unico')]){
   if(!fs.existsSync(dir))continue;
@@ -28,7 +28,6 @@ const required={
   'installer.iss':[`AppVersion=${VERSION}`,`GameZoney-Servidor-${VERSION}-Setup`,`VersionInfoVersion=${VERSION}.0`,'Source: "network-guard.js"','Source: "Microsoft.Web.WebView2.Core.dll"','Source: "Microsoft.Web.WebView2.WinForms.dll"','Source: "runtimes\\win-x64\\native\\WebView2Loader.dll"','Source: "runtimes\\win-x86\\native\\WebView2Loader.dll"'],
   'INSTALACAO.txt':[`SERVIDOR ${VERSION}`],
   'INSTALACAO-en.txt':[`SERVER ${VERSION}`],
-  'public/index.html':[`SERVER // ${VERSION}`],
   'shop.js':['marginPrice','Margem de lucro'],
   'public/shop-ui.js':['askFinishSale','marginPriceCents','Deseja realmente finalizar a venda?'],
   'public/app.js':['toggle-cash','gz-caixa-oculto','Ativar programa fidelidade','loyaltyEnabled'],

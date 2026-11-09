@@ -152,7 +152,5 @@ function updateRefreshView() {
   clearTimeout(gzUpdatePoll);
   if (gzUpdate && ['checking', 'downloading', 'installing'].includes(gzUpdate.status)) gzUpdatePoll = setTimeout(async () => { try { gzUpdate = await api('/update'); } catch { } updateRefreshView(); }, 1500);
 }
-(function () {
-  const original = renderSettings;
-  renderSettings = function () { original.apply(this, arguments); if (!isAdmin()) return; api('/update').then(u => { gzUpdate = u; setTimeout(updateRefreshView, 50); }).catch(() => {}); };
-})();
+/* 1.1.8: a seção "Atualização do sistema" saiu da Configuração (atualizações agora só pelo GameZoney-Instalador.exe).
+   As funções acima ficam sem uso, para não mexer no resto. */

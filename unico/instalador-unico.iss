@@ -1,7 +1,8 @@
 ﻿; GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
 ; INSTALADOR ÚNICO: na mesma tela o técnico escolhe o que instalar neste PC
-;   [ ] Instalar Servidor versão X  (PC da recepção)
-;   [ ] Instalar Cliente versão Y   (PCs gamers)
+;   [ ] GameZoney Servidor  (PC da recepção)
+;   [ ] GameZoney Cliente   (PCs gamers)
+; 1.1.8: o arquivo se chama só GameZoney-Instalador.exe e as telas não mostram versão (a versão fica nos detalhes do arquivo e no gerador, só para a equipe).
 ; Ele leva dentro os instaladores oficiais do Servidor e do Cliente, SEM mudar nada neles, e abre cada um escolhido
 ; (com as mesmas telas, pastas, firewall e permissões de sempre). Gere pelo GERAR-INSTALADOR-UNICO.cmd.
 #ifndef ServidorVersao
@@ -12,7 +13,7 @@
 AppId={{2BBB9A95-383E-475C-9499-B982288061F4}
 AppName=GameZoney
 AppVersion={#ServidorVersao}
-AppVerName=GameZoney (Servidor {#ServidorVersao} / Cliente {#ClienteVersao})
+AppVerName=GameZoney
 AppPublisher=GameZoney
 ; 1.1.3: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
@@ -27,7 +28,7 @@ SignTool=gz
 SignedUninstaller=yes
 #endif
 VersionInfoVersion={#ServidorVersao}.0
-VersionInfoDescription=GameZoney - Instalador (Servidor {#ServidorVersao} / Cliente {#ClienteVersao})
+VersionInfoDescription=GameZoney - Instalador
 ; O instalador único não fica instalado: quem fica são o Servidor e/ou o Cliente, cada um com o seu desinstalador.
 Uninstallable=no
 CreateAppDir=no
@@ -37,7 +38,7 @@ DisableWelcomePage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64
 MinVersion=10.0.17763
-OutputBaseFilename=GameZoney-Instalador-Servidor-{#ServidorVersao}-Cliente-{#ClienteVersao}
+OutputBaseFilename=GameZoney-Instalador
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -62,10 +63,10 @@ brazilianportuguese.SelectComponentsLabel2=Marque o que instalar neste PC: o Ser
 [CustomMessages]
 english.GzChoice=Choice
 brazilianportuguese.GzChoice=Escolha
-english.GzInstallServer=Install Server version %1
-brazilianportuguese.GzInstallServer=Instalar Servidor versão %1
-english.GzInstallClient=Install Client version %1
-brazilianportuguese.GzInstallClient=Instalar Cliente versão %1
+english.GzInstallServer=GameZoney Server
+brazilianportuguese.GzInstallServer=GameZoney Servidor
+english.GzInstallClient=GameZoney Client
+brazilianportuguese.GzInstallClient=GameZoney Cliente
 english.GzServer=Server
 brazilianportuguese.GzServer=Servidor
 english.GzClient=Client
@@ -85,8 +86,8 @@ brazilianportuguese.GzBoth=Você marcou Servidor e Cliente no mesmo PC. O Client
 Name: "escolha"; Description: "{cm:GzChoice}"; Flags: iscustom
 
 [Components]
-Name: "servidor"; Description: "{cm:GzInstallServer,{#ServidorVersao}}"
-Name: "cliente"; Description: "{cm:GzInstallClient,{#ClienteVersao}}"
+Name: "servidor"; Description: "{cm:GzInstallServer}"
+Name: "cliente"; Description: "{cm:GzInstallClient}"
 
 [Files]
 Source: "{#ServidorSetup}"; DestDir: "{tmp}"; DestName: "servidor-setup.exe"; Components: servidor; Flags: ignoreversion
