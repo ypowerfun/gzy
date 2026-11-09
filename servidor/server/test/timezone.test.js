@@ -8,7 +8,8 @@ test('1.2.5: fuso do servidor = o do computador; senão, o horário que o relóg
   assert.equal(run('America/Sao_Paulo',"console.log(require('./netinfo').timeZone())"),'America/Sao_Paulo');
   assert.equal(run('UTC',"console.log(require('./netinfo').timeZone())"),'UTC');
   // fuso que o sistema não reconhece (antes virava America/Manaus = 1 h errado): usa a diferença do relógio da máquina
-  assert.equal(run('XYZ+3',"console.log(require('./netinfo').timeZone())"),'Etc/GMT+3');
+  // (TZ no formato POSIX, como 'XYZ+3', só existe no Linux; no Windows o computador fica em UTC e a regra abaixo continua valendo)
+  if(process.platform!=='win32')assert.equal(run('XYZ+3',"console.log(require('./netinfo').timeZone())"),'Etc/GMT+3');
   // a hora mostrada pelo servidor é sempre a do computador
   for(const tz of ['America/Sao_Paulo','XYZ+3','America/Manaus','Asia/Tokyo','UTC'])assert.equal(run(tz,"const d=new Date(),z=require('./netinfo').timeZone();console.log(d.toTimeString().slice(0,5)===d.toLocaleTimeString('pt-BR',{timeZone:z}).slice(0,5))"),'true',tz);
   // relógio ajustado à mão diferente do fuso (ex.: horário de verão desligado/ligado manualmente): vale o relógio

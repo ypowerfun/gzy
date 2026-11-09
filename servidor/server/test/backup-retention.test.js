@@ -4,7 +4,9 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {Store}=require('../store'),createBackups=require('../backups');
 test('1.2.3: backups movidos da pasta antiga, automáticos com mais de 7 dias apagados, manuais e desconhecidos guardados',async t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ret-')),docs=path.join(root,'Documentos'),old=path.join(docs,'bkp gamezoney'),app=path.join(root,'app');fs.mkdirSync(app);fs.mkdirSync(old,{recursive:true});
-  const store=new Store(path.join(root,'data'));t.after(()=>{store.close();fs.rmSync(root,{recursive:true,force:true})});
+  const store=new Store(path.join(root,'data')),opened=[store];
+  // Windows: banco aberto não pode ser apagado — fecha TODOS os bancos antes de apagar a pasta temporária
+  t.after(()=>{for(const x of opened){try{x.close()}catch{}}fs.rmSync(root,{recursive:true,force:true,maxRetries:10,retryDelay:100})});
   const DAY=86400000,base=Date.parse('2026-11-20T12:00:00Z'),iso=t=>new Date(t).toISOString().replace(/[:.]/g,'-');
   // instalação antiga: configuração apontando para a pasta antiga + arquivos antigos (sem auto/manual no nome)
   store.state.settings.timeZone='UTC'; // o teste não pode depender do fuso do computador (no Windows Manaus/−4 o 'dia seguinte' caía antes das 03:00)
@@ -27,5 +29,5 @@ test('1.2.3: backups movidos da pasta antiga, automáticos com mais de 7 dias ap
   for(const keep of [auto6,manual90,legacyManual,legacyUnknown,'anotacao.txt'])assert.ok(names.includes(keep),'guardado: '+keep);
   assert.equal(names.filter(n=>/^GameZoney-auto-/.test(n)).length,2,'o de 6 dias + o novo');
   // pasta escolhida pelo usuário não é trocada
-  const store2=new Store(path.join(root,'data2'));t.after(()=>store2.close());store2.state.settings.backup={enabled:true,time:'03:00',directory:path.join(root,'D')};createBackups(store2,{application:app,documents:path.join(root,'docs2')});assert.equal(store2.state.settings.backup.directory,path.join(root,'D'));
+  const store2=new Store(path.join(root,'data2'));opened.push(store2);store2.state.settings.backup={enabled:true,time:'03:00',directory:path.join(root,'D')};createBackups(store2,{application:app,documents:path.join(root,'docs2')});assert.equal(store2.state.settings.backup.directory,path.join(root,'D'));
 });
