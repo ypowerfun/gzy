@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.2.2.0")]
+[assembly: AssemblyVersion("1.2.3.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -51,7 +51,9 @@ class Launcher : ApplicationContext {
             Process.Start(new ProcessStartInfo(edge,"--app="+address+" --user-data-dir=\""+profile+"\" --no-first-run --no-default-browser-check --disable-features=Translate,msEdgeTranslate,msHubApps,msEdgeSidebarV2,EdgeShoppingAssistant --disable-pinch --new-window --start-maximized --window-position="+area.X+","+area.Y+" --window-size="+area.Width+","+area.Height){UseShellExecute=true});}
         else Open(address);
     }
-    static void Restore(string data){using(var dialog=new OpenFileDialog{Title="Restaurar backup completo GameZoney",Filter="Backup GameZoney (*.zip)|*.zip",InitialDirectory=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"bkp gamezoney")}){if(dialog.ShowDialog()!=DialogResult.OK)return;if(MessageBox.Show("Restaurar os dados desta cópia? Os dados atuais serão guardados em uma pasta anterior. Saldos e sessões voltarão ao momento do backup.","Restaurar GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;var info=new ProcessStartInfo(Path.Combine(root,"BackupTool.exe"),"restore \""+dialog.FileName+"\" \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true};using(var process=Process.Start(info)){string output=process.StandardOutput.ReadToEnd(),error=process.StandardError.ReadToEnd();process.WaitForExit();if(process.ExitCode!=0)throw new Exception(error);MessageBox.Show(output+"\nAbra o servidor novamente.","Backup restaurado");}}}
+    /* 1.2.3: backups em Documentos\gamezoney\backup (antes Documentos\bkp gamezoney) */
+    static string BackupFolder(){string docs=Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),now=Path.Combine(docs,"gamezoney","backup"),old=Path.Combine(docs,"bkp gamezoney");return Directory.Exists(now)||!Directory.Exists(old)?now:old;}
+    static void Restore(string data){using(var dialog=new OpenFileDialog{Title="Restaurar backup completo GameZoney",Filter="Backup GameZoney (*.zip)|*.zip",InitialDirectory=BackupFolder()}){if(dialog.ShowDialog()!=DialogResult.OK)return;if(MessageBox.Show("Restaurar os dados desta cópia? Os dados atuais serão guardados em uma pasta anterior. Saldos e sessões voltarão ao momento do backup.","Restaurar GameZoney",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;var info=new ProcessStartInfo(Path.Combine(root,"BackupTool.exe"),"restore \""+dialog.FileName+"\" \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true};using(var process=Process.Start(info)){string output=process.StandardOutput.ReadToEnd(),error=process.StandardError.ReadToEnd();process.WaitForExit();if(process.ExitCode!=0)throw new Exception(error);MessageBox.Show(output+"\nAbra o servidor novamente.","Backup restaurado");}}}
     // 3.0.68: o Edge pode estar em Arquivos de Programas (x86), em Arquivos de Programas ou só registrado no Windows (App Paths).
     static string FindEdge(){
         foreach(string folder in new string[]{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),Environment.GetEnvironmentVariable("ProgramW6432")}){

@@ -6,7 +6,7 @@
    - %LOCALAPPDATA%\GameZoney\data (banco, pareamentos, certificado dos PCs, logs),
      MENOS a subpasta "backups". Antes de apagar, uma copia do banco vai para
      data\backups\antes-desinstalar-AAAAMMDD-HHMMSS.sqlite.
-  Ficam: Documentos\bkp gamezoney (backups diarios), data\backups e as pastas
+  Ficam: Documentos\gamezoney\backup (backups diarios), data\backups e as pastas
   data-anterior-* (copias feitas pela restauracao).
   Desinstalacao com tela: pede confirmacao antes de apagar os dados.
   Desinstalacao silenciosa: os dados sao mantidos (seguranca).
