@@ -17,8 +17,11 @@ const MEMBER_PASSWORD_MIN=4,MEMBER_PASSWORD_MAX=20;
 function memberPasswordHash(password){if(typeof password!=='string'||password.length<MEMBER_PASSWORD_MIN||password.length>MEMBER_PASSWORD_MAX)fail('A senha do cliente deve ter de 4 a 20 caracteres.');return passwordHash(password,undefined,1);}
 function verify(password,hash){try{const [salt,value]=hash.split(':');return crypto.timingSafeEqual(Buffer.from(value,'hex'),crypto.scryptSync(String(password),salt,64))}catch{return false}}
 const CHECKPOINT_FIELDS=['lastClientSyncAt','lastClientRemainingSeconds','lastClientRunId','lastClientSystemUptimeMs'];
+const HOT_DAYS=90,HIST_MAX=8e15;
+const ARCHIVE={sessions:r=>Number(r.startedAt),sales:r=>Number(r.at),shopSales:r=>Number(r.at),loyaltyLedger:r=>Number(r.at),stockMoves:r=>Number(r.at)};
+const ARCHIVE_LABEL={sessions:'sessões',sales:'recargas',shopSales:'cupons',loyaltyLedger:'movimentos de medalhas',stockMoves:'movimentos de estoque'};
 class Store{
- constructor(directory){this.directory=directory;fs.mkdirSync(directory,{recursive:true});this.db=new DatabaseSync(path.join(directory,'gamezoney.sqlite'));this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, type TEXT NOT NULL, detail TEXT NOT NULL); CREATE TABLE IF NOT EXISTS live (key TEXT PRIMARY KEY, data TEXT NOT NULL);');
+ constructor(directory){this.directory=directory;fs.mkdirSync(directory,{recursive:true});this.db=new DatabaseSync(path.join(directory,'gamezoney.sqlite'));this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, type TEXT NOT NULL, detail TEXT NOT NULL); CREATE TABLE IF NOT EXISTS live (key TEXT PRIMARY KEY, data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS hist (kind TEXT NOT NULL, id TEXT NOT NULL, at INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY(kind,id)); CREATE INDEX IF NOT EXISTS hist_at ON hist(kind,at);');
  if(!this.db.prepare('PRAGMA table_info(logs)').all().some(c=>c.name==='memberId'))this.db.exec('ALTER TABLE logs ADD COLUMN memberId TEXT');
  const row=this.db.prepare('SELECT data FROM state WHERE id=1').get();
  this.state=row?JSON.parse(row.data):{schema:1,settings:{hourCents:700,serverUrl:netinfo.defaultUrl()||'http://192.168.1.100:3000',timeZone:netinfo.timeZone()||'America/Manaus'},operators:[],members:[],promotions:[],stations:[/* 1.0.5: estações de exemplo (removíveis: Remover console / Remover computador) */{id:'1',name:'Exemplo Console',kind:'tv',ip:'192.168.1.111',brand:'',hdmi:1,active:true},{id:'2',name:'Exemplo PC',kind:'computer',ip:'',active:true}],sessions:[],sales:[]};
@@ -75,6 +78,43 @@ class Store{
  logs(query={}){const conditions=[],args=[];if(query.type){conditions.push('type=?');args.push(query.type)}if(query.nick||query.search){const nick=String(query.nick||query.search).trim().toLowerCase();const ids=this.state.members.filter(m=>(m.username||'').toLowerCase().includes(nick)).map(m=>m.id);if(!ids.length)return [];conditions.push('memberId IN ('+ids.map(()=>'?').join(',')+')');args.push(...ids)}if(query.from){conditions.push('at>=?');args.push(query.from)}if(query.to){conditions.push('at<=?');args.push(query.to)}return this.db.prepare('SELECT * FROM logs'+(conditions.length?' WHERE '+conditions.join(' AND '):'')+' ORDER BY id DESC LIMIT 1000').all(...args)}
  snapshot(){const recent=this.state.sessions.slice(-500),seen=new Set(recent.map(s=>s.id));return{settings:this.state.settings,members:this.state.members.filter(m=>!(m.guest&&!m.active)).map(m=>this.publicMember(m)),stations:this.state.stations.filter(s=>!s.removedAt).map(({pcTokenHash,pcDevice,...s})=>({...s,pcPaired:!!pcTokenHash})),promotions:this.state.promotions.filter(p=>!p.removedAt),sessions:[...this.state.sessions.filter(s=>s.status==='active'&&!seen.has(s.id)),...recent],sales:this.state.sales.slice(-500),serverNow:Date.now()}}
  async backup(){const dir=path.join(this.directory,'backups');fs.mkdirSync(dir,{recursive:true});const target=path.join(dir,'gamezoney-'+new Date().toISOString().replace(/[:.]/g,'-')+'.sqlite');await backup(this.db,target);return target}
+ /* 1.2.2: HISTÓRICO ANTIGO EM TABELA PRÓPRIA (hist). Registros com mais de HOT_DAYS dias que não podem mais mudar
+    (sessões encerradas, recargas já usadas/canceladas, cupons fora de Corujão/Viradão, extrato de medalhas, movimentos de estoque)
+    saem do estado em memória: cada gravação e a memória do servidor passam a depender só dos últimos meses.
+    Quem precisa do período inteiro (relatórios, estatística, extrato, caixas antigos, ranking) lê por history()/view(). */
+ history(kind,from=0,to=HIST_MAX){const hot=this.state[kind]||[],ids=new Set(hot.map(r=>r&&r.id));const old=this.db.prepare('SELECT data FROM hist WHERE kind=? AND at>=? AND at<? ORDER BY at').all(kind,Math.max(0,Math.floor(from)),Math.min(HIST_MAX,Math.ceil(to))).map(r=>{const x=JSON.parse(r.data);Object.defineProperty(x,'archived',{value:true,enumerable:false});return x}).filter(x=>!ids.has(x.id));if(!old.length)return hot.slice();/* intercala por data mantendo a ordem do estado */const t=ARCHIVE[kind],out=[];let i=0;for(const h of hot){const th=t(h);while(i<old.length&&t(old[i])<=th)out.push(old[i++]);out.push(h);}while(i<old.length)out.push(old[i++]);return out;}
+ /* cópia só para leitura: o estado com o histórico do período (arquivado + recente) nos lugares de sempre */
+ view(from=0,to=HIST_MAX){const v=Object.create(this),state={...this.state};for(const k of Object.keys(ARCHIVE))state[k]=this.history(k,from,to);Object.defineProperty(v,'state',{value:state});return v;}
+ archivedCount(){const o={};for(const r of this.db.prepare('SELECT kind,COUNT(*) n FROM hist GROUP BY kind').all())o[r.kind]=r.n;return o;}
+ async archiveOld(now=Date.now(),days=HOT_DAYS){
+  const cutoff=now-days*86400000,s=this.state;s.archive??={medalsMilli:{}};s.archive.medalsMilli??={};
+  const lastStart=new Map();for(const x of s.sessions||[])if(x&&x.memberId)lastStart.set(x.memberId,Math.max(lastStart.get(x.memberId)||0,Number(x.startedAt)||0));
+  const ok=t=>Number.isFinite(t)&&t>0&&t<cutoff;
+  const rules={sessions:x=>x.status!=='active'&&ok(x.startedAt)&&ok(Number(x.finishedAt)||x.startedAt),
+   sales:x=>ok(x.at)&&(x.status==='canceled'||!!x.usedAt||!!x.balanceAdjustedAt||(lastStart.get(x.memberId)||0)>=x.at),
+   shopSales:x=>ok(x.at)&&!x.eventId,loyaltyLedger:x=>ok(x.at),stockMoves:x=>ok(x.at)};
+  const plan={};let total=0;for(const k of Object.keys(ARCHIVE)){const list=s[k]||[],out=list.filter(x=>x&&x.id&&rules[k](x));if(out.length){plan[k]=out;total+=out.length;}}
+  if(!total)return {moved:0};
+  /* primeira vez: cópia do banco antes de mexer (pasta backups) */
+  if(!s.archive.firstBackupAt){const dir=path.join(this.directory,'backups');fs.mkdirSync(dir,{recursive:true});await backup(this.db,path.join(dir,'antes-arquivar-historico-'+new Date(now).toISOString().replace(/[:.]/g,'-')+'.sqlite'));}
+  /* depois do await o estado pode ter mudado: refaz a lista */
+  const counts={};total=0;const before={},medals={...s.archive.medalsMilli};
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const ins=this.db.prepare('INSERT INTO hist(kind,id,at,data) VALUES(?,?,?,?) ON CONFLICT(kind,id) DO UPDATE SET at=excluded.at,data=excluded.data');
+   for(const k of Object.keys(ARCHIVE)){const list=s[k]||[];before[k]=list;const keep=[];let n=0;
+    for(const x of list){if(x&&x.id&&rules[k](x)){ins.run(k,String(x.id),Math.floor(ARCHIVE[k](x)),JSON.stringify(x));n++;if(k==='loyaltyLedger'&&!/^Resgate/.test(x.reason||''))medals[x.memberId]=(medals[x.memberId]||0)+(Number(x.amount)||0);}else keep.push(x);}
+    if(n){s[k]=keep;counts[k]=n;total+=n;}}
+   s.archive.medalsMilli=medals;s.archive.firstBackupAt??=now;s.archive.lastAt=now;
+   this.persist();
+   this.db.prepare('INSERT INTO logs(at,actor,type,detail) VALUES(?,?,?,?)').run(new Date(now).toISOString(),'sistema','sistema','Histórico com mais de '+days+' dias guardado no arquivo do banco: '+Object.entries(counts).map(([k,n])=>n+' '+ARCHIVE_LABEL[k]).join(', '));
+   this.db.exec('COMMIT');
+  }catch(e){this.db.exec('ROLLBACK');for(const k of Object.keys(before))s[k]=before[k];throw e;}
+  return {moved:total,counts};
+ }
+ findArchived(kind,id){const r=this.db.prepare('SELECT data FROM hist WHERE kind=? AND id=?').get(kind,String(id));if(!r)return null;const x=JSON.parse(r.data);Object.defineProperty(x,'archived',{value:true,enumerable:false});return x;}
+ /* traz de volta para o estado (sem apagar do arquivo; a versão do estado vale e substitui o arquivo no próximo arquivamento) */
+ revive(kind,id){const hot=this.state[kind]||(this.state[kind]=[]),found=hot.find(x=>x&&x.id===id);if(found)return found;const r=this.db.prepare('SELECT data FROM hist WHERE kind=? AND id=?').get(kind,String(id));if(!r)return null;const x=JSON.parse(r.data),t=ARCHIVE[kind](x);let i=hot.length;while(i>0&&!(ARCHIVE[kind](hot[i-1])<=t))i--;hot.splice(i,0,x);return x;}
  close(){this.db.close()}
 }
-module.exports={Store,id,text,integer,fail,cpfDigits,validCpf,passwordHash,memberPasswordHash,verify,MEMBER_PASSWORD_MIN,MEMBER_PASSWORD_MAX,NICK_PATTERN,normalizeNick};
+module.exports={HOT_DAYS,Store,id,text,integer,fail,cpfDigits,validCpf,passwordHash,memberPasswordHash,verify,MEMBER_PASSWORD_MIN,MEMBER_PASSWORD_MAX,NICK_PATTERN,normalizeNick};

@@ -87,11 +87,14 @@ function ranking(store, q = {}) {
   const members = new Map(store.state.members.filter(m => !m.guest).map(m => [m.id, m])), nick = mid => members.get(mid)?.username || '';
   const top = (map, key) => [...map.entries()].filter(([mid, v]) => members.has(mid) && v[key] > 0).sort((a, b) => b[1][key] - a[1][key] || (b[1].cents || 0) - (a[1].cents || 0) || nick(a[0]).localeCompare(nick(b[0]))).slice(0, 10).map(([mid, v]) => ({username: nick(mid), ...v}));
   const medals = new Map(); // medalhas conquistadas (resgates não descontam)
+  // 1.2.2: soma guardada das medalhas que já foram para o histórico arquivado
+  for (const [mid, milli] of Object.entries(store.state.archive?.medalsMilli || {})) medals.set(mid, {medalsMilli: milli});
   for (const l of store.state.loyaltyLedger || []) { if (/^Resgate/.test(l.reason)) continue; const v = medals.get(l.memberId) || {medalsMilli: 0}; v.medalsMilli += l.amount; medals.set(l.memberId, v); }
   const parts = new Map();
   for (const e of store.state.events || []) if (!e.removedAt && e.status !== 'open') for (const p of e.participants) if (p.participated) { const v = parts.get(p.memberId) || {count: 0}; v.count++; parts.set(p.memberId, v); }
   const recharges = new Map();
-  for (const s of store.state.sales || []) if (s.status !== 'canceled' && s.cents > 0 && localDate(s.at, tz).startsWith(month)) { const v = recharges.get(s.memberId) || {count: 0, cents: 0}; v.count++; v.cents += s.cents; recharges.set(s.memberId, v); }
+  const [y, mo] = month.split('-').map(Number), monthSales = typeof store.history === 'function' ? store.history('sales', Date.UTC(y, mo - 1, 1) - 2 * 86400000, Date.UTC(y, mo, 1) + 2 * 86400000) : (store.state.sales || []);
+  for (const s of monthSales) if (s.status !== 'canceled' && s.cents > 0 && localDate(s.at, tz).startsWith(month)) { const v = recharges.get(s.memberId) || {count: 0, cents: 0}; v.count++; v.cents += s.cents; recharges.set(s.memberId, v); }
   return {month, timeZone: tz, medals: top(medals, 'medalsMilli'), participations: top(parts, 'count'), recharges: top(recharges, 'count')};
 }
 module.exports = {init, list, create, addParticipant, removeParticipant, pay, start, finish, remove, medalSettings, blockCancel, ranking, PAYMENTS};

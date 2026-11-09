@@ -153,6 +153,8 @@ function removePrevious(store, input, actor, isOwner) {
 
 function salesOf(store, regId) {
   const reg = store.state.cashRegisters.find(c => c.id === regId) || fail('Caixa não encontrado.');
+  // 1.2.2: caixa antigo: lê também o histórico arquivado do período do caixa
+  if (typeof store.view === 'function' && reg.openedAt) store = store.view(reg.openedAt - 86400000, (reg.closedAt || Date.now()) + 86400000);
   const time = store.state.sales.filter(s => s.cashId === reg.id).map(s => ({kind: 'recarga', id: s.id, at: s.at, actor: s.actor, label: (s.invoiceNumber ? 'Fatura ' + s.invoiceNumber + ' • ' : '') + (s.memberUsername || s.memberName) + ' • ' + s.label, cents: s.cents, paymentMethod: s.paymentMethod, paymentLabel: require('./payments').label(s), status: s.status}));
   const shop = (store.state.shopSales || []).filter(s => s.cashId === reg.id).map(s => ({kind: 'pdv', id: s.id, number: s.number, at: s.at, actor: s.actor, label: 'Cupom ' + String(s.number).padStart(6, '0') + ' • ' + s.items.map(i => i.qty + 'x ' + i.name).join(', '), cents: s.totalCents, paymentMethod: s.paymentMethod, paymentLabel: require('./payments').label(s), status: s.status}));
   return [...time, ...shop].sort((a, b) => b.at - a.at);

@@ -114,7 +114,8 @@ function sell(store, input, actor) {
 }
 
 function cancelSale(store, input, actor) {
-  const sale = store.state.shopSales.find(s => s.id === input.id) || fail('Venda não encontrada.');
+  // 1.2.2: cupom antigo guardado no histórico volta para o estado para ser cancelado (como antes)
+  const sale = store.state.shopSales.find(s => s.id === input.id) || store.revive?.('shopSales', String(input.id || '')) || fail('Venda não encontrada.');
   if (sale.status === 'canceled') fail('Esta venda já foi cancelada.');
   require('./events').blockCancel(store, sale);
   const reason = text(input.reason, 'Motivo', 300);
@@ -149,7 +150,7 @@ function receiptLines(store, sale) {
   return L;
 }
 function receiptPdf(store, saleId) {
-  const sale = store.state.shopSales.find(s => s.id === saleId) || fail('Venda não encontrada.');
+  const sale = store.state.shopSales.find(s => s.id === saleId) || store.findArchived?.('shopSales', String(saleId || '')) || fail('Venda não encontrada.');
   return {pdf: linesPdf(receiptLines(store, sale), 'Cupom ' + sale.number), number: sale.number};
 }
 // 3.0.31: gerador de PDF de texto (80 mm) reaproveitado pelo relatorio de fechamento de caixa.

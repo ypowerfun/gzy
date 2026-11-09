@@ -208,7 +208,9 @@ const REPORTS = {machines, hours, staff, clients, free, durations, sales, cashfl
 function report(store, q = {}) {
   const fn = REPORTS[q.kind] || fail('Relatório inválido.');
   const R = range(store, q);
-  return {kind: q.kind, from: R.from, to: R.to, timeZone: R.tz, data: fn(store, R)};
+  // 1.2.2: lê também o histórico arquivado do período (sessões que começaram até 2 dias antes, por causa das longas)
+  const scoped = typeof store.view === 'function' ? store.view(R.start - 2 * DAY, R.end + DAY) : store;
+  return {kind: q.kind, from: R.from, to: R.to, timeZone: R.tz, data: fn(scoped, R)};
 }
 
 // ---------- contas a pagar (fluxo de caixa) ----------

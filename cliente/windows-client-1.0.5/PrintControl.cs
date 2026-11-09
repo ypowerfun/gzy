@@ -61,6 +61,7 @@ public class PrintControl {
  public void Update(bool enabled,bool active){this.enabled=enabled;this.active=enabled&&active;if(enabled)Start();}
  public void Start(){if(thread!=null)return;thread=new Thread(Loop){IsBackground=true,Name="GameZoney.Print"};thread.Start();}
  public void Stop(){stop=true;}
+ public bool Holding{get{lock(sync){return held.Count>0;}}}
 
  int lastScan=Environment.TickCount-10000;
  void Loop(){
@@ -68,12 +69,12 @@ public class PrintControl {
   try{if(OpenPrinter(null,out server,IntPtr.Zero))change=FindFirstPrinterChangeNotification(server,CHANGE_JOB,0,IntPtr.Zero);}catch{}
   while(!stop){
    try{
-    /* 1.0.16: sem sessão e sem documento retido, só varre quando o Windows avisa de um trabalho novo (ou a cada 3 s); com sessão continua a cada 0,4 s */
+    /* 1.0.16: sem sessão e sem documento retido, só varre quando o Windows avisa de um trabalho novo (ou a cada 10 s); com sessão continua a cada 0,4 s */
     bool busy;lock(sync){busy=active||held.Count>0;}bool signaled=false;
     if(change!=INVALID&&change!=IntPtr.Zero){if(WaitForSingleObject(change,400)==0){signaled=true;uint what;FindNextPrinterChangeNotification(change,out what,IntPtr.Zero,IntPtr.Zero);}}
     else Thread.Sleep(busy?400:2000);
     int now=Environment.TickCount;
-    if(busy||signaled||change==INVALID||change==IntPtr.Zero||unchecked(now-lastScan)>=3000){lastScan=now;Scan();}
+    if(busy||signaled||change==INVALID||change==IntPtr.Zero||unchecked(now-lastScan)>=10000){lastScan=now;Scan();}
    }catch(Exception e){LastError=e.Message;Thread.Sleep(1000);}
   }
   try{if(change!=INVALID&&change!=IntPtr.Zero)FindClosePrinterChangeNotification(change);if(server!=IntPtr.Zero)ClosePrinter(server);}catch{}
