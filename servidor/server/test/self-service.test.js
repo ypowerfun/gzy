@@ -97,6 +97,19 @@ test('1.1.4: Pagar via PIX sem conta (só e-mail) libera o PC como visitante', a
   } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
 });
 
+test('1.1.5: Testar Mercado Pago confere o Access Token salvo', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-self4-')), store = new Store(dir); let status = 200;
+  const fetch = async url => (assert.match(url, /\/users\/me$/), {ok: status === 200, status, json: async () => ({id: 185, nickname: 'ARENA'})});
+  try {
+    const ss = selfService(store, {fetch, noTimer: true});
+    await assert.rejects(ss.testToken(), /Cole e salve/);
+    store.state.promotions.push({id: 'a', name: '1h', cents: 500, minutes: 60, active: true});
+    ss.save({pix: true, token: 'APP_USR-1234567890123456-abcdef', promotionIds: ['a']}, 'admin');
+    assert.deepEqual(await ss.testToken(), {ok: true, account: 'ARENA', id: '185', site: ''});
+    status = 401; await assert.rejects(ss.testToken(), /recusou o Access Token/);
+  } finally { store.close(); fs.rmSync(dir, {recursive: true, force: true}); }
+});
+
 test('1.1.2: configuração anterior — promoções ativas continuam no PC', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-self2-')), store = new Store(dir);
   try {

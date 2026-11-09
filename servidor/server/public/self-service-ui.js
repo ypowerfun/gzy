@@ -21,9 +21,16 @@ function selfServiceSection(d) {
       <div class="row"><label>Valor mínimo (R$)<input name="customMin" inputmode="decimal" maxlength="10" value="${esc(((d.customMinCents ?? 500) / 100).toFixed(2).replace('.', ','))}"></label><label>Valor máximo (R$)<input name="customMax" inputmode="decimal" maxlength="10" value="${esc(((d.customMaxCents ?? 20000) / 100).toFixed(2).replace('.', ','))}"></label></div>
       <p class="hint">Ex.: mínimo 5,00 = o PC aceita PIX de R$ 5,00 para cima. O tempo é calculado pelo valor da hora.</p>
       <p class="hint">No PC agora: ${(d.options || []).map(o => `${esc(o.label)} = ${o.minutes} min`).join(' • ') || 'nenhum pacote marcado'}${d.customInfo ? ` • Outro valor de ${money(d.customInfo.min)} a ${money(d.customInfo.max)}` : ''}</p>
-      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button></div><p class="error" id="self-error"></p>
+      <div class="dialog-actions" style="justify-content:flex-start;gap:10px"><button class="primary" style="flex:0 0 auto">Salvar</button>${d.tokenSet ? '<button type="button" class="ghost" data-mp-test style="flex:0 0 auto">Testar Mercado Pago</button>' : ''}</div><p class="hint" id="self-test"></p><p class="error" id="self-error"></p>
     </form>
     ${(d.charges || []).length ? `<h3 style="margin-top:18px">Últimos PIX no PC</h3><div class="table-wrap"><table><thead><tr><th>Data</th><th>PC</th><th>Cliente</th><th>Pacote</th><th>Valor</th><th>Situação</th></tr></thead><tbody>${d.charges.map(c => `<tr><td>${datetime(c.createdAt)}</td><td>${esc(c.stationName)}</td><td>${esc(c.username)}</td><td>${esc(c.label)}</td><td>${money(c.cents)}</td><td>${esc(PIX_STATUS[c.status] || c.status)}${c.error ? `<small class="subtext">${esc(c.error)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+  const testBtn = sec.querySelector('[data-mp-test]');
+  if (testBtn) testBtn.onclick = async () => {
+    const out = sec.querySelector('#self-test'); testBtn.disabled = true; out.textContent = 'Testando…'; out.style.color = '';
+    try { const r = await api('/self-service/test', {}); out.textContent = `Mercado Pago OK: conta ${r.account}${r.id ? ' (ID ' + r.id + ')' : ''}. O PIX no PC vai cair nessa conta.`; out.style.color = 'var(--green)'; }
+    catch (err) { out.textContent = err.message; out.style.color = '#ff8793'; }
+    finally { testBtn.disabled = false; }
+  };
   sec.querySelector('#self-form').onsubmit = async e => {
     e.preventDefault(); const f = e.target, b = e.submitter; b.disabled = true; sec.querySelector('#self-error').textContent = '';
     try { const r = await api('/self-service', {signup: f.signup.checked, pix: f.pix.checked, token: f.token.value.trim(), removeToken: !!f.removeToken?.checked, payerEmail: f.payerEmail.value, promotionIds: [...f.querySelectorAll('input[name=promo]:checked')].map(x => x.value), payeeName: f.payeeName.value, custom: f.custom.checked, customMin: f.customMin.value, customMax: f.customMax.value}); sec.replaceWith(selfServiceSection(r)); toast('Autoatendimento salvo.'); }

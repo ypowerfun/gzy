@@ -171,5 +171,15 @@ module.exports = function selfService(store, options = {}) {
     });
     return settings();
   }
-  return {flags, signup, options: options_, custom, payee, create, status, cancel, check, sweep, settings, save};
+  // 1.1.5: botão "Testar Mercado Pago" (Configuração): confere se o Access Token salvo funciona e de qual conta é
+  async function testToken() {
+    if (!s.secrets.mpToken) fail('Cole e salve o Access Token do Mercado Pago primeiro.');
+    let r, data;
+    try { r = await fetchImpl(MP + '/users/me', {headers: {Authorization: 'Bearer ' + s.secrets.mpToken}, signal: AbortSignal.timeout(15000)}); data = await r.json().catch(() => ({})); }
+    catch { fail('Este computador não conseguiu falar com o Mercado Pago (api.mercadopago.com). Confira a internet do servidor ou se um antivírus/firewall bloqueia o GameZoney.'); }
+    if (r.status === 401 || r.status === 403) fail('O Mercado Pago recusou o Access Token (inválido, de teste ou renovado). Copie o Access Token de PRODUÇÃO de novo e salve.');
+    if (!r.ok) fail('O Mercado Pago respondeu com erro (HTTP ' + r.status + '). Tente de novo em alguns minutos.');
+    return {ok: true, account: String(data.nickname || data.email || data.id || ''), id: String(data.id || ''), site: String(data.site_id || '')};
+  }
+  return {flags, signup, options: options_, custom, payee, create, testToken, status, cancel, check, sweep, settings, save};
 };

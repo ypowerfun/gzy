@@ -59,7 +59,7 @@ public sealed class PixForm : SelfForm {
  PixMode mode;readonly TextBox nick,password,email;readonly LinkLabel switchLink=new LinkLabel();readonly Label who=new Label(),payLabel=new Label(),payee=new Label();readonly RadioButton pixRadio=new RadioButton();
  readonly ListBox options=new ListBox();readonly GzButton generate=new GzButton("Gerar QR Code PIX",GzButtonKind.Primary),cancel=new GzButton("Cancelar",GzButtonKind.Ghost),copy=new GzButton("Copiar código",GzButtonKind.Neutral);
  readonly PictureBox qr=new PictureBox();readonly TextBox code=new TextBox();readonly Label info=new Label(),status=new Label();readonly Timer poll=new Timer{Interval=3000};
- readonly List<string> ids=new List<string>();string chargeId,payeeName="";DateTime expires;
+ readonly List<string> ids=new List<string>();string chargeId,payeeName="",loadError="";DateTime expires;
  readonly Label customLabel=new Label();readonly TextBox customValue=new TextBox();int customMin,customMax,hourCents;readonly List<Control> fieldControls=new List<Control>();
  public string Username{get;private set;}public string Password{get;private set;}
  public PixMode Mode{get{return mode;}}
@@ -97,7 +97,7 @@ public sealed class PixForm : SelfForm {
  }
  async Task LoadOptions(){try{var r=await post("pix/options",new {});options.Items.Clear();ids.Clear();payeeName=V(r,"payee");var list=r.ContainsKey("options")?r["options"] as IEnumerable:null;if(list!=null)foreach(var o in list){var d=o as Dictionary<string,object>;if(d==null)continue;ids.Add(V(d,"id"));int cents=Convert.ToInt32(d["cents"]),minutes=Convert.ToInt32(d["minutes"]);options.Items.Add(V(d,"label")+"  —  "+Brl(cents)+"  •  "+Hours(minutes));}
   var k=r.ContainsKey("custom")?r["custom"] as Dictionary<string,object>:null;if(k!=null){customMin=Convert.ToInt32(k["min"]);customMax=Convert.ToInt32(k["max"]);hourCents=Convert.ToInt32(k["hourCents"]);ids.Add("custom");options.Items.Add("Outro valor (a partir de "+Brl(customMin)+")");}
-  if(options.Items.Count>0)options.SelectedIndex=0;else error.Text="Nenhum pacote disponível. Procure a recepção.";}catch(Exception e){error.Text=Clean(e);}}
+  if(options.Items.Count>0)options.SelectedIndex=0;else error.Text=loadError="Nenhum pacote disponível. Procure a recepção.";}catch(Exception e){error.Text=loadError="Os pacotes não carregaram: "+Clean(e);}}
  static string Brl(int cents){return (cents/100.0).ToString("C",new System.Globalization.CultureInfo("pt-BR"));}
  bool IsCustom(){return options.SelectedIndex>=0&&options.SelectedIndex<ids.Count&&ids[options.SelectedIndex]=="custom";}
  void ToggleCustom(){bool c=IsCustom();customLabel.Visible=c;customValue.Visible=c;if(c){UpdateCustomHint();customValue.Focus();}}
@@ -107,7 +107,7 @@ public sealed class PixForm : SelfForm {
  async Task Generate(){if(busy)return;error.Text="";
   if(mode==PixMode.Guest&&!System.Text.RegularExpressions.Regex.IsMatch(email.Text.Trim(),@"^[^\s@]+@[^\s@]+\.[^\s@]+$")){error.Text="Digite um e-mail válido.";email.Focus();return;}
   if(mode==PixMode.Account&&(nick.Text.Trim().Length==0||password.Text.Length==0)){error.Text="Digite o seu nick e a sua senha.";return;}
-  if(options.SelectedIndex<0){error.Text="Escolha um pacote.";return;}
+  if(options.Items.Count==0){error.Text=loadError.Length>0?loadError:"Nenhum pacote disponível. Procure a recepção.";if(loadError.StartsWith("Os pacotes"))await LoadOptions();return;}if(options.SelectedIndex<0){error.Text="Escolha um pacote.";return;}
   int cents=0;if(IsCustom()){cents=CustomCents();if(cents<customMin||cents>customMax){error.Text="Digite um valor de "+Brl(customMin)+" a "+Brl(customMax)+".";customValue.Focus();return;}}
   busy=true;generate.Enabled=false;
   try{

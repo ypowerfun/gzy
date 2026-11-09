@@ -7,7 +7,7 @@ test('2.0.37: transport.js do cliente libera todas as ações usadas pelo client
  if(!dir){t.skip('pasta do cliente não encontrada');return;}
  const transport=fs.readFileSync(path.join(dir,'transport.js'),'utf8'),list=JSON.parse(transport.match(/\[('state'[^\]]*)\]/)[0].replace(/'/g,'"'));
  const cs=fs.readdirSync(dir).filter(f=>f.endsWith('.cs')).map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
- const used=new Set([...cs.matchAll(/Post\("([a-z-]+)"/g)].map(m=>m[1]));for(const m of cs.matchAll(/"(admin-logout|finish)"/g))used.add(m[1]);used.delete('discover');
- const server=fs.readFileSync(path.join(__dirname,'..','pc.js'),'utf8'),routes=new Set([...server.matchAll(/(?:operation|router\.post)\('\/([a-z-]+)'/g)].map(m=>m[1]));
+ const used=new Set([...cs.matchAll(/[Pp]ost\("([a-z/-]+)"/g)].map(m=>m[1]));/* 1.0.12: a janela do autoatendimento chama post("pix/options") pelo delegate (antes o teste não via e o transporte recusava) */for(const m of cs.matchAll(/"(admin-logout|finish)"/g))used.add(m[1]);used.delete('discover');
+ const server=fs.readFileSync(path.join(__dirname,'..','pc.js'),'utf8'),routes=new Set([...server.matchAll(/(?:operation|selfOp|router\.post)\('\/([a-z/-]+)'/g)].map(m=>m[1]));
  for(const action of used){assert(list.includes(action),'transport.js não libera: '+action);if(action!=='setup')assert(routes.has(action),'servidor sem a rota: '+action);}
 });
