@@ -67,9 +67,9 @@ procedure GzFwRules(var Script: String; Install: Boolean);
 begin
 #if GzRole == "server"
   if Install then begin
-    GzFwAdd(Script, 'https-in', 'dir=in protocol=TCP localport=3443 remoteip=localsubnet edge=no');
-    GzFwAdd(Script, 'discovery-in', 'dir=in protocol=UDP localport=3444 remoteip=localsubnet edge=no');
-    GzFwAdd(Script, 'discovery-out', 'dir=out protocol=UDP localport=3444 remoteip=localsubnet');
+    GzFwAdd(Script, 'https-in', 'dir=in protocol=TCP localport=3443 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16 edge=no');
+    GzFwAdd(Script, 'discovery-in', 'dir=in protocol=UDP localport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16 edge=no');
+    GzFwAdd(Script, 'discovery-out', 'dir=out protocol=UDP localport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16');
   end else begin
     GzFwDelete(Script, 'https-in');
     GzFwDelete(Script, 'discovery-in');
@@ -77,9 +77,9 @@ begin
   end;
 #else
   if Install then begin
-    GzFwAdd(Script, 'https-out', 'dir=out protocol=TCP remoteport=3443 remoteip=localsubnet');
-    GzFwAdd(Script, 'discovery-out', 'dir=out protocol=UDP remoteport=3444 remoteip=localsubnet,255.255.255.255');
-    GzFwAdd(Script, 'discovery-in', 'dir=in protocol=UDP remoteport=3444 remoteip=localsubnet edge=no');
+    GzFwAdd(Script, 'https-out', 'dir=out protocol=TCP remoteport=3443 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16');
+    GzFwAdd(Script, 'discovery-out', 'dir=out protocol=UDP remoteport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,255.255.255.255');
+    GzFwAdd(Script, 'discovery-in', 'dir=in protocol=UDP remoteport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16 edge=no');
   end else begin
     GzFwDelete(Script, 'https-out');
     GzFwDelete(Script, 'discovery-out');

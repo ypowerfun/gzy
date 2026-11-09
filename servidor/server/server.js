@@ -3,7 +3,7 @@ const express=require('express'),http=require('http'),path=require('path'),fs=re
 const {Store,id,text,integer,fail,passwordHash,verify}=require('./store');
 const Vidaa=require('./vidaa');const netinfo=require('./netinfo');
 // Versão atual do GameZoney Cliente (PCs gamers): usada nos avisos do painel para pedir a atualização dos PCs.
-const CLIENT_VERSION='1.0.18';const SERVER_VERSION='1.2.4';const AndroidTv=require('./androidtv');
+const CLIENT_VERSION='1.0.19';const SERVER_VERSION='1.2.5';const AndroidTv=require('./androidtv');
 function createServer(options={}){
  const directory=options.directory||process.env.GZ_DATA_DIR||path.join(process.env.LOCALAPPDATA||os.homedir(),'GameZoney','data');
  const store=new Store(directory),app=express(),server=http.createServer(app),sessions=require('./panel-sessions')(store),clients=new Map(),status=new Map(),attempts=new Map();
@@ -27,7 +27,7 @@ function createServer(options={}){
  app.disable('x-powered-by');app.use(express.json({limit:'3mb'}));
  app.use((req,res,next)=>{res.set('X-Content-Type-Options','nosniff');if(req.path.startsWith('/api'))res.set('Cache-Control','no-store');next()});
  app.use('/pc',pc.router);
- app.get('/health',(_,res)=>res.json({app:'gamezoney-server',version:'1.2.4'}));
+ app.get('/health',(_,res)=>res.json({app:'gamezoney-server',version:'1.2.5'}));
  app.post('/internal/stop',(req,res)=>{if(!local(req)||!process.env.GZ_CONTROL_TOKEN||req.headers['x-gz-control']!==process.env.GZ_CONTROL_TOKEN)return res.sendStatus(403);res.json({ok:true});setImmediate(()=>process.emit('SIGTERM'))});
  app.use('/api',(req,res,next)=>{
   if((!local(req)||req.headers['x-forwarded-for']||req.headers['x-forwarded-proto']||req.headers['x-forwarded-host']))return res.status(403).json({error:'O painel do GameZoney abre somente no próprio servidor.'});
@@ -40,7 +40,7 @@ function createServer(options={}){
  app.use('/api',(req,res,next)=>{const token=String(req.headers.cookie||'').match(/(?:^|;\s*)gz_session=([a-f0-9]+)/)?.[1];const s=sessions.touch(token);req.operator=s&&s.until>Date.now()?store.state.operators.find(o=>o.id===s.id&&o.active!==false):null;if(!req.operator)return res.status(401).json({error:'Entre com seu usuário e senha.'});req.authToken=token;next()});
  const admin=req=>{if(req.operator.role!=='admin')fail('Somente o administrador pode alterar esta configuração.')};
  /* 1.0.5: licença — teste grátis de 30 dias e licença vitalícia (license.js). Teste encerrado: só bloqueia ações que geram venda/tempo novo. */
- const lic=require('./license')(store,{version:'1.2.4',/* 1.0.7: a cópia fora da pasta de dados vale também quando o GameZoney.exe abre o servidor (GZ_DATA_DIR); só os testes (options.directory) ficam sem ela */markerFile:options.directory?null:path.join(path.dirname(directory),'gz-license.json'),machineBound:!options.directory,...options.license});store.persist();
+ const lic=require('./license')(store,{version:'1.2.5',/* 1.0.7: a cópia fora da pasta de dados vale também quando o GameZoney.exe abre o servidor (GZ_DATA_DIR); só os testes (options.directory) ficam sem ela */markerFile:options.directory?null:path.join(path.dirname(directory),'gz-license.json'),machineBound:!options.directory,...options.license});store.persist();
  app.use('/api',lic.guard);
  app.get('/api/license',(req,res)=>res.json(lic.status()));
  app.post('/api/license/activate',(req,res)=>{if(req.operator.role!=='admin')return res.status(400).json({error:'Somente o administrador pode ativar a licença.'});lic.activate(req.body||{},actor(req)).then(r=>res.json(r),e=>res.status(400).json({error:e.message,...(e.needLogin?{needLogin:true,machine:e.machine||''}:{})}))});
@@ -52,7 +52,7 @@ function createServer(options={}){
  app.post('/api/license/logout',(req,res)=>{if(!licAdmin(req,res))return;lic.logout(actor(req)).then(r=>res.json(r),e=>licErr(res,e))});
  /* 1.0.6: Verificar atualização (Configuração): manifesto assinado pela GameZoney, SHA-256 conferido, backup antes de instalar */
  let exitCode=0;const updDir=(options.directory||process.env.GZ_DATA_DIR)?path.join(path.dirname(directory),path.basename(directory)+'-updates'):path.join(path.dirname(directory),'updates');
- const upd=require('./updater')(store,lic,{version:'1.2.4',dir:updDir,publicKey:lic.publicKey,backups,onExit:()=>{exitCode=75;process.emit('SIGTERM')},...options.update});
+ const upd=require('./updater')(store,lic,{version:'1.2.5',dir:updDir,publicKey:lic.publicKey,backups,onExit:()=>{exitCode=75;process.emit('SIGTERM')},...options.update});
  const updRoute=(fn)=>(req,res)=>{if(!licAdmin(req,res))return;Promise.resolve().then(()=>fn(req)).then(r=>res.json(r),e=>res.status(400).json({error:e.message}))};
  app.get('/api/update',updRoute(()=>upd.status()));
  app.post('/api/update/check',updRoute(()=>upd.check()));
@@ -137,7 +137,7 @@ const ownerId=()=>(store.state.operators.find(o=>o.owner&&o.role==='admin')||sto
 route('get','/api/operators',req=>{admin(req);const owner=ownerId();return{ownerId:owner,canManage:req.operator.id===owner,operators:store.state.operators.map(o=>({id:o.id,username:o.username,role:o.role,active:o.active!==false,owner:o.id===owner,createdAt:o.createdAt||null,disabledAt:o.disabledAt||null}))}});
 route('post','/api/operators/status',req=>{admin(req);if(req.operator.id!==ownerId())fail('Somente o administrador principal pode ativar ou desativar contas.');const o=store.state.operators.find(o=>o.id===String(req.body.id||''))||fail('Conta não encontrada.');if(o.id===ownerId())fail('A conta do administrador principal não pode ser desativada.');const active=req.body.active===true;store.change(actor(req),'operador',(active?'Conta reativada: ':'Conta desativada: ')+o.username,()=>{o.active=active;if(active)delete o.disabledAt;else o.disabledAt=Date.now()});if(!active)for(const [key,s] of sessions)if(s.id===o.id)sessions.delete(key);return{ok:true,active}});
  /* 1.0.5: Perfil — idioma do painel (por usuário) e Feedback para a GameZoney */
-const feedback=require('./feedback')(store,'1.2.4');
+const feedback=require('./feedback')(store,'1.2.5');
 route('post','/api/profile/lang',req=>{const lang=String(req.body.lang||'');if(!['pt-BR','en','es','fr','ru'].includes(lang))fail('Idioma inválido.');store.change(actor(req),'operador','Idioma do painel: '+lang,()=>{store.state.operators.find(o=>o.id===req.operator.id).lang=lang});return {lang}});
 route('post','/api/feedback',async req=>feedback.submit(req.body,actor(req)));
 route('post','/api/password',req=>{if(!verify(req.body.current,req.operator.hash))fail('Senha atual incorreta.');const hash=passwordHash(req.body.password);store.change(actor(req),'operador','Senha alterada',()=>{store.state.operators.find(o=>o.id===req.operator.id).hash=hash});for(const [key,s] of sessions)if(s.id===req.operator.id&&key!==sessions.keyOf(req.authToken))sessions.delete(key);});
@@ -242,5 +242,5 @@ route('post','/api/business/cancel',req=>{admin(req);return business.cancel(stor
  /* 1.2.2: histórico com mais de 90 dias vai para a tabela própria (1 min depois de abrir e a cada 6 h) */const archiveRun=()=>store.archiveOld().catch(e=>console.error('Falha ao arquivar o histórico: '+e.message));const archiveFirst=options.noTimer?null:setTimeout(archiveRun,60000),archiveTimer=options.noTimer?null:setInterval(archiveRun,6*3600000);/* 1.0.6: renova o certificado do plano (a cada 6 h e 20 s depois de abrir) */const licTimer=options.noTimer?null:setInterval(()=>lic.refresh().catch(()=>{}),lic.REFRESH_EVERY);const licFirst=options.noTimer?null:setTimeout(()=>lic.refresh().catch(()=>{}),20000);/* 1.0.5: reenvio do Feedback pendente a cada 10 min */const feedbackTimer=options.noTimer?null:setInterval(()=>feedback.flush().catch(()=>{}),600000);let backupTimer;if(!options.noTimer&&!process.env.GZ_NO_BACKUP){backups.tick();backupTimer=setInterval(()=>backups.tick(),60000)}
  return{app,server,store,tick,pc,devices,selfService,pcNotices,backups,startPC,discovery,upd,get exitCode(){return exitCode},close:async()=>{discovery.close();clearInterval(timer);if(licTimer)clearInterval(licTimer);if(licFirst)clearTimeout(licFirst);clearInterval(heartbeat);clearInterval(backupTimer);if(archiveFirst)clearTimeout(archiveFirst);if(archiveTimer)clearInterval(archiveTimer);if(feedbackTimer)clearInterval(feedbackTimer);for(const c of clients.values())c.disconnect();await queue;await backups.wait().catch(()=>{});if(pcServer?.listening)await new Promise(resolve=>pcServer.close(resolve));await new Promise(resolve=>server.close(resolve));store.state.runtime.lastAliveAt=Date.now();store.state.runtime.cleanShutdown=true;store.persist();store.log('sistema','servidor','Servidor encerrado');store.close()}};
 }
-if(require.main===module){const app=createServer();const port=Number(process.env.PORT||3000);if(!process.env.GZ_NO_PC_TLS)app.startPC(Number(process.env.GZ_PC_PORT||3443)).then(()=>app.discovery.start()).catch(e=>console.error('Canal de computadores indisponível: '+e.message));app.server.on('error',e=>{console.error(e.code==='EADDRINUSE'?'Porta 3000 ocupada. Feche a versão anterior.':e.message);process.exit(1)});app.server.listen(port,'0.0.0.0',()=>console.log(`GameZoney SERVER 1.2.4 • http://localhost:${port}`));let stopping=false;for(const event of ['SIGINT','SIGTERM'])process.on(event,async()=>{if(stopping)return;stopping=true;await app.close();process.exit(app.exitCode||0)})}
+if(require.main===module){const app=createServer();const port=Number(process.env.PORT||3000);if(!process.env.GZ_NO_PC_TLS)app.startPC(Number(process.env.GZ_PC_PORT||3443)).then(()=>app.discovery.start()).catch(e=>console.error('Canal de computadores indisponível: '+e.message));app.server.on('error',e=>{console.error(e.code==='EADDRINUSE'?'Porta 3000 ocupada. Feche a versão anterior.':e.message);process.exit(1)});app.server.listen(port,'0.0.0.0',()=>console.log(`GameZoney SERVER 1.2.5 • http://localhost:${port}`));let stopping=false;for(const event of ['SIGINT','SIGTERM'])process.on(event,async()=>{if(stopping)return;stopping=true;await app.close();process.exit(app.exitCode||0)})}
 module.exports={createServer};

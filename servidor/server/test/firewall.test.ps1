@@ -6,6 +6,8 @@ $client=@(Get-GzFirewallPlan client 'C:\Arena Test\Cliente')
 foreach($rule in @($server)+@($client)) {
     Assert ($rule.Profile -eq 'Any') 'Todos os perfis devem ser incluidos'
     Assert ($rule.RemoteAddress -contains 'LocalSubnet') 'Alcance local obrigatorio'
+    foreach($net in @('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16')) { Assert ($rule.RemoteAddress -contains $net) "Sub-redes da arena (outros roteadores/Wi-Fi): $net" }
+    Assert (!($rule.RemoteAddress -contains 'Any')) 'Nunca liberar para a internet'
     Assert ($rule.Program.EndsWith('\runtime\node.exe')) 'Programa deve ser limitado ao runtime'
     if ($rule.Direction -eq 'Inbound') { Assert ($rule.EdgeTraversalPolicy -eq 'Block') 'Entrada sem edge traversal' }
     else { Assert (!$rule.ContainsKey('EdgeTraversalPolicy')) 'Regra de saida nao pode informar edge traversal' }

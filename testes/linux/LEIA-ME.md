@@ -9,3 +9,5 @@ Sem estes ajudantes, 7 testes do Servidor só rodam no Windows. Com eles, só fi
    `mcs -langversion:5 -target:winexe -out:X/GameZoneyCliente.exe -r:System.Windows.Forms.dll -r:System.Drawing.dll -r:System.Web.Extensions.dll -r:System.Security.dll` + os .cs do build.ps1;
    copiar `transport.js` e `discover.js` para `X`, `ln -s $(which node) X/runtime/node.exe`, e um `X/run.sh` com `exec mono X/GameZoneyCliente.exe "$@"`;
    rodar com `GZ_CLIENT_TEST_EXE=X/run.sh node --test test/*.test.js`.
+
+3. Sub-redes (roteador virtual): `sudo bash testes/linux/subredes/rodar.sh` (precisa de iproute2; o passo 1 antes).

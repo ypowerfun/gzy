@@ -8,13 +8,18 @@ function Get-GzFirewallKey {
     try { return ([BitConverter]::ToString($sha.ComputeHash($encoding.GetBytes($ProgramPath.ToLowerInvariant())))).Replace('-','').Substring(0,16) } finally { $sha.Dispose() }
 }
 
+# 1.2.5: rede da arena = sub-rede local + faixas PRIVADAS (10.x, 172.16-31.x, 192.168.x, 169.254.x).
+# Antes era so 'LocalSubnet': PCs/TVs atras de outro roteador, switch gerenciado ou ponto de Wi-Fi com outra faixa
+# (ex.: servidor 192.168.0.x e PC 192.168.1.x) eram bloqueados pelo firewall. Faixas privadas nao existem na internet.
+$GzPrivateNetworks = @('LocalSubnet','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','169.254.0.0/16')
+
 function Get-GzFirewallPlan {
     param([ValidateSet('server','client')][string]$Role, [string]$InstallDirectory)
     $programPath = [IO.Path]::GetFullPath((Join-Path $InstallDirectory 'runtime\node.exe'))
     $key = Get-GzFirewallKey $programPath
     $legacyKey = Get-GzFirewallKey $programPath -Legacy
     $prefix = "GameZoney-$Role-$key"
-    $common = @{ Program=$programPath; Profile='Any'; RemoteAddress=@('LocalSubnet'); Action='Allow'; Enabled='True'; PolicyStore='PersistentStore' }
+    $common = @{ Program=$programPath; Profile='Any'; RemoteAddress=$GzPrivateNetworks; Action='Allow'; Enabled='True'; PolicyStore='PersistentStore' }
     if ($Role -eq 'server') {
         $definitions = @(
             @{ Key='https-in'; Direction='Inbound'; Protocol='TCP'; LocalPort='3443'; RemotePort='Any' },
@@ -24,7 +29,7 @@ function Get-GzFirewallPlan {
     } else {
         $definitions = @(
             @{ Key='https-out'; Direction='Outbound'; Protocol='TCP'; LocalPort='Any'; RemotePort='3443' },
-            @{ Key='discovery-out'; Direction='Outbound'; Protocol='UDP'; LocalPort='Any'; RemotePort='3444'; RemoteAddress=@('LocalSubnet','255.255.255.255') },
+            @{ Key='discovery-out'; Direction='Outbound'; Protocol='UDP'; LocalPort='Any'; RemotePort='3444'; RemoteAddress=@($GzPrivateNetworks + '255.255.255.255') },
             @{ Key='discovery-in'; Direction='Inbound'; Protocol='UDP'; LocalPort='Any'; RemotePort='3444' }
         )
     }

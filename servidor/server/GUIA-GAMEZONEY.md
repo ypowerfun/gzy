@@ -235,12 +235,13 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 - **Backup completo:** seção 16.
 - **Servidor IP** (abaixo do backup): mostra o IP (ou o domínio, em nuvem) que as TVs e os PCs usam para chegar ao servidor — só o IP, sem a porta.
   - Botão **Servidor IP**: escolha a rede da máquina (**cabo de rede** ou **Wi-Fi**, com o IP de cada uma); ou **Servidor em nuvem / outro endereço** (domínio, ex.: `https://gamezoney.exemplo.com.br`).
+  - **Rede com vários roteadores, switches ou pontos de Wi-Fi** (sub-redes, ex.: recepção em 192.168.0.x e PCs em 192.168.1.x): funciona, desde que tudo seja a rede da própria arena. O firewall do GameZoney aceita as faixas de rede privada (10.x, 172.16–31.x, 192.168.x) e nunca a internet. O PC novo procura a recepção também nas outras faixas; se não achar sozinho, clique em **Informar IP do servidor** na tela de configuração do PC e digite o IP que aparece aqui. Depois de autorizado, o PC pode mudar de faixa/roteador sem nova autorização, e se a recepção ganhar outro IP os PCs a encontram de novo sozinhos. Rede de visitantes isolada (que bloqueia a comunicação entre aparelhos) continua impedindo a conexão. Ligar os PCs pela rede (Wake-on-LAN) em outra faixa depende do roteador repassar o pacote.
   - Botão **Atualizar Automático ›**: use quando o IP da máquina mudar (troca de roteador, cabo ↔ Wi-Fi). No topo do resultado aparece se o servidor está **disponível localmente (rede local)** ou **em nuvem**.
     - **Rede local:** confere o IP em uso e ajusta o endereço, testa a conexão das TVs, a dos PCs e a busca dos PCs na rede e confere o **firewall do Windows** — se faltar regra, recria (o Windows pede confirmação de administrador). Os PCs reencontram o servidor no novo IP sozinhos.
     - **Nuvem** (endereço com domínio): mantém o endereço, confere se o domínio é encontrado e responde, e se o servidor também responde na rede local.
     - Também mostra a data e a hora do computador do servidor. O resultado aparece em lista (✔/✖) e vai para o Log.
 - **Valor da hora:** fica na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
-- **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar.
+- **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar. O servidor usa o fuso do Windows; se o fuso não for reconhecido, ou se o relógio tiver sido acertado à mão (ex.: horário de verão desligado), vale **a hora que o computador está mostrando**. Ajustou o relógio do Windows? Feche e abra o GameZoney Servidor (ou use **Atualizar Automático**) para ele passar a usar a hora nova.
 
 ---
 
@@ -334,7 +335,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 |---|---|
 | Painel do servidor com a tela escura | Libere o Edge/WebView2 no programa que os desativou e instale o WebView2 Runtime da Microsoft; reabra o servidor |
 | PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 18); na recepção, Reparar conexão de rede |
-| PC novo não aparece para autorizar | Mesma rede do servidor (não use Wi-Fi de visitantes); firewall do servidor (Reparar conexão de rede) |
+| PC novo não aparece para autorizar | Mesma rede da arena (não use Wi-Fi de visitantes); em outro roteador/Wi-Fi da arena, use **Informar IP do servidor** no PC; firewall do servidor (Reparar conexão de rede) |
 | TV não troca de HDMI | Confira IP, entrada HDMI e pareamento (Parear TV); Testar HDMI |
 | TV não mostra o resumo | Configuração > Servidor IP > **Atualizar Automático**; a TV precisa alcançar a porta 3000 |
 | IP do servidor mudou | Configuração > Servidor IP > **Atualizar Automático** (ajusta o endereço, confere portas e firewall) |

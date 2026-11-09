@@ -36,7 +36,7 @@ module.exports=function discovery(store,pc,identity){
   reject(device){clean();const p=pending.get(device);if(p?.status==='pending')p.status='rejected';return {ok:true}},
   start(port=3444){return new Promise((resolve,reject)=>{
    if(socket)return reject(Error('Descoberta já iniciada.'));socket=dgram.createSocket('udp4');let count=0,window=Date.now();
-   socket.on('error',reject);socket.on('message',(bytes,remote)=>{if(bytes.length>1024)return;if(Date.now()-window>1000){count=0;window=Date.now()}if(++count>30)return;
+   socket.on('error',reject);socket.on('message',(bytes,remote)=>{if(bytes.length>1024)return;if(Date.now()-window>1000){count=0;window=Date.now()}if(++count>120)return;/* 1.2.5: vários PCs procurando ao mesmo tempo (servidor trocou de IP) */
     try{const query=JSON.parse(bytes);if(query.app!=='gamezoney-discover'||query.version!==1||!/^[a-f0-9]{32}$/.test(query.nonce))return;
      const info=identity();if(!info.fingerprint||!info.port)return;
      const response={app:'gamezoney-server',version:1,nonce:query.nonce,name:os.hostname(),...info};socket.send(Buffer.from(JSON.stringify(response)),remote.port,remote.address,()=>{});

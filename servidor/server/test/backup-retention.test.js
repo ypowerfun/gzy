@@ -5,8 +5,9 @@ const {Store}=require('../store'),createBackups=require('../backups');
 test('1.2.3: backups movidos da pasta antiga, automáticos com mais de 7 dias apagados, manuais e desconhecidos guardados',async t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ret-')),docs=path.join(root,'Documentos'),old=path.join(docs,'bkp gamezoney'),app=path.join(root,'app');fs.mkdirSync(app);fs.mkdirSync(old,{recursive:true});
   const store=new Store(path.join(root,'data'));t.after(()=>{store.close();fs.rmSync(root,{recursive:true,force:true})});
-  const DAY=86400000,base=Date.parse('2026-11-20T06:00:00Z'),iso=t=>new Date(t).toISOString().replace(/[:.]/g,'-');
+  const DAY=86400000,base=Date.parse('2026-11-20T12:00:00Z'),iso=t=>new Date(t).toISOString().replace(/[:.]/g,'-');
   // instalação antiga: configuração apontando para a pasta antiga + arquivos antigos (sem auto/manual no nome)
+  store.state.settings.timeZone='UTC'; // o teste não pode depender do fuso do computador (no Windows Manaus/−4 o 'dia seguinte' caía antes das 03:00)
   store.state.settings.backup={enabled:true,time:'03:00',directory:old};
   const legacyAuto='GameZoney-'+iso(base-20*DAY)+'-aaaaaa.zip',legacyManual='GameZoney-'+iso(base-30*DAY)+'-bbbbbb.zip',legacyUnknown='GameZoney-'+iso(base-40*DAY)+'-cccccc.zip';
   for(const f of [legacyAuto,legacyManual,legacyUnknown,'anotacao.txt'])fs.writeFileSync(path.join(old,f),'x');

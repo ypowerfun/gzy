@@ -1,0 +1,8 @@
+const discover=require(''+require('path').resolve(__dirname,'../../..')+'/cliente/windows-client-1.0.5/discover.js');const {spawn}=require('child_process'),crypto=require('crypto'),fs=require('fs');
+const call=(settings,action,body)=>new Promise(res=>{const c=spawn(process.execPath,['transport.js'],{cwd:''+require('path').resolve(__dirname,'../../..')+'/cliente/windows-client-1.0.5'});let o='';c.stdout.on('data',d=>o+=d);c.on('close',()=>res(JSON.parse(o)));c.stdin.end(JSON.stringify({settings,action,body}))});
+const step=process.argv[2],file=process.argv[3];
+(async()=>{
+ if(step==='pair'){const w=await discover({wide:true});const f=w.servers[0];if(!f){console.log('não achou');return;}const device=crypto.randomBytes(16).toString('hex'),secret=crypto.randomBytes(32).toString('hex');const base={server:f.server,fingerprint:f.fingerprint,token:'0'.repeat(64),device};let r;for(let i=0;i<20;i++){r=await call(base,'setup',{device,secret,name:'PC-NAT'});if(r.ok&&r.data.status==='approved')break;await new Promise(z=>setTimeout(z,400));}fs.writeFileSync(file,JSON.stringify({...base,token:r.data.token}));console.log('   autorizado:',r.ok?r.data.stationName:r.error);}
+ if(step==='state'){const s=JSON.parse(fs.readFileSync(file));const st=await call(s,'state',{clientRunId:'a'.repeat(32)});console.log('   consulta de estado:',st.ok?'OK — '+st.data.stationName:st.error);}
+ if(step==='find'){const s=JSON.parse(fs.readFileSync(file));const r=await discover({known:s.server});const same=r.servers.find(x=>x.fingerprint===s.fingerprint);console.log('   busca pela faixa anterior:',same?same.server+' (mesma identidade)':'nada');if(same){s.server=same.server;fs.writeFileSync(file,JSON.stringify(s));}}
+})();
