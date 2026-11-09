@@ -32,7 +32,7 @@ module.exports = function pcDevices(store, options = {}) {
       if (list.length && JSON.stringify(list) !== before) { station.network = {list, at: Date.now()}; store.persist(); }
     }
     if (body.printVersion === 1) {
-      const pc = s.settings.printControl, q = queue(station.id), reported = new Set();
+      const pc = s.settings.printControl, q = queue(station.id), reported = new Set(); let changed = false;
       for (const j of (Array.isArray(body.printJobs) ? body.printJobs : []).slice(0, 30)) {
         const jid = String(j?.id || '').slice(0, 160); if (!jid) continue; reported.add(jid);
         const pages = Math.max(0, Math.min(10000, Math.floor(Number(j.pages) || 0))), copies = Math.max(1, Math.min(999, Math.floor(Number(j.copies) || 1)));
@@ -46,10 +46,11 @@ module.exports = function pcDevices(store, options = {}) {
       }
       // documentos que o PC não informa mais: decisão aplicada no PC, ou cancelado/apagado pelo próprio cliente
       for (const [jid, job] of q) if (!reported.has(jid)) {
-        if (!job.decision) { history(job, 'cancelada no PC', 'cliente:' + station.name); store.log('cliente:' + station.name, 'impressao', `Impressão cancelada no PC: ${job.document}`); }
+        if (!job.decision) { changed = true; history(job, 'cancelada no PC', 'cliente:' + station.name); store.log('cliente:' + station.name, 'impressao', `Impressão cancelada no PC: ${job.document}`); }
         q.delete(jid);
       }
-      store.persist();
+      // 1.2.1: a fila fica na memória; só grava quando o histórico de impressões mudou (antes: estado inteiro a cada consulta de cada PC)
+      if (changed) store.persist();
       out.printControl = {enabled: !!pc.enabled, decisions: [...q.values()].filter(j => j.decision).map(j => ({id: j.id, action: j.decision}))};
     }
     return out;

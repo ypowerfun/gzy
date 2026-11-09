@@ -20,7 +20,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Cliente - controle do PC da arena")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.0.15.0")]
+[assembly: AssemblyVersion("1.0.16.0")]
 
 public class Settings {
  public string server, fingerprint, token, stationName, device, maintenance,offlineAdminUsername,offlineAdminHash;
@@ -117,11 +117,18 @@ public class Transport {
  // (o processo e encerrado se nao terminar), a mensagem de erro do componente e guardada e o runtime e conferido antes.
  // Antes, um node.exe preso (ex.: antivirus) deixava a consulta parada para sempre e o PC ficava "Sem conexao" ate reiniciar.
  public static int StateTimeoutMs=12000,ActionTimeoutMs=20000,DiscoverTimeoutMs=8000;
+ static Dictionary<string,object> Unwrap(Dictionary<string,object> envelope){
+  if(envelope==null||!envelope.ContainsKey("ok"))throw new ConnectionFailure("o componente de conexão devolveu uma resposta inválida.",0);
+  if(!Convert.ToBoolean(envelope["ok"]))throw new ConnectionFailure(Convert.ToString(envelope["error"]),envelope.ContainsKey("status")?Convert.ToInt32(envelope["status"]):0);
+  return (Dictionary<string,object>)envelope["data"];
+ }
  public virtual Dictionary<string,object> Post(string action,object body){
   string root=AppDomain.CurrentDomain.BaseDirectory,node=Path.Combine(root,"runtime","node.exe");
   if(!File.Exists(node))throw new ConnectionFailure("o componente de conexão não foi encontrado (runtime\\node.exe). Reinstale o GameZoney Cliente.",0);
   var info=new ProcessStartInfo(node,"transport.js"){WorkingDirectory=root,UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8};
   int limit=action=="discover"?DiscoverTimeoutMs:action=="state"||action=="heartbeat"?StateTimeoutMs:ActionTimeoutMs;
+  /* 1.0.16: um único node.exe aberto atende todas as consultas (antes: um processo novo a cada 2 s). Se ele não abrir, o modo antigo continua. */
+  if(action!="discover"){Dictionary<string,object> piped;if(TransportPipe.TrySend(root,node,settings,action,body,limit,out piped))return Unwrap(piped);}
   using(var process=new Process()){
    process.StartInfo=info;
    try{process.Start();}catch(Exception e){throw new ConnectionFailure("não foi possível abrir o componente de conexão (runtime\\node.exe): "+e.Message+". Confira o antivírus ou reinstale o cliente.",0);}
@@ -135,10 +142,53 @@ public class Transport {
    if(process.ExitCode!=0){string first=error.Length>0?error.Split('\n')[0].Trim():"";if(first.Length>160)first=first.Substring(0,160);throw new ConnectionFailure("falha no componente de conexão do cliente (código "+process.ExitCode+(first.Length>0?": "+first:"")+").",0);}
    Dictionary<string,object> envelope;
    try{envelope=Files.Json.Deserialize<Dictionary<string,object>>(output);}catch{envelope=null;}
-   if(envelope==null||!envelope.ContainsKey("ok"))throw new ConnectionFailure("o componente de conexão devolveu uma resposta inválida.",0);
-   if(!Convert.ToBoolean(envelope["ok"]))throw new ConnectionFailure(Convert.ToString(envelope["error"]),envelope.ContainsKey("status")?Convert.ToInt32(envelope["status"]):0);
-   return (Dictionary<string,object>)envelope["data"];
+   return Unwrap(envelope);
   }
+ }
+}
+// 1.0.16: transporte em processo único. Antes cada consulta (a cada 2 s, mais o batimento) abria um node.exe novo:
+// ~40-50 ms de processador e ~50 MB de memória por vez, além da verificação do antivírus a cada processo.
+// Agora UM node.exe (transport.js --serve) fica aberto, recebe uma linha JSON por consulta e reaproveita a conexão segura.
+// Regras: o que não chegou a ser enviado volta para o modo antigo (TrySend = false); o que foi enviado nunca é reenviado.
+// Sem resposta no tempo-limite = o processo é encerrado e reaberto na próxima consulta (igual ao antigo, que encerrava o node.exe preso).
+public static class TransportPipe {
+ static readonly object gate=new object();
+ static Process proc;static StreamWriter writer;static int nextId;static DateTime retryAfter=DateTime.MinValue;
+ static readonly Dictionary<int,Call> pending=new Dictionary<int,Call>();
+ class Call{public readonly ManualResetEvent done=new ManualResetEvent(false);public string line;}
+ public static string LastError="";
+ static bool Start(string root,string node){
+  if(proc!=null){bool alive=false;try{alive=!proc.HasExited;}catch{}if(alive)return true;Reset();}
+  if(DateTime.UtcNow<retryAfter)return false;
+  Process p=null;
+  try{
+   var info=new ProcessStartInfo(node,"transport.js --serve"){WorkingDirectory=root,UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=new UTF8Encoding(false),StandardErrorEncoding=new UTF8Encoding(false)};
+   p=new Process();p.StartInfo=info;p.Start();
+   var w=new StreamWriter(p.StandardInput.BaseStream,new UTF8Encoding(false));w.AutoFlush=true;w.NewLine="\n";
+   p.ErrorDataReceived+=(s,e)=>{if(!String.IsNullOrEmpty(e.Data))LastError=e.Data.Length>160?e.Data.Substring(0,160):e.Data;};p.BeginErrorReadLine();
+   var reader=p;var t=new Thread(()=>Read(reader));t.IsBackground=true;t.Name="GameZoney.Transport";
+   proc=p;writer=w;t.Start();return true;
+  }catch(Exception e){LastError=e.Message;retryAfter=DateTime.UtcNow.AddSeconds(60);if(p!=null){try{if(!p.HasExited)p.Kill();}catch{}}proc=null;writer=null;return false;}
+ }
+ static void Read(Process p){
+  try{string line;while((line=p.StandardOutput.ReadLine())!=null){int id=-1;try{var m=Files.Json.Deserialize<Dictionary<string,object>>(line);if(m!=null&&m.ContainsKey("id"))id=Convert.ToInt32(m["id"]);}catch{}Call c=null;lock(gate){if(pending.TryGetValue(id,out c))pending.Remove(id);}if(c!=null){c.line=line;c.done.Set();}}}catch{}
+  lock(gate){if(proc==p){proc=null;writer=null;FailAll();}}
+  try{p.Dispose();}catch{}
+ }
+ static void FailAll(){foreach(var c in pending.Values)c.done.Set();pending.Clear();}
+ static void Reset(){var p=proc;proc=null;writer=null;FailAll();if(p!=null){try{if(!p.HasExited)p.Kill();}catch{}}}
+ public static bool TrySend(string root,string node,Settings settings,string action,object body,int limit,out Dictionary<string,object> envelope){
+  envelope=null;var call=new Call();int id;
+  lock(gate){
+   if(!Start(root,node))return false;
+   id=++nextId;string json=Files.Json.Serialize(new {id=id,settings=settings,action=action,body=body});
+   pending[id]=call;
+   try{writer.WriteLine(json);}catch(Exception e){pending.Remove(id);LastError=e.Message;Reset();return false;}
+  }
+  if(!call.done.WaitOne(limit)){lock(gate){pending.Remove(id);Reset();}throw new ConnectionFailure("o componente de conexão não respondeu em "+(limit/1000)+" s e foi reiniciado (antivírus ou PC lento?).",0);}
+  if(call.line==null)throw new ConnectionFailure("o componente de conexão foi encerrado"+(LastError.Length>0?": "+LastError:"")+".",0);
+  try{envelope=Files.Json.Deserialize<Dictionary<string,object>>(call.line);}catch{envelope=null;}
+  return true;
  }
 }
 public static class TaskManagerPolicy {
@@ -714,7 +764,7 @@ public class ClientForm : Form {
  async Task Poll(){if(sessionCleanup!=null&&sessionCleanup.Pending&&cleanupTask==null&&!observing){observing=true;try{var tracker=sessionCleanup;await Task.Run(()=>tracker.Observe());}catch(Exception ex){cleanupBlocked=true;cleanupError="Falha no acompanhamento da sessão: "+ex.Message;}finally{observing=false;}}if(offlineAdminSession||busy||maintenance||(maintenanceDialogOpen&&!registeringPassword)||closing)return;busy=true;try{if(!String.IsNullOrEmpty(settings.setupDevice)){if(!String.IsNullOrEmpty(settings.formerFingerprint)&&(DateTime.UtcNow-lastRediscover).TotalSeconds>=30)Rediscover();await RequestAuthorization();return;}string screen="";if(remoteWatch&&!adminSession&&!locked&&timerWindow.Visible&&budget.Online(monotonic.ElapsedMilliseconds)&&DateTime.UtcNow.Subtract(watchVisibleAt).TotalSeconds>=2){try{screen=await Task.Run(()=>RemoteControl.Capture());}catch{}}
  var inventory=adminSession?new object[0]:await Task.Run(()=>remoteControl.Inventory());var resultList=remoteControl.Results.ToArray();long now=monotonic.ElapsedMilliseconds;double clientRemaining=budget.sessionId==null?0:budget.Left(now);
  object netPayload=null;if((DateTime.UtcNow-lastNetReport).TotalMinutes>=5)netPayload=PcNetwork.Adapters();var printJobs=printControl.Report();
- var r=await Task.Run(()=>transport.Post("state",new {clientRunId=clientRunId,clientVersion="1.0.15",printVersion=1,printJobs=printJobs,network=netPayload,layoutRevision=settings.layoutRevision,policyRevision=appliedRevision,policyError=policyError,remoteVersion=1,canTerminate=true,remoteSessionId=remoteControl.Session,clientSessionId=budget.sessionId,clientRemainingSeconds=clientRemaining,clientAllocatedSeconds=budget.sessionId==null?-1:knownAllocated,recoverySessionId=crashRecoveryPending?crashRecoverySessionId:null,recoveryRemainingSeconds=crashRecoveryPending?crashRecoveryRemaining:0,recoveryAfterRestart=crashRecoveryPending,systemUptimeMs=Files.SystemUptimeMs(),processes=inventory,remoteResults=resultList,screen=screen}));Interlocked.Exchange(ref lastServerContact,monotonic.ElapsedMilliseconds);NoteConnectionOk();if(connectionFaulted){Files.LogConnection("Conexão com o servidor restabelecida. Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=false;}if(!closing){await ApplyClean(r);NoteApplied();if(crashRecoveryPending){var activeAfter=r.ContainsKey("active")?r["active"] as Dictionary<string,object>:null;bool resolved=r.ContainsKey("recoveryResolved")&&Convert.ToBoolean(r["recoveryResolved"]);if(resolved||activeAfter==null||Value(activeAfter,"id")!=crashRecoverySessionId){crashRecoveryPending=false;crashRecoverySessionId="";crashRecoveryRemaining=0;Files.ClearSession();}}if(netPayload!=null)lastNetReport=DateTime.UtcNow;HandlePrint(r);ApplySelfService(r);await HandleRemote(r);try{await SyncWallpaper(r);}catch(Exception imageError){status.Text="Falha no fundo: "+imageError.Message;}}}catch(ConnectionFailure e){NoteConnectionFailure(e);if(!connectionFaulted){Files.LogConnection("Falha de conexão/status "+e.Status+": "+e.Message+". Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=true;}if(e.Status==401){authorized=false;login.Enabled=false;localSessionTrusted=false;Files.ClearSession();budget.Restore(null,0,monotonic.ElapsedMilliseconds);budget.Offline();if(adminSession){adminSession=false;offlineAdminSession=false;try{applyPolicies(settings);}catch{}}if(String.IsNullOrEmpty(settings.setupDevice)){settings.setupDevice=Guid.NewGuid().ToString("N");settings.setupSecret=Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N");saveSettings(settings);}setupMessage="Associação removida. Solicitando nova autorização à recepção…";}else if(e.Status==403){authorized=false;localSessionTrusted=false;Files.ClearSession();budget.Restore(null,0,monotonic.ElapsedMilliseconds);budget.Offline();setupMessage=e.Message;}else{if(!closing&&!budget.Online(monotonic.ElapsedMilliseconds))status.Text=budget.sessionId!=null?"Servidor indisponível • sessão continua ativa neste PC e o tempo segue contando localmente.":e.Message;}}catch(Exception e){NoteConnectionFailure(e);/* 2.0.57: falha das restricoes do Windows ja fica no log (uma vez) com o texto certo */if(!connectionFaulted&&!(e is PolicyFailure)){Files.LogConnection("Falha de conexão: "+e.Message+". Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=true;}if(!closing&&!budget.Online(monotonic.ElapsedMilliseconds))status.Text=budget.sessionId!=null?"Servidor indisponível • sessão continua ativa neste PC e o tempo segue contando localmente.":e.Message;}finally{busy=false;if(!closing)RefreshClock();}}
+ var r=await Task.Run(()=>transport.Post("state",new {clientRunId=clientRunId,clientVersion="1.0.16",printVersion=1,printJobs=printJobs,network=netPayload,layoutRevision=settings.layoutRevision,policyRevision=appliedRevision,policyError=policyError,remoteVersion=1,canTerminate=true,remoteSessionId=remoteControl.Session,clientSessionId=budget.sessionId,clientRemainingSeconds=clientRemaining,clientAllocatedSeconds=budget.sessionId==null?-1:knownAllocated,recoverySessionId=crashRecoveryPending?crashRecoverySessionId:null,recoveryRemainingSeconds=crashRecoveryPending?crashRecoveryRemaining:0,recoveryAfterRestart=crashRecoveryPending,systemUptimeMs=Files.SystemUptimeMs(),processes=inventory,remoteResults=resultList,screen=screen}));Interlocked.Exchange(ref lastServerContact,monotonic.ElapsedMilliseconds);NoteConnectionOk();if(connectionFaulted){Files.LogConnection("Conexão com o servidor restabelecida. Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=false;}if(!closing){await ApplyClean(r);NoteApplied();if(crashRecoveryPending){var activeAfter=r.ContainsKey("active")?r["active"] as Dictionary<string,object>:null;bool resolved=r.ContainsKey("recoveryResolved")&&Convert.ToBoolean(r["recoveryResolved"]);if(resolved||activeAfter==null||Value(activeAfter,"id")!=crashRecoverySessionId){crashRecoveryPending=false;crashRecoverySessionId="";crashRecoveryRemaining=0;Files.ClearSession();}}if(netPayload!=null)lastNetReport=DateTime.UtcNow;HandlePrint(r);ApplySelfService(r);await HandleRemote(r);try{await SyncWallpaper(r);}catch(Exception imageError){status.Text="Falha no fundo: "+imageError.Message;}}}catch(ConnectionFailure e){NoteConnectionFailure(e);if(!connectionFaulted){Files.LogConnection("Falha de conexão/status "+e.Status+": "+e.Message+". Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=true;}if(e.Status==401){authorized=false;login.Enabled=false;localSessionTrusted=false;Files.ClearSession();budget.Restore(null,0,monotonic.ElapsedMilliseconds);budget.Offline();if(adminSession){adminSession=false;offlineAdminSession=false;try{applyPolicies(settings);}catch{}}if(String.IsNullOrEmpty(settings.setupDevice)){settings.setupDevice=Guid.NewGuid().ToString("N");settings.setupSecret=Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N");saveSettings(settings);}setupMessage="Associação removida. Solicitando nova autorização à recepção…";}else if(e.Status==403){authorized=false;localSessionTrusted=false;Files.ClearSession();budget.Restore(null,0,monotonic.ElapsedMilliseconds);budget.Offline();setupMessage=e.Message;}else{if(!closing&&!budget.Online(monotonic.ElapsedMilliseconds))status.Text=budget.sessionId!=null?"Servidor indisponível • sessão continua ativa neste PC e o tempo segue contando localmente.":e.Message;}}catch(Exception e){NoteConnectionFailure(e);/* 2.0.57: falha das restricoes do Windows ja fica no log (uma vez) com o texto certo */if(!connectionFaulted&&!(e is PolicyFailure)){Files.LogConnection("Falha de conexão: "+e.Message+". Sessão="+(budget.sessionId??"nenhuma")+".");connectionFaulted=true;}if(!closing&&!budget.Online(monotonic.ElapsedMilliseconds))status.Text=budget.sessionId!=null?"Servidor indisponível • sessão continua ativa neste PC e o tempo segue contando localmente.":e.Message;}finally{busy=false;if(!closing)RefreshClock();}}
  // 1.0.8: autoatendimento — o Servidor diz se o cadastro e o PIX no PC estão ligados
  // 1.1.0/1.0.11: o Servidor diz se o cadastro e o PIX no PC estão ligados. CORRIGIDO na 1.0.11: antes a barra lia o Visible dos botões
  // (que no WinForms é sempre false enquanto a barra está escondida) e por isso NUNCA aparecia.

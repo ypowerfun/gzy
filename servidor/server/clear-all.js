@@ -53,6 +53,7 @@ async function clearAll(directory, now = Date.now()) {
     try {
       db.prepare('UPDATE state SET data=? WHERE id=1').run(JSON.stringify(next));
       db.exec('DELETE FROM logs');
+      try { db.exec('DELETE FROM live'); } catch {} // 1.2.1: gravações leves (presença e pontos de controle)
       try { db.exec("DELETE FROM sqlite_sequence WHERE name='logs'"); } catch {}
       db.prepare('INSERT INTO logs(at,actor,type,detail) VALUES(?,?,?,?)').run(new Date(now).toISOString(), 'ClearAll', 'sistema', 'Todos os registros foram apagados pelo ClearAll. Estações e pareamentos mantidos. Cópia anterior: ' + path.basename(copy));
       db.exec('COMMIT');
