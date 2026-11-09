@@ -241,7 +241,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
     - **Nuvem** (endereço com domínio): mantém o endereço, confere se o domínio é encontrado e responde, e se o servidor também responde na rede local.
     - Também mostra a data e a hora do computador do servidor. O resultado aparece em lista (✔/✖) e vai para o Log.
 - **Valor da hora:** fica na engrenagem do card **Valor da hora**, no Painel de controle (mudar o valor pede a senha do administrador).
-- **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar. O servidor usa o fuso do Windows; se o fuso não for reconhecido, ou se o relógio tiver sido acertado à mão (ex.: horário de verão desligado), vale **a hora que o computador está mostrando**. Ajustou o relógio do Windows? Feche e abra o GameZoney Servidor (ou use **Atualizar Automático**) para ele passar a usar a hora nova.
+- **Data e hora:** sempre as do computador do servidor (relógio do Windows); não há fuso para configurar. O servidor usa o fuso do Windows; se o fuso não for reconhecido, ou se o relógio tiver sido acertado à mão (ex.: horário de verão desligado), vale **a hora que o computador está mostrando**. Para dar o nome certo ao fuso, o servidor usa o **país do Windows** (região e idioma): no Brasil reconhece Fernando de Noronha (UTC−2), Brasília (UTC−3), Amazonas (UTC−4) e Acre (UTC−5); também Argentina, Bolívia, Peru, Uruguai, Paraguai, Venezuela, Chile, Colômbia, Equador, México, EUA, Canadá, Portugal e outros. Confira a região em Configurações do Windows › Hora e idioma › Região. Ajustou o relógio do Windows? Feche e abra o GameZoney Servidor (ou use **Atualizar Automático**) para ele passar a usar a hora nova.
 
 ---
 
