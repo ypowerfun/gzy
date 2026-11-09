@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.2.5.0")]
+[assembly: AssemblyVersion("1.2.6.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -49,7 +49,7 @@ class Launcher : ApplicationContext {
         if(edge!=null){Rectangle area=Screen.FromPoint(Cursor.Position).WorkingArea;string profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoney","painel-edge");try{Directory.CreateDirectory(profile);}catch{}
             // 3.0.26: perfil proprio do painel (sem extensoes, barra lateral ou traducao do perfil pessoal do Edge).
             Process.Start(new ProcessStartInfo(edge,"--app="+address+" --user-data-dir=\""+profile+"\" --no-first-run --no-default-browser-check --disable-features=Translate,msEdgeTranslate,msHubApps,msEdgeSidebarV2,EdgeShoppingAssistant --disable-pinch --new-window --start-maximized --window-position="+area.X+","+area.Y+" --window-size="+area.Width+","+area.Height){UseShellExecute=true});}
-        else Open(address);
+        else WebView2Setup.Missing();
     }
     /* 1.2.3: backups em Documentos\gamezoney\backup (antes Documentos\bkp gamezoney) */
     static string BackupFolder(){string docs=Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),now=Path.Combine(docs,"gamezoney","backup"),old=Path.Combine(docs,"bkp gamezoney");return Directory.Exists(now)||!Directory.Exists(old)?now:old;}
@@ -135,16 +135,47 @@ class Launcher : ApplicationContext {
         return MainCode;
     }
 }
+// 1.2.6: componente WebView2 da Microsoft (janela própria do painel). O instalador já instala quando falta; se ainda faltar,
+// o GameZoney oferece instalar na hora (instalador oficial guardado na pasta do programa). Sem ele e sem o Edge, o painel
+// NÃO abre no navegador padrão (Internet Explorer/Brave etc. não mostram o painel e o dono quer só a janela do GameZoney).
+static class WebView2Setup {
+    const string Id=@"\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}";
+    static bool Has(RegistryHive hive,RegistryView view,string path){try{using(var root=RegistryKey.OpenBaseKey(hive,view))using(var k=root.OpenSubKey(path)){string v=k==null?null:k.GetValue("pv") as string;return !String.IsNullOrEmpty(v)&&v!="0.0.0.0";}}catch{return false;}}
+    public static bool Installed(){
+        foreach(var view in new[]{RegistryView.Registry64,RegistryView.Registry32}){if(Has(RegistryHive.LocalMachine,view,@"SOFTWARE\WOW6432Node"+Id)||Has(RegistryHive.LocalMachine,view,@"SOFTWARE"+Id))return true;}
+        return Has(RegistryHive.CurrentUser,RegistryView.Default,@"Software"+Id);
+    }
+    static string SetupFile(){string f=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"MicrosoftEdgeWebview2Setup.exe");return File.Exists(f)?f:null;}
+    public static bool Install(Action<string> log){
+        string exe=SetupFile();if(exe==null){log("Painel: WebView2 ausente e sem o instalador da Microsoft na pasta do programa.");return false;}
+        if(MessageBox.Show("Para abrir o painel na janela própria do GameZoney, este computador precisa do componente WebView2 da Microsoft (o mesmo que já vem no Windows 10 e 11).\n\nInstalar agora? Precisa de internet e leva alguns minutos.","GameZoney Servidor",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return false;
+        using(var wait=new Form{Text="GameZoney Servidor",FormBorderStyle=FormBorderStyle.FixedDialog,StartPosition=FormStartPosition.CenterScreen,ClientSize=new Size(460,110),ControlBox=false,TopMost=true,ShowInTaskbar=true}){
+            wait.Controls.Add(new Label{Text="Instalando o componente WebView2 da Microsoft…\nAguarde: o painel abre sozinho quando terminar.",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,Font=new Font("Segoe UI",10)});
+            Process p=null;
+            try{p=Process.Start(new ProcessStartInfo(exe,"/silent /install"){UseShellExecute=true});}catch(Exception e){log("Painel: o instalador do WebView2 não abriu ("+e.Message+").");return false;}
+            var started=DateTime.UtcNow;var timer=new System.Windows.Forms.Timer{Interval=500};
+            timer.Tick+=(s,e)=>{bool done;try{done=p==null||p.HasExited;}catch{done=true;}if(done||Installed()||(DateTime.UtcNow-started).TotalMinutes>15){timer.Stop();wait.Close();}};
+            wait.Shown+=(s,e)=>timer.Start();wait.ShowDialog();timer.Dispose();
+        }
+        bool ok=Installed();if(!ok)log("Painel: o WebView2 não foi instalado (sem internet ou instalação cancelada).");return ok;
+    }
+    static bool warned;
+    // Sem WebView2 e sem Edge: avisa (uma vez por abertura) em vez de abrir o navegador padrão.
+    public static void Missing(){
+        if(warned)return;warned=true;
+        MessageBox.Show("O painel do GameZoney abre numa janela própria, que usa o componente WebView2 da Microsoft — e ele não está instalado neste computador.\n\nInstale o WebView2 (reinstale o GameZoney Servidor com internet, ou baixe em developer.microsoft.com/microsoft-edge/webview2 › Evergreen Bootstrapper) e abra o GameZoney Servidor de novo.\n\nO servidor continua funcionando (ícone perto do relógio): os PCs e as TVs não param.","GameZoney Servidor",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+    }
+}
 // 3.0.68: painel do servidor em JANELA PRÓPRIA do GameZoney (ícone e nome do GameZoney na barra de tarefas, sem barra de
 // endereço, abas ou extensões). Por dentro usa o WebView2, o motor do Edge que já vem no Windows 10/11; as telas do painel são
 // as mesmas. Fechar a janela só esconde o painel: o servidor continua ativo no ícone perto do relógio.
-// Sem o WebView2 Runtime (ou sem os arquivos dele), o painel abre como antes (Edge em modo app ou navegador padrão) e o motivo
+// Sem o WebView2 Runtime: oferece instalar (1.2.6); sem ele, Edge em modo app se houver, nunca o navegador padrão; o motivo
 // fica no server.log. Nada aqui toca na pasta de dados do servidor.
 class PanelHost : IDisposable {
     [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int processId);
     public readonly string Address, UserData; public readonly Icon AppIcon; public readonly Action<string> Log;
     public Action Hidden;
-    readonly Action<string> fallback; readonly Control ui; readonly string signalName;
+    readonly Action<string> fallback; readonly Control ui; readonly string signalName; bool installTried;
     EventWaitHandle signal; volatile bool disposed; Form window; bool unavailable; int crashes;
     public PanelHost(string address,int port,Icon icon,Action<string> log,Action<string> fallback,string userData=null){
         Address=address;AppIcon=icon;Log=log;this.fallback=fallback;signalName=SignalName(port);
@@ -184,7 +215,10 @@ class PanelHost : IDisposable {
     public void Failed(string reason){
         if(ui.InvokeRequired){try{ui.BeginInvoke(new Action<string>(Failed),reason);}catch{}return;}
         if(disposed||unavailable)return;
-        Log("Painel: "+reason+" O painel abre no Edge/navegador, como antes da 3.0.68.");
+        /* 1.2.6: sem o WebView2 (ex.: Windows Server sem Edge) oferece instalar o componente da Microsoft e abre de novo na janela própria */
+        if(!installTried&&!WebView2Setup.Installed()){installTried=true;var old=window;window=null;if(old!=null&&!old.IsDisposed){try{old.Dispose();}catch{}}
+            if(WebView2Setup.Install(Log)){Log("Painel: WebView2 instalado; abrindo a janela própria.");try{ShowWindow();return;}catch(Exception e){reason="a janela própria não abriu depois de instalar o WebView2 ("+PanelWindow.Describe(e)+").";}}}
+        Log("Painel: "+reason+" O painel abre no Edge em modo aplicativo, se houver; nunca no navegador padrão.");
         unavailable=true;var w=window;window=null;
         if(w!=null&&!w.IsDisposed){try{w.Dispose();}catch{}}
         OpenFallback();

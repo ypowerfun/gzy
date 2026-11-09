@@ -34,6 +34,22 @@ try {
         & $node (Join-Path $PSScriptRoot 'testServer.cjs')
         if ($LASTEXITCODE -ne 0) { throw 'Os testes falharam.' }
     }
+    # 1.2.6: instalador oficial do WebView2 (Microsoft) vai junto: Windows sem Edge/WebView2 (ex.: Windows Server em VPS)
+    # recebe o componente na instalação e o painel abre na janela própria, nunca no navegador. Baixado do link oficial da
+    # Microsoft e aceito só com assinatura digital válida da Microsoft; a cópia fica guardada para as próximas gerações.
+    $wv2 = Join-Path $serverRoot 'MicrosoftEdgeWebview2Setup.exe'
+    $wv2Ok = { param($f) (Test-Path -LiteralPath $f) -and ((Get-AuthenticodeSignature -LiteralPath $f).Status -eq 'Valid') -and ((Get-AuthenticodeSignature -LiteralPath $f).SignerCertificate.Subject -match 'O=Microsoft Corporation') }
+    if (!(& $wv2Ok $wv2) -or ((Get-Item -LiteralPath $wv2).LastWriteTime -lt (Get-Date).AddDays(-60))) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -UseBasicParsing -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile ($wv2 + '.download')
+            if (& $wv2Ok ($wv2 + '.download')) { Move-Item -LiteralPath ($wv2 + '.download') -Destination $wv2 -Force; Write-Host 'OK  WebView2 (Microsoft) baixado e conferido.' -ForegroundColor Green }
+            else { Remove-Item -LiteralPath ($wv2 + '.download') -Force -ErrorAction SilentlyContinue; throw 'assinatura da Microsoft não confere' }
+        } catch {
+            if (& $wv2Ok $wv2) { Write-Host ('AVISO WebView2: não foi possível atualizar (' + $_.Exception.Message + '); usando a cópia guardada.') -ForegroundColor Yellow }
+            else { Remove-Item -LiteralPath $wv2 -Force -ErrorAction SilentlyContinue; Write-Host ('AVISO WebView2: não foi possível baixar (' + $_.Exception.Message + '). O instalador sai SEM ele; em Windows sem Edge o painel pede para instalar o WebView2.') -ForegroundColor Yellow }
+        }
+    } else { Write-Host 'OK  WebView2 (Microsoft) já guardado e conferido.' -ForegroundColor Green }
     New-Item -ItemType Directory -Force -Path (Join-Path $serverRoot 'runtime'),$outputRoot | Out-Null
     Copy-Item -LiteralPath $node -Destination (Join-Path $serverRoot 'runtime\node.exe') -Force
     # A short temporary path avoids the compiler's legacy path limits.

@@ -4,7 +4,7 @@ AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
 ; 1.1.9: sem número de versão nas telas do instalador (a versão continua nos detalhes do arquivo, para a equipe)
 AppVerName=GameZoney Servidor
-AppVersion=1.2.5
+AppVersion=1.2.6
 AppPublisher=GameZoney
 ; 1.1.9: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
@@ -27,7 +27,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.2.5-Setup
+OutputBaseFilename=GameZoney-Servidor-1.2.6-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -39,7 +39,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.2.5.0
+VersionInfoVersion=1.2.6.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -49,7 +49,9 @@ Name: brazilianportuguese; MessagesFile: compiler:Languages\BrazilianPortuguese.
 english.GzDesktopIcon=Create a desktop shortcut
 brazilianportuguese.GzDesktopIcon=Criar atalho na área de trabalho
 english.GzOpenApp=Open GameZoney Server
+english.GzWebView2=Installing the Microsoft WebView2 component (GameZoney panel window)...
 brazilianportuguese.GzOpenApp=Abrir GameZoney Servidor
+brazilianportuguese.GzWebView2=Instalando o componente WebView2 da Microsoft (janela do painel GameZoney)...
 english.GzFirewallStatus=Configuring Windows Firewall for GameZoney...
 brazilianportuguese.GzFirewallStatus=Configurando o Firewall do Windows para o GameZoney...
 english.GzFirewallFailed=GameZoney Server was installed, but the firewall was not configured (administrator permission canceled, group policy or an antivirus with its own firewall). Details in firewall-status.log in the application folder. Use the "Reparar conexao de rede" (repair network connection) shortcut in the Start menu and allow the change.
@@ -122,6 +124,9 @@ Source: "Microsoft.Web.WebView2.Core.dll"; DestDir: "{app}"; Flags: ignoreversio
 Source: "Microsoft.Web.WebView2.WinForms.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "runtimes\win-x64\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x64\native"; Flags: ignoreversion
 Source: "runtimes\win-x86\native\WebView2Loader.dll"; DestDir: "{app}\runtimes\win-x86\native"; Flags: ignoreversion
+; 1.2.6: instalador oficial do WebView2 da Microsoft (o gerador baixa e confere a assinatura). Windows sem Edge/WebView2
+; (ex.: Windows Server em VPS) recebe o componente e o painel abre na janela própria do GameZoney, nunca no navegador.
+Source: "MicrosoftEdgeWebview2Setup.exe"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "server.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "panel-sessions.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "store.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -144,9 +149,22 @@ Name: "{autodesktop}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Worki
 Name: "{userstartup}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Parameters: "/silent"; WorkingDir: "{app}"
 
 [Run]
+Filename: "{app}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "{cm:GzWebView2}"; Check: GzNeedsWebView2; Flags: waituntilterminated skipifdoesntexist
 Filename: "{app}\GameZoney.exe"; Description: "{cm:GzOpenApp}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+{ 1.2.6: WebView2 Runtime instalado = versao (pv) registrada pelo EdgeUpdate, por computador ou por usuario }
+function GzWebView2Version(Root: Integer; Key: String): Boolean;
+var V: String;
+begin
+  Result := RegQueryStringValue(Root, Key, 'pv', V) and (V <> '') and (V <> '0.0.0.0');
+end;
+function GzNeedsWebView2(): Boolean;
+var Id: String;
+begin
+  Id := '\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
+  Result := not (GzWebView2Version(HKLM, 'SOFTWARE\WOW6432Node' + Id) or GzWebView2Version(HKLM, 'SOFTWARE' + Id) or GzWebView2Version(HKCU, 'Software' + Id));
+end;
 
 #include "uninstall-cleanup.iss"
 #include "firewall-installer.iss"

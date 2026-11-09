@@ -33,7 +33,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 1. Execute o instalador (ou o instalador único e marque **Instalar Servidor**). Ele já leva o motor (Node), o banco e as ferramentas; não baixa nada.
 2. O instalador configura o firewall do Windows (somente rede local) para as portas **3000/TCP** (TVs), **3443/TCP** (PCs) e **3444/UDP** (descoberta dos PCs). Se precisar repetir: menu Iniciar > GameZoney > **Reparar conexão de rede**.
 3. O servidor abre sozinho quando a conta entra no Windows e fica no ícone perto do relógio. Clique com o botão direito no ícone para abrir o painel, o diagnóstico ou encerrar o servidor. Fechar a janela do painel não encerra o servidor.
-4. O painel abre em janela própria do GameZoney (motor WebView2 do Windows). **O WebView2 e o Edge não podem estar bloqueados** no PC do servidor (programas que "desativam o Edge" costumam bloquear também o WebView2 e o painel fica com a tela escura). O navegador padrão pode ser o Chrome ou outro.
+4. O painel abre em janela própria do GameZoney (motor WebView2 do Windows). **O WebView2 e o Edge não podem estar bloqueados** no PC do servidor (programas que "desativam o Edge" costumam bloquear também o WebView2 e o painel fica com a tela escura). O navegador padrão pode ser o Chrome ou outro. Em Windows sem o WebView2 (ex.: **Windows Server em VPS**, que vem só com o Internet Explorer), o **instalador instala o WebView2 da Microsoft sozinho** (precisa de internet). Se ainda faltar, ao abrir o painel o GameZoney pergunta se pode instalar e abre na janela própria em seguida. O painel **nunca abre** no Internet Explorer, Brave ou outro navegador.
 5. Deixe o IP do PC do servidor **fixo** (reserva no roteador). Mantenha o PC ligado, sem suspensão, durante o atendimento.
 
 **Cliente (PCs gamers)** — Windows 10/11 de 64 bits, conta do Windows **padrão** (não administradora) para os clientes.
@@ -334,6 +334,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 | Situação | O que fazer |
 |---|---|
 | Painel do servidor com a tela escura | Libere o Edge/WebView2 no programa que os desativou e instale o WebView2 Runtime da Microsoft; reabra o servidor |
+| Aviso "precisa do componente WebView2" (Windows Server/VPS) | Responda **Sim** para instalar (com internet) ou reinstale o GameZoney Servidor com internet; o servidor continua funcionando no ícone perto do relógio |
 | PC "Sem conexão com o servidor" | Confira se o servidor está aberto; leia o motivo na tela (seção 18); na recepção, Reparar conexão de rede |
 | PC novo não aparece para autorizar | Mesma rede da arena (não use Wi-Fi de visitantes); em outro roteador/Wi-Fi da arena, use **Informar IP do servidor** no PC; firewall do servidor (Reparar conexão de rede) |
 | TV não troca de HDMI | Confira IP, entrada HDMI e pareamento (Parear TV); Testar HDMI |

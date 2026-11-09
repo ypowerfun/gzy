@@ -19,6 +19,11 @@ test('3.0.68: instalador do servidor leva o WebView2 do painel e o iniciador usa
  assert(/menu\.Items\.Add\("Abrir GameZoney",null,\(s,e\)=>ShowPanel\(\)\)/.test(launcher),'menu do ícone abre a janela própria');
  assert(!launcher.includes('menu.Items.Add("Abrir no navegador"')&&!launcher.includes('menu.Items.Add("Abrir pasta de dados"'),'1.0.5: menu do ícone sem Abrir no navegador e sem Abrir pasta de dados');
  assert(launcher.includes('new PanelHost(address,port,AppIcon(SystemInformation.IconSize),Log,OpenPanel)'),'reserva: sem WebView2 o painel abre no Edge/navegador');
+ // 1.2.6: Windows sem WebView2/Edge (ex.: Windows Server em VPS): o instalador instala o WebView2 oficial e o painel nunca abre no navegador padrão
+ assert(iss.includes('Source: "MicrosoftEdgeWebview2Setup.exe"')&&iss.includes('Check: GzNeedsWebView2')&&iss.includes('{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'),'instalador leva e roda o WebView2 quando falta');
+ assert(launcher.includes('else WebView2Setup.Missing();')&&!/else Open\(address\);/.test(launcher),'sem WebView2 e sem Edge: avisa, nunca abre o navegador padrão');
+ assert(launcher.includes('WebView2Setup.Install(Log)'),'oferece instalar o WebView2 e reabre na janela própria');
+ assert(fs.readFileSync(path.join(root,'..','scripts','build-server.ps1'),'utf8').includes("SignerCertificate.Subject -match 'O=Microsoft Corporation'"),'gerador só aceita o instalador do WebView2 assinado pela Microsoft');
  assert(launcher.includes('shown=PanelHost.SignalRunning(port)')&&launcher.includes('if(!shown)OpenPanel('),'segunda abertura avisa o servidor aberto (1.0.7: espera a primeira ficar pronta antes de abrir o navegador)');
  assert(launcher.includes('Splash.Open()')&&launcher.includes('Splash.Close()'),'1.0.7: janela Iniciando o servidor na abertura');
  assert(/FormClosing\+=\(s,e\)=>\{if\(e\.CloseReason==CloseReason\.UserClosing\)\{e\.Cancel=true;Hide\(\)/.test(launcher),'fechar a janela só esconde o painel (servidor continua)');
