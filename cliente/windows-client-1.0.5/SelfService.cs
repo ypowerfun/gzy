@@ -58,7 +58,7 @@ public enum PixMode { Guest, Account, Known, Session }
 public sealed class PixForm : SelfForm {
  PixMode mode;readonly TextBox nick,password,email;readonly LinkLabel switchLink=new LinkLabel();readonly Label who=new Label(),payLabel=new Label(),payee=new Label();readonly RadioButton pixRadio=new RadioButton();
  readonly ListBox options=new ListBox();readonly GzButton generate=new GzButton("Gerar QR Code PIX",GzButtonKind.Primary),cancel=new GzButton("Cancelar",GzButtonKind.Ghost),copy=new GzButton("Copiar código",GzButtonKind.Neutral);
- readonly PictureBox qr=new PictureBox();readonly TextBox code=new TextBox();readonly Label info=new Label(),status=new Label();readonly Timer poll=new Timer{Interval=3000};
+ readonly PictureBox qr=new PictureBox();readonly TextBox code=new TextBox();readonly Label info=new Label(),status=new Label();readonly Timer poll=new Timer{Interval=2000};
  readonly List<string> ids=new List<string>();string chargeId,payeeName="",loadError="";DateTime expires;
  readonly Label customLabel=new Label();readonly TextBox customValue=new TextBox();int customMin,customMax,hourCents;readonly List<Control> fieldControls=new List<Control>();
  public string Username{get;private set;}public string Password{get;private set;}
@@ -125,14 +125,24 @@ public sealed class PixForm : SelfForm {
   payee.Text=payeeName.Length>0?"OBS: "+payeeName:"";payee.Visible=payeeName.Length>0;
   try{var bytes=Convert.FromBase64String(base64);using(var ms=new MemoryStream(bytes))qr.Image=new Bitmap(Image.FromStream(ms));}catch{qr.Image=null;}
   qr.Visible=true;info.Text="Pague "+Brl(cents)+" • "+label;info.Visible=true;code.Text=copyCode;code.Visible=copyCode.Length>0;copy.Visible=copyCode.Length>0;
-  status.Text="Abra o app do seu banco e pague pelo QR Code ou pelo PIX copia e cola. "+(mode==PixMode.Session?"O tempo entra na sua sessão":mode==PixMode.Guest?"O PC é liberado":"O PC entra com a sua conta")+" assim que o pagamento for aprovado.";status.Visible=true;cancel.Text="Fechar";cancel.SetBounds(130,586,200,44);
+  status.Text="Abra o app do seu banco e pague pelo QR Code ou pelo PIX copia e cola. "+(mode==PixMode.Session?"O tempo entra na sua sessão":mode==PixMode.Guest?"O PC é liberado":"O tempo entra na sua conta")+" assim que o pagamento for aprovado.";status.Visible=true;cancel.Text="Fechar";cancel.SetBounds(130,586,200,44);
  }
  async Task Check(){if(busy||chargeId==null)return;busy=true;
   try{var r=await post("pix/status",new {id=chargeId});string st=V(r,"status");
-   if(st=="approved"){poll.Stop();status.ForeColor=Color.FromArgb(120,220,140);status.Text=mode==PixMode.Session?"Pagamento aprovado! Tempo adicionado.":mode==PixMode.Guest?"Pagamento aprovado! Liberando o PC…":"Pagamento aprovado! Entrando…";DialogResult=DialogResult.OK;await Task.Delay(1200);Close();return;}
+   if(st=="approved"){poll.Stop();status.ForeColor=Color.FromArgb(120,220,140);status.Text=mode==PixMode.Session?"Pagamento aprovado! Tempo adicionado.":mode==PixMode.Guest?"Pagamento aprovado! Liberando o PC…":"Pagamento aprovado! Tempo adicionado à sua conta.";DialogResult=DialogResult.OK;/* 1.0.18: só e-mail = libera o PC na hora */await Task.Delay(mode==PixMode.Guest?250:900);Close();return;}
    if(st=="expired"||st=="error"){poll.Stop();status.ForeColor=Color.FromArgb(255,138,144);status.Text=st=="expired"?"O PIX expirou. Feche e gere outro.":"Pagamento recebido, mas o tempo não entrou sozinho. Procure a recepção.";return;}
-   int left=(int)Math.Max(0,(expires-DateTime.Now).TotalSeconds);status.Text="Aguardando o pagamento… expira em "+(left/60)+":"+(left%60).ToString("00")+".\n"+(mode==PixMode.Session?"O tempo entra sozinho na sua sessão":"O PC é liberado sozinho")+" quando o PIX for aprovado.";}
+   int left=(int)Math.Max(0,(expires-DateTime.Now).TotalSeconds);status.Text="Aguardando o pagamento… expira em "+(left/60)+":"+(left%60).ToString("00")+".\n"+(mode==PixMode.Session?"O tempo entra sozinho na sua sessão":mode==PixMode.Guest?"O PC é liberado sozinho":"O tempo entra sozinho na sua conta")+" quando o PIX for aprovado.";}
   catch{}finally{busy=false;}
  }
  async Task CancelCharge(){poll.Stop();if(chargeId!=null&&DialogResult!=DialogResult.OK){try{await post("pix/cancel",new {id=chargeId});}catch{}}Close();}
+}
+
+// 1.0.18: caixa "Pagamento aprovado" depois do PIX com conta (ou logo após Criar conta): o cliente entra com o login e a senha dele.
+public sealed class PaidNotice : Form {
+ public PaidNotice(string nick){Text="Pagamento aprovado";ClientSize=new Size(460,250);AutoScaleMode=AutoScaleMode.Dpi;StartPosition=FormStartPosition.CenterScreen;FormBorderStyle=FormBorderStyle.FixedDialog;MinimizeBox=false;MaximizeBox=false;ShowInTaskbar=false;TopMost=true;BackColor=GzTheme.Panel;ForeColor=Color.White;Font=new Font("Segoe UI",10);KeyPreview=true;
+  Controls.Add(new Label{Text="Pagamento aprovado!",Font=new Font("Segoe UI",17,FontStyle.Bold),ForeColor=Color.FromArgb(120,220,140),Left=22,Top=18,Width=410,Height=36});
+  Controls.Add(new Label{Text="O tempo já entrou na sua conta"+(String.IsNullOrEmpty(nick)?"":" ("+nick+")")+".\n\nPara começar, digite o seu login (nick) e a sua senha na tela e clique em Entrar.",Left=22,Top=64,Width=410,Height=110,ForeColor=Color.FromArgb(215,217,222)});
+  var ok=new GzButton("OK, vou entrar",GzButtonKind.Primary);ok.SetBounds(22,186,410,44);ok.Click+=(s,e)=>{DialogResult=DialogResult.OK;Close();};Controls.Add(ok);AcceptButton=ok;
+  KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape||e.KeyCode==Keys.Enter){e.Handled=true;e.SuppressKeyPress=true;DialogResult=DialogResult.OK;Close();}};Shown+=(s,e)=>{Activate();ok.Focus();};
+ }
 }
