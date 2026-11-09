@@ -1,12 +1,12 @@
 ﻿# GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
-# Gera o instalador GameZoney-Servidor-1.1.5-Setup.exe na pasta outputs\.
+# Gera o instalador GameZoney-Servidor-1.1.6-Setup.exe na pasta outputs\.
 # Uso: dois cliques em GERAR-INSTALADOR-SERVIDOR.cmd (ou botão direito neste arquivo -> "Executar com o PowerShell").
 # Precisa de internet na primeira vez, para o npm.
 param([string]$InnoCompiler = '', [switch]$SkipTests)
 $ErrorActionPreference = 'Stop'
 function Pausar { if ($Host.Name -eq 'ConsoleHost') { Read-Host 'Pressione Enter para fechar' | Out-Null } }
 try {
-  Write-Host 'GameZoney - gerar instalador do Servidor 1.1.5' -ForegroundColor Cyan
+  Write-Host 'GameZoney - gerar instalador do Servidor 1.1.6' -ForegroundColor Cyan
   # 1) Node.js
   $node = Get-Command node.exe -ErrorAction SilentlyContinue
   if (!$node) { throw 'Node.js não encontrado. Instale o Node.js 24 LTS (https://nodejs.org) e rode de novo.' }
@@ -39,7 +39,7 @@ try {
   # 4) Gera (versão conferida, dependências, ferramentas, testes e instalador)
   $build = Join-Path $PSScriptRoot 'scripts\build-server.ps1'
   if ($SkipTests) { & $build -InnoCompiler $InnoCompiler -SkipTests } else { & $build -InnoCompiler $InnoCompiler }
-  $setup = Join-Path $PSScriptRoot 'outputs\GameZoney-Servidor-1.1.5-Setup.exe'
+  $setup = Join-Path $PSScriptRoot 'outputs\GameZoney-Servidor-1.1.6-Setup.exe'
   if (!(Test-Path -LiteralPath $setup)) { throw 'O instalador não foi gerado. Veja as mensagens acima.' }
   $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
   Write-Host ''

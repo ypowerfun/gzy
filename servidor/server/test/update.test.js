@@ -28,14 +28,14 @@ async function boot(t, {serverKey} = {}) {
 test('1.0.6: Verificar atualização — manifesto assinado, download só com plano, SHA-256 conferido, backup antes e instalador aberto pelo GameZoney.exe quando o servidor é encerrado (1.1.3)', {skip: !createApp && 'site não encontrado'}, async t => {
   const s = await boot(t);
   let U = await s.call('/api/update/check', {}); assert.equal(U.status, 'latest');
-  // o administrador publica 1.1.6 no site
-  const bytes = crypto.randomBytes(300000), name = 'GameZoney-Servidor-1.1.6-Setup.exe'; fs.writeFileSync(path.join(s.dl, name), bytes);
+  // o administrador publica 1.1.7 no site
+  const bytes = crypto.randomBytes(300000), name = 'GameZoney-Servidor-1.1.7-Setup.exe'; fs.writeFileSync(path.join(s.dl, name), bytes);
   fs.writeFileSync(path.join(s.dl, 'GameZoney-Servidor-1.0.5-Setup.exe'), 'velho');
-  const files = (await s.dono('/api/admin/updates')).files; assert.ok(files.some(f => f.file === name && f.version === '1.1.6'));
+  const files = (await s.dono('/api/admin/updates')).files; assert.ok(files.some(f => f.file === name && f.version === '1.1.7'));
   await s.dono('/api/admin/updates/publish', {file: '../../etc/passwd'}, 404);
   const pub = (await s.dono('/api/admin/updates/publish', {file: name, notes: 'Plano na conta'})).published; assert.equal(pub.sha256, crypto.createHash('sha256').update(bytes).digest('hex'));
   // sem plano: vê a versão nova mas não baixa
-  U = await s.call('/api/update/check', {}); assert.equal(U.status, 'available'); assert.equal(U.available.version, '1.1.6'); assert.equal(U.available.canDownload, false); assert.equal(U.available.notes, 'Plano na conta');
+  U = await s.call('/api/update/check', {}); assert.equal(U.status, 'available'); assert.equal(U.available.version, '1.1.7'); assert.equal(U.available.canDownload, false); assert.equal(U.available.notes, 'Plano na conta');
   assert.match((await s.call('/api/update/download', {}, 400)).error, /faz parte do plano/);
   // com plano: baixa, confere e instala
   const ana = s.web(); await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'});
@@ -51,7 +51,7 @@ test('1.0.6: Verificar atualização — manifesto assinado, download só com pl
   await s.call('/api/update/check', {}); await s.call('/api/update/download', {}); await s.inst.upd.wait();
   // backup falhou: não instala
   s.backups.fail = true; assert.match((await s.call('/api/update/install', {}, 400)).error, /backup/); assert.equal(s.spawned.length, 0); s.backups.fail = false;
-  // 1.1.6: Instalar = backup + pedido pendente; o servidor NÃO fecha sozinho: espera ser encerrado (botão ou ícone do relógio)
+  // 1.1.7: Instalar = backup + pedido pendente; o servidor NÃO fecha sozinho: espera ser encerrado (botão ou ícone do relógio)
   await s.call('/api/update/close', {}, 400);
   U = await s.call('/api/update/install', {}); assert.equal(U.status, 'waiting'); assert.equal(s.exits.length, 0);
   const pending = fs.readFileSync(path.join(s.updDir, 'pending-update.txt'), 'utf8').split(/\r?\n/);
@@ -72,7 +72,7 @@ test('1.0.6: Verificar atualização — manifesto assinado, download só com pl
 });
 
 test('1.0.6: atualização — arquivo trocado no site, link vencido e manifesto assinado por outra chave são recusados', {skip: !createApp && 'site não encontrado'}, async t => {
-  const s = await boot(t); const name = 'GameZoney-Servidor-1.1.6-Setup.exe', bytes = crypto.randomBytes(200000); fs.writeFileSync(path.join(s.dl, name), bytes);
+  const s = await boot(t); const name = 'GameZoney-Servidor-1.1.7-Setup.exe', bytes = crypto.randomBytes(200000); fs.writeFileSync(path.join(s.dl, name), bytes);
   await s.dono('/api/admin/updates/publish', {file: name});
   const ana = s.web(); await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'}); await s.dono('/api/admin/subscriptions/grant', {email: 'ana@x.com', plan: 'pro', months: 1});
   await s.call('/api/license/login', {email: 'ana@x.com', password: 'senha-forte-1'}); await s.call('/api/update/check', {});

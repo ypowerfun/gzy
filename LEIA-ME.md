@@ -1,4 +1,4 @@
-# GameZoney — Gestão Gamer (Servidor 1.1.5 · Cliente 1.0.12)
+# GameZoney — Gestão Gamer (Servidor 1.1.6 · Cliente 1.0.13)
 
 Gerenciador de arena gamer: **Servidor** (PC da recepção, painel em janela própria, uso na rede local) e **Cliente** (PCs gamers).
 Todos os direitos reservados à GameZoney. Software proprietário e confidencial.
@@ -8,7 +8,7 @@ Todos os direitos reservados à GameZoney. Software proprietário e confidencial
 |---|---|
 | `servidor/` | Código do Servidor (Node 24 + painel), gerador `GERAR-INSTALADOR-SERVIDOR.cmd` |
 | `cliente/windows-client-1.0.5/` | Código do Cliente Windows (.exe nativo + monitor), gerador `GERAR-INSTALADOR-CLIENTE.cmd` |
-| `unico/` + `GERAR-INSTALADOR-UNICO.cmd` | Instalador único com as caixas "Instalar Servidor versão 1.1.5" e "Instalar Cliente versão 1.0.12" |
+| `unico/` + `GERAR-INSTALADOR-UNICO.cmd` | Instalador único com as caixas "Instalar Servidor versão 1.1.6" e "Instalar Cliente versão 1.0.13" |
 | `marca/` | Logo GZ e banner originais (referência do visual dourado/preto/vermelho) |
 | `ferramentas/` | `gerar-imagens-marca.py` (ícones, logos e papel de parede a partir da marca; uso só no desenvolvimento) |
 
@@ -21,8 +21,8 @@ Extraia o projeto num caminho curto (ex.: `C:\GZ\`) e dê dois cliques no `.cmd`
 .zip → Propriedades → **Desbloquear**). O gerador do servidor confere as versões, baixa as dependências fixadas (npm),
 compila as ferramentas e roda os testes: se algum teste falhar, o instalador **não** é gerado.
 
-- **Tudo em um:** dois cliques em `GERAR-INSTALADOR-UNICO.cmd` → `saida\GameZoney-Instalador-Servidor-1.1.5-Cliente-1.0.12.exe`
-- Só o servidor: `servidor\GERAR-INSTALADOR-SERVIDOR.cmd` → `servidor\outputs\GameZoney-Servidor-1.1.5-Setup.exe`
+- **Tudo em um:** dois cliques em `GERAR-INSTALADOR-UNICO.cmd` → `saida\GameZoney-Instalador-Servidor-1.1.6-Cliente-1.0.13.exe`
+- Só o servidor: `servidor\GERAR-INSTALADOR-SERVIDOR.cmd` → `servidor\outputs\GameZoney-Servidor-1.1.6-Setup.exe`
 - Só o cliente: `cliente\windows-client-1.0.5\GERAR-INSTALADOR-CLIENTE.cmd` → `cliente\outputs\GameZoney-Cliente-1.0.5-Setup.exe`
 
 Os instaladores não têm nada de app Android/iOS.

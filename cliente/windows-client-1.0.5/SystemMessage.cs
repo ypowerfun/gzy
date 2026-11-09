@@ -13,6 +13,8 @@ using System.Windows.Forms;
 // por cima de tudo, pelo tempo definido no servidor. A janela NÃO recebe clique nem teclado e NÃO rouba o foco
 // (WS_EX_TRANSPARENT + WS_EX_NOACTIVATE + WS_EX_LAYERED): o cliente continua jogando normalmente.
 // Fonte: Montserrat (pasta "fonts" do cliente ou instalada no Windows); se não houver, Segoe UI Black / Arial Black.
+// 1.0.13: letras ~20% menores (ocupavam muito da tela); mesma fonte e posição. Também mostra os avisos automáticos do
+// servidor (tempo acabando e prêmio da fidelidade), que chegam pela mesma fila do Enviar Mensagem.
 // Trecho entre *asteriscos* sai em dourado (ex.: "Servidor encerra em *20 minutos!*").
 public class SystemMessage : Form {
  [DllImport("user32.dll")] static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref MsgPoint pptDst, ref MsgSize psize, IntPtr hdcSrc, ref MsgPoint pprSrc, int crKey, ref MsgBlend pblend, int dwFlags);
@@ -106,8 +108,8 @@ public class SystemMessage : Form {
     g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
     var fam = Family(); var fmt = StringFormat.GenericTypographic; fmt.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
     float left = W * 0.046f, top = H * 0.06f, maxWidth = W * 0.30f;
-    using (var titleFont = new Font(fam, Math.Max(11f, H * 0.021f), familyStyle, GraphicsUnit.Pixel))
-    using (var mainFont = new Font(fam, Math.Max(20f, H * 0.043f), familyStyle, GraphicsUnit.Pixel))
+    using (var titleFont = new Font(fam, Math.Max(10f, H * 0.017f), familyStyle, GraphicsUnit.Pixel))
+    using (var mainFont = new Font(fam, Math.Max(16f, H * 0.034f), familyStyle, GraphicsUnit.Pixel))
     using (var shadow = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
     using (var goldBrush = new SolidBrush(Gold)) {
      int white = (int)(255 * pulse);
