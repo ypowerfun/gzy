@@ -21,6 +21,7 @@
     $('#cart-renew').textContent = annual ? `Cobrado ${money(p.annual)} a cada 12 meses no cartão. Cancele quando quiser.` : `Cobrado ${money(p.monthly)} a cada mês no cartão. Cancele quando quiser.`;
     const yearSave = p.monthly * 12 - p.annual;
     $('#cart-upsell').classList.toggle('hidden', annual || yearSave <= 0); $('#cart-upsell-text').textContent = yearSave > 0 ? ` Economize ${money(yearSave)} por ano com a assinatura de 12 meses.` : '';
+    $('#cart-pro-obs').classList.toggle('hidden', plan !== 'pro'); // requisitos do Pro (domínio, VPS, internet nas unidades, XML da NF-e)
     $('#cart-feats').innerHTML = p.features.map(f => `<li>${PLAN_ICON}<span>${esc(f)}</span></li>`).join('');
     $('#sum-plan').textContent = `Plano ${p.name}`; $('#sum-period').textContent = annual ? 'Duração de 12 meses' : 'Duração de 1 mês';
     $('#sum-old').textContent = full > v.total ? money(full) : ''; $('#sum-price').textContent = money(v.total);

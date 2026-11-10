@@ -313,3 +313,6 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .cookie-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:80;max-width:760px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:16px 18px;border-radius:12px;background:#121720;border:1px solid #625432;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 .cookie-banner p{margin:0;flex:1 1 320px;font-size:14px;line-height:1.55;color:#dde2ea}.cookie-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cookie-actions a{color:#d9c791;font-size:13px}
 .cookie-prefs{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:4px 0}
+
+/* carrinho: observação com os requisitos do plano Pro */
+.cart-obs{background:#14110a;border:1px solid #6b5626;border-left:3px solid #FDD034;border-radius:12px;padding:16px 18px;margin:14px 0;font-size:14px;line-height:1.6;color:#d9dde5}.cart-obs-title{display:block;color:#ffdb73;margin-bottom:4px}.cart-obs p{margin:0 0 8px}.cart-obs ul{margin:0 0 8px;padding-left:18px}.cart-obs li{margin:4px 0}.cart-obs li b{color:#fff;margin-right:.35em}.cart-obs .cart-obs-foot{font-size:12px;color:#aeb5c2;margin:0}.cart-obs a{color:#ffdb73}
