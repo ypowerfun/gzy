@@ -9,7 +9,13 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-story-1080x1920.jpg` | Stories, Reels, Status do WhatsApp |
 | `gamezoney-quadrado-1080x1080.jpg` | Facebook, Google (Display e Performance Max) |
 | `gamezoney-paisagem-1200x628.jpg` | Google (Display), link do Facebook |
-| `gamezoney-feed-1080x1350-novidades.jpg` | Feed — novidades (liga PCs, impressão, nota fiscal, várias lojas, foto, importação) |
+| `gamezoney-feed-1080x1350-novidades.jpg` | Feed — novidades liberadas no teste grátis (PIX no PC, liga PCs, leitor de código de barras, aviso de fim de tempo, importação, foto) |
+| `gamezoney-feed-1080x1350-planos.jpg` | Feed — planos Free / Standard / Pro com preço e o que cada um libera |
+| `gamezoney-story-1080x1920-planos.jpg` | Stories, Reels, Status do WhatsApp — planos |
+| `gamezoney-quadrado-1080x1080-planos.jpg` | Facebook, Google (Display e Performance Max) — planos |
+| `gamezoney-paisagem-1200x628-planos.jpg` | Google (Display), link do Facebook — planos |
+| `gamezoney-feed-1080x1350-pix.jpg` | Feed — PIX no PC ("Pagou no PIX, já joga") |
+| `gamezoney-story-1080x1920-pix.jpg` | Stories, Reels, Status do WhatsApp — PIX no PC |
 | `gamezoney-feed-1080x1350-troca-sistema.jpg` | Feed — para quem já usa outro sistema ("Traga seus clientes") |
 | `gamezoney-story-1080x1920-novidades.jpg` | Stories, Reels, Status do WhatsApp — novidades |
 | `gamezoney-quadrado-1080x1080-novidades.jpg` | Facebook, Google (Display e Performance Max) — novidades |
@@ -60,10 +66,15 @@ No próprio Instagram, publique a peça `feed-1080x1350-recursos` com a legenda 
 ---
 
 ### Campanha "Novidades" e "Troca de sistema" (nov/2026)
-- **Novidades** (peças `*-novidades`): texto principal: *O GameZoney agora liga os PCs pela rede, controla as impressões, dá entrada no estoque pela nota fiscal e mostra todas as suas lojas no celular. Teste grátis por 30 dias.* — Título: *Muito além de PCs e consoles*.
+- **Novidades** (peças `*-novidades`, atualizadas em 10/11/2026): texto principal: *No GameZoney o cliente paga o PIX direto no PC, você liga os PCs pela rede, vende pelo leitor de código de barras e o PC avisa quando o tempo está acabando. Teste grátis por 30 dias.* — Título: *Muito além de PCs e consoles*.
+- **Atenção (desde a 1.2.8):** o teste grátis não libera Controle de impressão, Nota fiscal (NF-e), Várias lojas (Multi-Unidade) nem Gerenciar App. Não anuncie esses recursos junto com "Teste grátis": eles aparecem só nas peças de **Planos** (impressão = Standard e Pro; NF-e, várias lojas e app = Pro).
+
+### Campanha "Planos" e "PIX no PC" (nov/2026)
+- **Planos** (peças `*-planos`): texto principal: *Comece grátis por 30 dias. Standard por R$ 29,90/mês com todas as funções, PIX no PC e controle de impressão. Pro por R$ 129,90/mês com nota fiscal (NF-e), várias lojas no celular e app personalizado.* — Título: *Escolha o seu plano*. **Antes de publicar, confira os preços em /admin › Planos**: as peças usam os preços padrão (R$ 29,90 e R$ 129,90); se mudar no site, mude `PLANOS` em `gerar-anuncios.js` e rode `node marketing/gerar-anuncios.js`.
+- **PIX no PC** (peças `*-pix`): texto principal: *Chega de fila no balcão: o cliente cria a conta e paga pelo PIX direto no PC. Pagamento aprovado, o tempo entra sozinho. Em todos os planos, inclusive no teste grátis.* — Título: *Pagou no PIX, já joga*. Não use o logotipo oficial do PIX (o ícone da peça é genérico).
 - **Troca de sistema** (peça `feed-1080x1350-troca-sistema`): texto principal: *Vai trocar de sistema? Importe nick, tempo e medalhas de fidelidade dos seus clientes por planilha, em poucos minutos. Nenhum cliente fica para trás.* — Título: *Traga seus clientes para o GameZoney*. Público: interesses de *Lan house* e *Pequenas empresas*.
 - **Não cite outras marcas** (nomes de outros sistemas) no texto ou na imagem do anúncio: Google e Meta podem reprovar por uso de marca de terceiros. Os nomes aparecem só nas Dúvidas frequentes do site.
-- No Google Performance Max, acrescente as peças `quadrado-1080x1080-novidades` e `paisagem-1200x628-novidades` ao mesmo grupo de recursos (não precisa criar campanha nova) e os títulos: *Liga os PCs pela Rede* · *Controle de Impressão* · *Várias Lojas no Celular* · *Troque de Sistema Fácil*.
+- No Google Performance Max, acrescente as peças `quadrado-1080x1080-novidades` e `paisagem-1200x628-novidades` ao mesmo grupo de recursos (não precisa criar campanha nova) e os títulos: *Cliente Paga PIX no PC* · *Liga os PCs pela Rede* · *Leitor de Código de Barras* · *Troque de Sistema Fácil*. Acrescente também as peças `*-planos` com os títulos *Planos a partir de R$ 29,90* · *Comece Grátis por 30 Dias*.
 
 ## 2. WhatsApp
 
