@@ -154,8 +154,11 @@ function createApp(options = {}) {
   });
 
   // ---------- configuração pública ----------
+  // "+N arenas confiam" no topo da inicial (pedido do dono): 5000 + 100 a cada 100 contas criadas (105 contas = 5100); conta guardada por 1 min
+  let arenasCache = {at: 0, n: 5000};
+  const arenasTrust = () => { if (Date.now() - arenasCache.at > 60000) arenasCache = {at: Date.now(), n: arenasFor(db.get('SELECT COUNT(*) n FROM users').n)}; return arenasCache.n; };
   app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), subscriptions: !!(pay.enabled && env.MP_PUBLIC_KEY), legacySales: env.LEGACY_SALES === '1', plans: plans.publicPlans(), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
-    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || '', tracking: track.publicConfig()}); });
+    supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || '', tracking: track.publicConfig(), arenas: arenasTrust()}); });
 
   // ---------- contas ----------
   app.post('/api/auth/register', jsonOnly, limit('auth', 20, 15 * 60000), api((req, res) => {
@@ -602,4 +605,6 @@ if (require.main === module) {
   const app = createApp(), port = Number(process.env.PORT || 8080);
   app.listen(port, process.env.HOST || '127.0.0.1', () => console.log(`GameZoney site em http://${process.env.HOST || '127.0.0.1'}:${port}`));
 }
-module.exports = {createApp, newKey, normalizeKey, hashPassword, checkPassword};
+// 5000 + 100 a cada 100 contas criadas no site (0–99 = 5000; 105 = 5100; 200 = 5200)
+const arenasFor = users => 5000 + Math.floor((Number(users) || 0) / 100) * 100;
+module.exports = {createApp, arenasFor, newKey, normalizeKey, hashPassword, checkPassword};

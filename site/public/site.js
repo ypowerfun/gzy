@@ -22,6 +22,7 @@ async function loadConfig() {
   // 1.4: faixa do topo (texto editável no /admin)
   const strip = $('#promo-strip'); if (strip && siteConfig.banner) { $$('[data-banner]').forEach(e => e.textContent = siteConfig.banner); strip.classList.remove('hidden'); }
   // 2.0: "a partir de" (menor preço mensal dos planos) e os cartões dos planos na página inicial
+  if (Number.isInteger(siteConfig.arenas)) $$('[data-arenas]').forEach(e => e.textContent = '+' + siteConfig.arenas);
   if (siteConfig.plans && siteConfig.plans.some(p => !p.free)) { const from = Math.min(...siteConfig.plans.filter(p => !p.free).map(p => Math.min(p.monthly, Math.round(p.annual / 12)))); $$('[data-plan-from]').forEach(e => e.textContent = money(from)); renderPlans(); }
   document.dispatchEvent(new CustomEvent('gz:config', {detail: siteConfig}));
 }

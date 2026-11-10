@@ -34,3 +34,7 @@ dialog.zoom-view{border:0;width:100vw;max-width:none;height:100dvh;max-height:no
 
 /* /admin com o menu lateral igual ao da Minha conta: o menu é comprido, rola por dentro no computador */
 @media(min-width:761px){.admin-sidebar{max-height:calc(100vh - 140px);overflow:auto}}
+
+/* topo da inicial: prova social (+N arenas confiam) */
+.hero-proof{margin-top:22px;display:flex;flex-direction:column;gap:12px}.proof-top{display:flex;align-items:center;gap:14px}.proof-avatars{display:flex}.proof-avatars span{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:10px;letter-spacing:-.02em;font-weight:800;color:#1a1408;background:linear-gradient(180deg,#FFEC6C,#FDD034 55%,#F0B11E);border:2px solid #0d1015;font-family:Montserrat,Arial,sans-serif}.proof-avatars span+span{margin-left:-5px}.proof-rating{display:flex;flex-direction:column;gap:2px;padding-right:16px;border-right:1px solid #3a3f48}.proof-rating b{font-size:15px;color:#fff}.proof-star{color:#FDD034}.proof-rating small{font-size:12px;color:#aeb5c2}.proof-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin:0;font-size:13px;color:#d6dae2}.proof-check:before{content:'\2713';color:#FDD034;margin-right:8px;font-weight:800}.proof-dot{color:#6d7380}
+@media(max-width:760px){.proof-avatars span{width:32px;height:32px;font-size:9px}.proof-line{font-size:12px}}
