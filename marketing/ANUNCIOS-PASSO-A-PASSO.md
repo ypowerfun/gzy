@@ -9,7 +9,6 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-story-1080x1920.jpg` | Stories, Reels, Status do WhatsApp |
 | `gamezoney-quadrado-1080x1080.jpg` | Facebook, Google (Display e Performance Max) |
 | `gamezoney-paisagem-1200x628.jpg` | Google (Display), link do Facebook |
-| `gamezoney-feed-1080x1350-novidades.jpg` | **Vertical 4:5** — feed do Instagram, Facebook e Threads — "Tudo que sua arena precisa" (PCs/consoles/VRs/simuladores, Multi-Unidade PRO, troca de sistema, XML da NF-e PRO, PIX no PC, Gerenciamento de NF-e PRO) |
 | `gamezoney-feed-1080x1350-planos.jpg` | Feed — planos Free / Standard / Pro com preço e o que cada um libera |
 | `gamezoney-story-1080x1920-planos.jpg` | Stories, Reels, Status do WhatsApp — planos |
 | `gamezoney-quadrado-1080x1080-planos.jpg` | Facebook, Google (Display e Performance Max) — planos |
@@ -17,9 +16,7 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-feed-1080x1350-pix.jpg` | Feed — PIX no PC ("Pagou no PIX, já joga") |
 | `gamezoney-story-1080x1920-pix.jpg` | Stories, Reels, Status do WhatsApp — PIX no PC |
 | `gamezoney-feed-1080x1350-troca-sistema.jpg` | Feed — para quem já usa outro sistema ("Traga seus clientes") |
-| `gamezoney-story-1080x1920-novidades.jpg` | **Vertical 9:16** — Stories, Reels, Status — "Tudo que sua arena precisa" |
-| `gamezoney-quadrado-1080x1080-novidades.jpg` | **Quadrado 1:1** — feed do Instagram, Facebook e Threads, Google — "Tudo que sua arena precisa" |
-| `gamezoney-paisagem-1200x628-novidades.jpg` | **Horizontal 1,91:1** — feed do Facebook e Threads, coluna da direita, Google — "Tudo que sua arena precisa" |
+| `gamezoney-quadrado-1080x1080-novidades.jpg` | **Quadrado 1:1** — feed do Instagram, Facebook e Threads, Google — "Tudo que sua arena precisa" (os 6 recursos ficam SÓ no quadrado; vertical e horizontal usam `feed-1080x1350-recursos`, `story-1080x1920` e `paisagem-1200x628`) |
 | `gamezoney-logo-quadrado-1200x1200.png` | Logotipo quadrado (Google Ads, foto do perfil) |
 | `gamezoney-logo-horizontal-1200x300.png` | Logotipo horizontal 4:1 (Google Ads) |
 
@@ -66,7 +63,7 @@ No próprio Instagram, publique a peça `feed-1080x1350-recursos` com a legenda 
 ---
 
 ### Campanha "Novidades" e "Troca de sistema" (nov/2026)
-- **Tudo que sua arena precisa** (peças `*-novidades`, refeitas em 10/11/2026 a pedido do dono): texto principal: *PCs, consoles, VRs e simuladores em um só sistema. Troque de sistema sem perder nada, receba PIX direto na tela do PC e, no plano Pro, importe o XML da NF-e do fornecedor, gerencie suas notas e acompanhe todas as unidades. Teste grátis por 30 dias.* — Título: *Tudo que sua arena precisa*. Use as 4 peças no mesmo anúncio (Meta: **Personalizar posicionamentos** › quadrado/4:5 no feed, 9:16 em Stories/Reels/Status, horizontal na coluna da direita e em Resultados de pesquisa) com Instagram, Facebook e Threads marcados.
+- **Tudo que sua arena precisa** (peças `*-novidades`, refeitas em 10/11/2026 a pedido do dono): texto principal: *PCs, consoles, VRs e simuladores em um só sistema. Troque de sistema sem perder nada, receba PIX direto na tela do PC e, no plano Pro, importe o XML da NF-e do fornecedor, gerencie suas notas e acompanhe todas as unidades. Teste grátis por 30 dias.* — Título: *Tudo que sua arena precisa*. No mesmo anúncio (Meta: **Personalizar posicionamentos**, Instagram, Facebook e Threads marcados): **quadrado** = `quadrado-1080x1080-novidades` (os 6 recursos); **vertical 4:5** = `feed-1080x1350-recursos`; **vertical 9:16** (Stories/Reels/Status) = `story-1080x1920`; **horizontal** (coluna da direita, pesquisa, link) = `paisagem-1200x628` — vertical e horizontal no estilo de antes, com a tela do painel.
 - **Atenção (desde a 1.2.8):** o teste grátis não libera Controle de impressão, NF-e, Multi-Unidade nem Gerenciar App. Por isso, nas peças com "Teste grátis", esses recursos levam o selo **PRO** e a nota "recursos do plano Pro" (não tire o selo: sem ele o anúncio promete algo que o teste não entrega). No texto do anúncio, cite NF-e e Multi-Unidade sempre com "no plano Pro".
 
 ### Campanha "Planos" e "PIX no PC" (nov/2026)
