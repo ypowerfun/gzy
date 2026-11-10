@@ -9,7 +9,7 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-story-1080x1920.jpg` | Stories, Reels, Status do WhatsApp |
 | `gamezoney-quadrado-1080x1080.jpg` | Facebook, Google (Display e Performance Max) |
 | `gamezoney-paisagem-1200x628.jpg` | Google (Display), link do Facebook |
-| `gamezoney-feed-1080x1350-novidades.jpg` | Feed — novidades liberadas no teste grátis (PIX no PC, liga PCs, leitor de código de barras, aviso de fim de tempo, importação, foto) |
+| `gamezoney-feed-1080x1350-novidades.jpg` | **Vertical 4:5** — feed do Instagram, Facebook e Threads — "Tudo que sua arena precisa" (PCs/consoles/VRs/simuladores, Multi-Unidade PRO, troca de sistema, XML da NF-e PRO, PIX no PC, Gerenciamento de NF-e PRO) |
 | `gamezoney-feed-1080x1350-planos.jpg` | Feed — planos Free / Standard / Pro com preço e o que cada um libera |
 | `gamezoney-story-1080x1920-planos.jpg` | Stories, Reels, Status do WhatsApp — planos |
 | `gamezoney-quadrado-1080x1080-planos.jpg` | Facebook, Google (Display e Performance Max) — planos |
@@ -17,9 +17,9 @@ Confidencial (uso interno). As peças prontas estão em `marketing/anuncios/`.
 | `gamezoney-feed-1080x1350-pix.jpg` | Feed — PIX no PC ("Pagou no PIX, já joga") |
 | `gamezoney-story-1080x1920-pix.jpg` | Stories, Reels, Status do WhatsApp — PIX no PC |
 | `gamezoney-feed-1080x1350-troca-sistema.jpg` | Feed — para quem já usa outro sistema ("Traga seus clientes") |
-| `gamezoney-story-1080x1920-novidades.jpg` | Stories, Reels, Status do WhatsApp — novidades |
-| `gamezoney-quadrado-1080x1080-novidades.jpg` | Facebook, Google (Display e Performance Max) — novidades |
-| `gamezoney-paisagem-1200x628-novidades.jpg` | Google (Display), link do Facebook — novidades |
+| `gamezoney-story-1080x1920-novidades.jpg` | **Vertical 9:16** — Stories, Reels, Status — "Tudo que sua arena precisa" |
+| `gamezoney-quadrado-1080x1080-novidades.jpg` | **Quadrado 1:1** — feed do Instagram, Facebook e Threads, Google — "Tudo que sua arena precisa" |
+| `gamezoney-paisagem-1200x628-novidades.jpg` | **Horizontal 1,91:1** — feed do Facebook e Threads, coluna da direita, Google — "Tudo que sua arena precisa" |
 | `gamezoney-logo-quadrado-1200x1200.png` | Logotipo quadrado (Google Ads, foto do perfil) |
 | `gamezoney-logo-horizontal-1200x300.png` | Logotipo horizontal 4:1 (Google Ads) |
 
@@ -66,15 +66,15 @@ No próprio Instagram, publique a peça `feed-1080x1350-recursos` com a legenda 
 ---
 
 ### Campanha "Novidades" e "Troca de sistema" (nov/2026)
-- **Novidades** (peças `*-novidades`, atualizadas em 10/11/2026): texto principal: *No GameZoney o cliente paga o PIX direto no PC, você liga os PCs pela rede, vende pelo leitor de código de barras e o PC avisa quando o tempo está acabando. Teste grátis por 30 dias.* — Título: *Muito além de PCs e consoles*.
-- **Atenção (desde a 1.2.8):** o teste grátis não libera Controle de impressão, Nota fiscal (NF-e), Várias lojas (Multi-Unidade) nem Gerenciar App. Não anuncie esses recursos junto com "Teste grátis": eles aparecem só nas peças de **Planos** (impressão = Standard e Pro; NF-e, várias lojas e app = Pro).
+- **Tudo que sua arena precisa** (peças `*-novidades`, refeitas em 10/11/2026 a pedido do dono): texto principal: *PCs, consoles, VRs e simuladores em um só sistema. Troque de sistema sem perder nada, receba PIX direto na tela do PC e, no plano Pro, importe o XML da NF-e do fornecedor, gerencie suas notas e acompanhe todas as unidades. Teste grátis por 30 dias.* — Título: *Tudo que sua arena precisa*. Use as 4 peças no mesmo anúncio (Meta: **Personalizar posicionamentos** › quadrado/4:5 no feed, 9:16 em Stories/Reels/Status, horizontal na coluna da direita e em Resultados de pesquisa) com Instagram, Facebook e Threads marcados.
+- **Atenção (desde a 1.2.8):** o teste grátis não libera Controle de impressão, NF-e, Multi-Unidade nem Gerenciar App. Por isso, nas peças com "Teste grátis", esses recursos levam o selo **PRO** e a nota "recursos do plano Pro" (não tire o selo: sem ele o anúncio promete algo que o teste não entrega). No texto do anúncio, cite NF-e e Multi-Unidade sempre com "no plano Pro".
 
 ### Campanha "Planos" e "PIX no PC" (nov/2026)
 - **Planos** (peças `*-planos`): texto principal: *Comece grátis por 30 dias. Standard por R$ 29,90/mês com todas as funções, PIX no PC e controle de impressão. Pro por R$ 129,90/mês com nota fiscal (NF-e), várias lojas no celular e app personalizado.* — Título: *Escolha o seu plano*. **Antes de publicar, confira os preços em /admin › Planos**: as peças usam os preços padrão (R$ 29,90 e R$ 129,90); se mudar no site, mude `PLANOS` em `gerar-anuncios.js` e rode `node marketing/gerar-anuncios.js`.
 - **PIX no PC** (peças `*-pix`): texto principal: *Chega de fila no balcão: o cliente cria a conta e paga pelo PIX direto no PC. Pagamento aprovado, o tempo entra sozinho. Em todos os planos, inclusive no teste grátis.* — Título: *Pagou no PIX, já joga*. Não use o logotipo oficial do PIX (o ícone da peça é genérico).
 - **Troca de sistema** (peça `feed-1080x1350-troca-sistema`): texto principal: *Vai trocar de sistema? Importe nick, tempo e medalhas de fidelidade dos seus clientes por planilha, em poucos minutos. Nenhum cliente fica para trás.* — Título: *Traga seus clientes para o GameZoney*. Público: interesses de *Lan house* e *Pequenas empresas*.
 - **Não cite outras marcas** (nomes de outros sistemas) no texto ou na imagem do anúncio: Google e Meta podem reprovar por uso de marca de terceiros. Os nomes aparecem só nas Dúvidas frequentes do site.
-- No Google Performance Max, acrescente as peças `quadrado-1080x1080-novidades` e `paisagem-1200x628-novidades` ao mesmo grupo de recursos (não precisa criar campanha nova) e os títulos: *Cliente Paga PIX no PC* · *Liga os PCs pela Rede* · *Leitor de Código de Barras* · *Troque de Sistema Fácil*. Acrescente também as peças `*-planos` com os títulos *Planos a partir de R$ 29,90* · *Comece Grátis por 30 Dias*.
+- No Google Performance Max, acrescente as peças `quadrado-1080x1080-novidades` e `paisagem-1200x628-novidades` ao mesmo grupo de recursos (não precisa criar campanha nova) e os títulos: *PCs, Consoles, VRs e Simuladores* · *PIX Direto na Tela do PC* · *Troque de Sistema sem Perder Nada* · *NF-e e Multi-Unidade no Pro*. Acrescente também as peças `*-planos` com os títulos *Planos a partir de R$ 29,90* · *Comece Grátis por 30 Dias*.
 
 ## 2. WhatsApp
 

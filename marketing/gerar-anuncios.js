@@ -24,10 +24,15 @@ const ICON = {
   pix: '<svg viewBox="0 0 48 48"><path d="M24 4 44 24 24 44 4 24z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M16 24l8-8 8 8-8 8z" fill="currentColor"/></svg>',
   barras: '<svg viewBox="0 0 48 48"><path d="M8 10v28M13 10v28M19 10v28M22 10v28M28 10v28M34 10v28M37 10v28M41 10v28" stroke="currentColor" stroke-width="3"/><path d="M4 24h40" stroke="#ff4d4d" stroke-width="2.5"/></svg>',
   aviso: '<svg viewBox="0 0 48 48"><rect x="4" y="7" width="40" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M17 41h14M24 33v8" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><path d="M24 13v9M24 26v1" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>',
+  vr: '<svg viewBox="0 0 48 48"><path d="M5 17a4 4 0 0 1 4-4h30a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4h-9l-3-5h-6l-3 5H9a4 4 0 0 1-4-4z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><circle cx="15" cy="23" r="3.5" fill="currentColor"/><circle cx="33" cy="23" r="3.5" fill="currentColor"/></svg>',
+  xml: '<svg viewBox="0 0 48 48"><path d="M11 5h18l9 9v29H11z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M29 5v9h9" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 23l-5 5 5 5M29 23l5 5-5 5M26 21l-3 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  nfe: '<svg viewBox="0 0 48 48"><path d="M8 5h22l8 8v30H8z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M14 18h14M14 25h10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="35" r="9" fill="#0e0e10" stroke="currentColor" stroke-width="3.5"/><path d="M29 35l3 3 5-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   wifi: '<svg viewBox="0 0 48 48"><path d="M6 18a26 26 0 0 1 36 0M12 25a17 17 0 0 1 24 0M18 32a8 8 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><circle cx="24" cy="39" r="3" fill="currentColor"/></svg>'
 };
-// 2026-11-10 (Servidor 1.2.8): só recursos liberados no teste grátis (impressão, NF-e e várias lojas dependem do plano: peças *-planos)
-const NOVAS = [['pix', 'Cliente paga<br>PIX no PC'], ['power', 'Liga os PCs<br>pela rede'], ['barras', 'Leitor de<br>código de barras'], ['aviso', 'Aviso de fim<br>de tempo no PC'], ['troca', 'Importa de<br>outro sistema'], ['foto', 'Foto do<br>cliente']];
+// 2026-11-10 (pedido do dono): recursos em destaque; pro = selo PRO (o teste grátis não libera NF-e nem Multi-Unidade)
+const NOVAS = [['vr', 'PCs, Consoles,<br>VRs e<br>Simuladores'], ['lojas', 'Multi-Unidade', true], ['troca', 'Troque de<br>sistema sem<br>perder nada'], ['xml', 'Importe o XML<br>da NF-e do<br>fornecedor', true], ['pix', 'PIX direto na<br>tela do PC'], ['nfe', 'Gerenciamento<br>de NF-e', true]];
+const box = (list, size, fs = .105) => `<div style="display:flex;gap:${size * .1}px;justify-content:center">${list.map(([i, t, pro]) => `<div style="position:relative;width:${size}px;height:${size * .92}px;border-radius:${size * .09}px;border:3px solid #FDD034;background:linear-gradient(180deg,rgba(40,32,10,.92),rgba(14,14,16,.94));box-shadow:0 0 ${size * .2}px rgba(253,208,52,.35),inset 0 0 ${size * .15}px rgba(253,208,52,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${size * .07}px;padding:0 ${size * .05}px">${pro ? `<div style="position:absolute;top:${size * .05}px;right:${size * .05}px;padding:${size * .012}px ${size * .04}px;border-radius:99px;background:${GOLD};color:#141008;font-size:${size * .065}px;font-weight:900;letter-spacing:1px">PRO</div>` : ''}<div style="width:${size * .34}px;height:${size * .34}px;color:#FDD034">${ICON[i]}</div><div style="font-weight:800;font-size:${size * fs}px;line-height:1.15;text-align:center;color:#fff;white-space:nowrap">${t}</div></div>`).join('')}</div>`;
+const proNote = fs => `<div style="font-size:${fs}px;color:#cfd3da;font-weight:600"><span style="padding:2px 10px;border-radius:99px;background:${GOLD};color:#141008;font-weight:900;font-size:${fs * .8}px">PRO</span> recursos do plano Pro</div>`;
 // planos (preços padrão de site/plans.js — conferir no /admin › Planos antes de anunciar)
 const PLANOS = [
   {nome: 'Free', preco: 'Grátis', obs: '30 dias', itens: ['Funções essenciais', 'PIX no PC', 'PCs e consoles ilimitados', 'Sem cartão']},
@@ -63,30 +68,34 @@ const PECAS = {
     <div style="margin-top:14px;font-size:42px;font-weight:600;color:#e7eaf0">Lan Houses e Cyber cafés</div>
     <div style="position:absolute;bottom:64px;left:0;right:0">${tiles(TILES, 215)}</div></div>`],
   // 2026-11: NOVIDADES (Servidor 1.0.9 / Cliente 1.0.7) — feed, story, quadrado e paisagem
-  'feed-1080x1350-novidades': [1080, 1350, `<div style="position:absolute;inset:0;padding:70px 60px;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:330px"><div style="margin-top:40px;font-size:40px;font-weight:800;letter-spacing:8px;color:#FDD034">NOVIDADES</div>
-    <div style="margin-top:10px;font-size:84px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">MUITO ALÉM DE<br><span class="g">PCS E CONSOLES</span></div>
-    <div style="margin-top:56px">${tiles(NOVAS.slice(0, 3), 270)}</div><div style="margin-top:26px">${tiles(NOVAS.slice(3), 270)}</div>
-    <div style="position:absolute;bottom:70px;left:60px;right:60px;display:flex;align-items:center;justify-content:space-between"><div style="padding:26px 40px;border-radius:16px;background:${GOLD};color:#141008;font-size:40px;font-weight:900">Teste grátis 30 dias</div><div style="font-size:38px;font-weight:800">gamezoney.com</div></div></div>`],
+  'feed-1080x1350-novidades': [1080, 1350, `<div style="position:absolute;inset:0;padding:66px 50px;display:flex;flex-direction:column;align-items:center">
+    <img src="${logo}" style="width:320px"><div style="margin-top:34px;font-size:38px;font-weight:800;letter-spacing:8px;color:#FDD034">SISTEMA PARA ARENA GAMER</div>
+    <div style="margin-top:10px"><div style="font-size:86px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">TUDO QUE SUA<br><span class="g">ARENA PRECISA</span></div></div>
+    <div style="margin-top:46px">${box(NOVAS.slice(0, 3), 300)}</div><div style="margin-top:24px">${box(NOVAS.slice(3), 300)}</div>
+    <div style="margin-top:20px">${proNote(26)}</div>
+    <div style="position:absolute;bottom:60px;left:60px;right:60px;display:flex;align-items:center;justify-content:space-between"><div style="padding:24px 38px;border-radius:16px;background:${GOLD};color:#141008;font-size:38px;font-weight:900">Teste grátis 30 dias</div><div style="font-size:38px;font-weight:800">gamezoney.com</div></div></div>`],
   'feed-1080x1350-troca-sistema': [1080, 1350, `<div style="position:absolute;inset:0;padding:80px 70px">
     <img src="${logo}" style="width:300px"><div style="margin-top:70px;font-size:56px;font-weight:700;color:#e7eaf0">Vai trocar de sistema?</div>
     <div style="margin-top:14px;font-size:100px;font-weight:900;font-style:italic;line-height:.98;letter-spacing:-2px">TRAGA SEUS<br><span class="g">CLIENTES.</span></div>
     <div style="margin-top:40px;font-size:40px;line-height:1.35;color:#e7eaf0;max-width:900px">Importe nick, tempo e medalhas de fidelidade do seu sistema atual em poucos minutos, por planilha. Nenhum cliente fica para trás.</div>
     <div style="position:absolute;right:70px;top:320px;width:200px;height:200px;color:#FDD034;filter:drop-shadow(0 0 30px rgba(253,208,52,.6))">${ICON.troca}</div>
     <div style="position:absolute;bottom:80px;left:70px;right:70px;display:flex;align-items:center;justify-content:space-between"><div style="padding:30px 46px;border-radius:18px;background:${GOLD};color:#141008;font-size:44px;font-weight:900">Teste grátis 30 dias</div><div style="font-size:40px;font-weight:800">gamezoney.com</div></div></div>`],
-  'story-1080x1920-novidades': [1080, 1920, `<div style="position:absolute;inset:0;padding:250px 60px 0;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:380px"><div style="margin-top:46px;font-size:46px;font-weight:800;letter-spacing:10px;color:#FDD034">NOVIDADES</div>
-    <div style="margin-top:12px;font-size:96px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">MUITO ALÉM DE<br><span class="g">PCS E CONSOLES</span></div>
-    <div style="margin-top:70px">${tiles(NOVAS.slice(0, 3), 290)}</div><div style="margin-top:30px">${tiles(NOVAS.slice(3), 290)}</div>
-    <div style="margin-top:80px;padding:30px 60px;border-radius:20px;background:${GOLD};color:#141008;font-size:50px;font-weight:900">Teste grátis · gamezoney.com</div></div>`],
-  'quadrado-1080x1080-novidades': [1080, 1080, `<div style="position:absolute;inset:0;padding:56px 60px;display:flex;flex-direction:column;align-items:center">
-    <img src="${logo}" style="width:300px"><div style="margin-top:30px;font-size:74px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">MUITO ALÉM DE<br><span class="g">PCS E CONSOLES</span></div>
-    <div style="margin-top:44px">${tiles(NOVAS.slice(0, 3), 245)}</div><div style="margin-top:22px">${tiles(NOVAS.slice(3), 245)}</div></div>`],
-  'paisagem-1200x628-novidades': [1200, 628, `<div style="position:absolute;inset:0;padding:46px 56px">
-    <img src="${logo}" style="width:240px"><div style="margin-top:24px;font-size:30px;font-weight:800;letter-spacing:6px;color:#FDD034">NOVIDADES</div>
-    <div style="margin-top:8px;font-size:62px;font-weight:900;font-style:italic;line-height:.98;letter-spacing:-1.5px">MUITO ALÉM DE<br><span class="g">PCS E CONSOLES</span></div>
-    <div style="margin-top:26px;display:inline-block;padding:15px 28px;border-radius:12px;background:${GOLD};color:#141008;font-size:27px;font-weight:900">Teste grátis 30 dias</div>
-    <div style="position:absolute;right:46px;top:70px;display:flex;flex-direction:column;gap:16px">${tiles(NOVAS.slice(0, 3), 150)}${tiles(NOVAS.slice(3), 150)}</div></div>`],
+  'story-1080x1920-novidades': [1080, 1920, `<div style="position:absolute;inset:0;padding:250px 40px 0;display:flex;flex-direction:column;align-items:center">
+    <img src="${logo}" style="width:380px"><div style="margin-top:44px;font-size:40px;font-weight:800;letter-spacing:8px;color:#FDD034">SISTEMA PARA ARENA GAMER</div>
+    <div style="margin-top:12px"><div style="font-size:100px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">TUDO QUE SUA<br><span class="g">ARENA PRECISA</span></div></div>
+    <div style="margin-top:70px">${box(NOVAS.slice(0, 3), 315)}</div><div style="margin-top:28px">${box(NOVAS.slice(3), 315)}</div>
+    <div style="margin-top:24px">${proNote(28)}</div>
+    <div style="margin-top:56px;padding:30px 60px;border-radius:20px;background:${GOLD};color:#141008;font-size:50px;font-weight:900">Teste grátis · gamezoney.com</div></div>`],
+  'quadrado-1080x1080-novidades': [1080, 1080, `<div style="position:absolute;inset:0;padding:48px 50px;display:flex;flex-direction:column;align-items:center">
+    <img src="${logo}" style="width:270px"><div style="margin-top:22px"><div style="font-size:70px;font-weight:900;font-style:italic;line-height:.98;text-align:center;letter-spacing:-2px">TUDO QUE SUA<br><span class="g">ARENA PRECISA</span></div></div>
+    <div style="margin-top:34px">${box(NOVAS.slice(0, 3), 290)}</div><div style="margin-top:20px">${box(NOVAS.slice(3), 290)}</div>
+    <div style="position:absolute;bottom:40px;left:56px;right:56px;display:flex;align-items:center;justify-content:space-between">${proNote(24)}<div style="font-size:32px;font-weight:800">gamezoney.com</div></div></div>`],
+  'paisagem-1200x628-novidades': [1200, 628, `<div style="position:absolute;inset:0;padding:44px 50px">
+    <img src="${logo}" style="width:230px"><div style="margin-top:22px;font-size:20px;font-weight:800;letter-spacing:2px;color:#FDD034">SISTEMA PARA ARENA GAMER</div>
+    <div style="margin-top:8px;font-size:56px;font-weight:900;font-style:italic;line-height:.98;letter-spacing:-1.5px">TUDO QUE SUA<br><span class="g">ARENA PRECISA</span></div>
+    <div style="margin-top:24px;display:inline-block;padding:14px 26px;border-radius:12px;background:${GOLD};color:#141008;font-size:26px;font-weight:900">Teste grátis 30 dias</div>
+    <div style="margin-top:22px">${proNote(19)}</div>
+    <div style="position:absolute;right:36px;top:60px;display:flex;flex-direction:column;gap:16px">${box(NOVAS.slice(0, 3), 205)}${box(NOVAS.slice(3), 205)}</div></div>`],
   // 2026-11-10: PLANOS (Free / Standard / Pro) — o que cada um libera
   'feed-1080x1350-planos': [1080, 1350, `<div style="position:absolute;inset:0;padding:70px 50px;display:flex;flex-direction:column;align-items:center">
     <img src="${logo}" style="width:330px"><div style="margin-top:40px;font-size:40px;font-weight:800;letter-spacing:8px;color:#FDD034">PLANOS</div>
