@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.2.8.0")]
+[assembly: AssemblyVersion("1.2.9.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -73,7 +73,7 @@ class Launcher : ApplicationContext {
     void ShowPanel(){if(panel!=null)panel.Show();else OpenPanel(address);}
     void Log(string line) { if(line==null)return; lock(logLock) {try{File.AppendAllText(Path.Combine(data,"server.log"),DateTime.Now.ToString("s")+" "+line+Environment.NewLine);}catch{}} }
     string Request(string path,bool stop=false) {
-        HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=1000;r.ReadWriteTimeout=1000;
+        HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=stop?3000:1000;r.ReadWriteTimeout=stop?3000:1000;r.KeepAlive=false;
         if(stop){r.Method="POST";r.Headers["X-GZ-Control"]=token;r.ContentLength=0;}
         using(var response=r.GetResponse())using(var reader=new StreamReader(response.GetResponseStream()))return reader.ReadToEnd();
     }
@@ -95,7 +95,7 @@ class Launcher : ApplicationContext {
         if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
         child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
-        bool ready=false;for(int i=0;i<240;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(250);}
+        bool ready=false;for(int i=0;i<240;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(i<40?100:250);/* 1.2.9: primeiros 4 s conferindo a cada 0,1 s (abre o painel assim que o servidor responde) */}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
         var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());/* 1.0.5: "Abrir no navegador" e "Abrir pasta de dados" retirados do menu */menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
@@ -111,7 +111,8 @@ class Launcher : ApplicationContext {
     }
     void OnSessionEnding(object sender,SessionEndingEventArgs e){SessionEnded=true;Stop();}
     public static bool SessionEnded,Ran;
-    void Stop(){if(stopping)return;stopping=true;try{if(panel!=null)panel.Dispose();if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}if(!child.WaitForExit(15000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");child.Kill();child.WaitForExit(3000);}}}finally{if(tray!=null){tray.Visible=false;tray.Dispose();}}}
+    // 1.2.9: encerrar rápido e com aviso — pede o fim ao Node PRIMEIRO (ele fecha enquanto a janela do painel é descartada), some com o ícone na hora e mostra "Encerrando…"
+    void Stop(){if(stopping)return;stopping=true;var watch=Stopwatch.StartNew();bool show=!SessionEnded&&tray!=null;try{if(tray!=null)tray.Visible=false;if(show)Splash.Open("Encerrando o servidor… aguarde alguns segundos.");if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}}if(panel!=null){try{panel.Dispose();}catch{}}if(child!=null&&!child.HasExited&&!child.WaitForExit(12000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");try{child.Kill();child.WaitForExit(3000);}catch{}}Log("GameZoney encerrado em "+watch.ElapsedMilliseconds+" ms.");}finally{Splash.Close();if(tray!=null){tray.Visible=false;tray.Dispose();}}}
     protected override void ExitThreadCore(){SystemEvents.SessionEnding-=OnSessionEnding;if(monitor!=null)monitor.Stop();Stop();base.ExitThreadCore();}
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
     [STAThread] static int Main(string[] args){
@@ -383,12 +384,13 @@ static class PendingUpdate {
 }
 static class Splash {
     static Form form;
-    public static void Open(){
-        try{
+    public static void Open(){Open("Iniciando o servidor… aguarde alguns segundos.");}
+    public static void Open(string text){
+        try{if(form!=null)Close();
             form=new Form{FormBorderStyle=FormBorderStyle.None,StartPosition=FormStartPosition.CenterScreen,Size=new Size(420,130),BackColor=Color.FromArgb(18,23,32),ShowInTaskbar=true,Text="GameZoney",TopMost=true};
             try{using(var s=Assembly.GetExecutingAssembly().GetManifestResourceStream("gamezoney.ico"))if(s!=null)form.Icon=new Icon(s);}catch{}
             var title=new Label{Text="GameZoney",ForeColor=Color.FromArgb(253,208,52),Font=new Font("Segoe UI",18,FontStyle.Bold),AutoSize=true,Location=new Point(24,22)};
-            var sub=new Label{Text="Iniciando o servidor… aguarde alguns segundos.",ForeColor=Color.FromArgb(220,224,232),Font=new Font("Segoe UI",10),AutoSize=true,Location=new Point(26,72)};
+            var sub=new Label{Text=text,ForeColor=Color.FromArgb(220,224,232),Font=new Font("Segoe UI",10),AutoSize=true,Location=new Point(26,72)};
             form.Controls.Add(title);form.Controls.Add(sub);form.Show();form.Refresh();Application.DoEvents();
         }catch{form=null;}
     }
