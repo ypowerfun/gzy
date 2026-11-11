@@ -11,7 +11,10 @@ module.exports=store=>{
   if(d.run!==body.clientRunId||d.session!==session||d.admin!==!!admin){
    // Comandos de energia já enviados sobrevivem a troca de sessão/admin para que
    // o PC possa desligar/reiniciar mesmo depois de entrar em modo administrador.
-   d.commands=d.commands.filter(c=>c.sent&&['restart','shutdown'].includes(c.type)&&c.expires>Date.now());
+   // 1.3.1: o desligamento pela recepção encerra a sessão logo depois de pedir o comando; o comando ainda não entregue
+   // continua valendo (só é descartado se o próprio Cliente reiniciou — outra execução).
+   const sameRun=d.run===String(body.clientRunId||'');
+   d.commands=d.commands.filter(c=>['restart','shutdown'].includes(c.type)&&c.expires>Date.now()&&(c.sent||sameRun));
    for(const c of d.commands)c.noRetry=false;
    d.frame=null;d.watchUntil=0;d.locked=false;d.processes=[];
   }
