@@ -337,3 +337,11 @@ label.check{display:flex;align-items:flex-start;gap:4px;margin:8px 0;text-transf
 
 /* 1.1.3: aviso de atualização aguardando o servidor ser encerrado */
 .gz-upd-wait{border:1px solid rgba(253,208,52,.45);background:rgba(253,208,52,.08);border-radius:10px;padding:12px 14px;margin:10px 0}.gz-upd-wait strong{color:var(--gold2,#FDD034)}.gz-upd-wait .hint{margin:6px 0 0}
+/* 1.3.0: notas fiscais (Focus NFe) */
+.badge.gold{background:#3a2e0b;color:#ffd75e}
+.fiscal-form h3{margin:22px 0 6px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#ffd75e;border-top:1px solid #2b303a;padding-top:16px}
+.fiscal-form .row{display:flex;gap:12px;flex-wrap:wrap}.fiscal-form .row>label{flex:1 1 180px}
+.fiscal-form textarea{min-height:64px}
+.warn-panel{border-left:3px solid #f0b11e}
+td.actions-cell a.button-link{display:inline-flex;align-items:center;padding:6px 10px;font-size:11px;margin:2px 4px 2px 0;background:transparent;border:1px solid #6b5626;color:#ffd75e;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;font-weight:700}td.actions-cell a.button-link:hover{background:#2a2310}
+details.fiscal-fields{margin:10px 0;border:1px solid #2b303a;padding:8px 12px}details.fiscal-fields summary{cursor:pointer;color:#ffd75e;font-weight:600}

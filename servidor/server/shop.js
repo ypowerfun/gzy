@@ -37,6 +37,17 @@ function marginPrice(costCents, percent) {
   const raw = costCents * (10000 + Math.round(percent * 100));          // centavos × 10000
   return Math.ceil(raw / 1000000) * 100;                                  // real inteiro, para cima
 }
+// 1.3.0: dados fiscais do produto para a NFC-e (passados pelo contador). Vazios = usa o padrão de Notas fiscais.
+function fiscalFields(input, before) {
+  if (input === undefined) return before || null;
+  if (input === null || typeof input !== 'object') return null;
+  const d = v => String(v ?? '').replace(/\D/g, ''), f = {ncm: d(input.ncm), cfop: d(input.cfop), cst: d(input.cst), origem: d(input.origem).slice(0, 1), unidade: String(input.unidade ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)};
+  if (f.ncm && !/^\d{8}$/.test(f.ncm)) fail('NCM do produto: 8 dígitos (ex.: 22021000 para refrigerante).');
+  if (f.cfop && !/^\d{4}$/.test(f.cfop)) fail('CFOP do produto: 4 dígitos (ex.: 5102).');
+  if (f.cst && !/^\d{2,3}$/.test(f.cst)) fail('CST/CSOSN do produto: 2 ou 3 dígitos (ex.: 102).');
+  for (const k of Object.keys(f)) if (!f[k]) delete f[k];
+  return Object.keys(f).length ? f : null;
+}
 function saveProduct(store, input, actor) {
   const name = text(input.name, 'Nome do produto', 100);
   const category = store.state.categories.includes(input.category) ? input.category : fail('Escolha a categoria.');
@@ -47,6 +58,7 @@ function saveProduct(store, input, actor) {
   if (barcode && !/^[\x20-\x7E]{3,200}$/.test(barcode)) fail('Código de barras/QR Code inválido (3 a 200 caracteres, sem acentos).'); /* 1.1.0: aceita também o texto de QR Code */
   const stock = integer(input.stock, 0, 1000000, 'Quantidade em estoque');
   const existing = input.id ? store.state.products.find(p => p.id === input.id) || fail('Produto não encontrado.') : null;
+  const fiscal = fiscalFields(input.fiscal, existing?.fiscal);
   if (barcode && store.state.products.some(p => p.active && p.id !== existing?.id && p.barcode === barcode)) fail('Este código de barras já está em outro produto.');
   if (store.state.products.some(p => p.active && p.id !== existing?.id && p.name.toLowerCase() === name.toLowerCase())) fail('Já existe um produto com este nome.');
   return store.change(actor, 'produto', (existing ? 'Produto atualizado: ' : 'Produto cadastrado: ') + name + ` • estoque ${stock}`, () => {
@@ -55,6 +67,7 @@ function saveProduct(store, input, actor) {
     const before = existing ? existing.stock : 0;
     if (stock !== before) (store.state.stockMoves ??= []).push({id: id(), at: Date.now(), actor, productId: p.id, productName: name, type: existing ? 'ajuste' : 'cadastro', qty: stock - before, stockAfter: stock, reason: existing ? 'Ajuste no cadastro do produto' : 'Estoque inicial'});
     Object.assign(p, {name, category, costCents, marginPercent: margin, priceCents, barcode, stock, active: true, example: false, updatedAt: Date.now()});
+    if (fiscal) p.fiscal = fiscal; else delete p.fiscal;
     return p;
   });
 }

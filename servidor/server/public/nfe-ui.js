@@ -11,10 +11,11 @@ async function renderNfe() {
   $('#view-title').textContent = 'Gerenciamento NF-e';
   if (!state.pro) { node.innerHTML = `<div class="shop-area"><div class="panel"><h2>Notas Fiscais</h2><p class="hint">Recurso do plano Pro. Assine o Pro em gamezoney.com e clique em Atualizar plano em Configuração › Licença.</p></div></div>`; return; }
   if (!isAdmin()) { node.innerHTML = '<div class="empty">Esta área é reservada ao administrador.</div>'; return; }
+  if (typeof nfeTab !== 'undefined' && nfeTab !== 'entrada') return renderFiscal(node);   // 1.3.0: Notas emitidas / Configuração fiscal
   const q = new URLSearchParams(); if (nfeStatus) q.set('status', nfeStatus); if (nfeSearch) q.set('search', nfeSearch);
   nfeData = await api('/nfe?' + q); if (view !== 'nfe') return;
   const S = nfeData.summary, card = (t, v, h) => `<div class="stat"><span>${t}</span><strong>${v}</strong>${h ? `<small>${h}</small>` : ''}</div>`;
-  node.innerHTML = `<div class="shop-area">
+  node.innerHTML = `<div class="shop-area">${typeof fiscalTabs === 'function' ? fiscalTabs() : ''}
     <div class="stats">${card('Aguardando entrada', S.pending)}${card('Entradas no mês', S.postedMonth, money(S.postedMonthCents))}${card('Fornecedores', S.suppliers)}${card('Canceladas', S.cancelled)}</div>
     <div class="panel"><div class="toolbar"><div><h2>Notas fiscais de entrada</h2><p class="hint">Importe o XML da nota do fornecedor. Os itens são vinculados sozinhos pelo código de barras ou pelo vínculo já usado; os que faltarem pedem o código do produto. Ao dar entrada, o estoque e o preço de custo são atualizados.</p></div>
       <button class="primary" type="button" id="nfe-pick" style="flex:0 0 auto">+ Importar XML da nota</button><input type="file" accept=".xml,text/xml,application/xml" multiple hidden id="nfe-file"></div>

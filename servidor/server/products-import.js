@@ -17,7 +17,10 @@ function detect(rows) {
     const h = rows[i].cells.map(c => typeof c === 'object' ? '' : norm(c)), col = {};
     h.forEach((t, j) => {
       if (!t) return;
-      if (col.barcode === undefined && /(barra|ean|gtin|qr)/.test(t)) col.barcode = j;
+      if (col.ncm === undefined && /\bncm\b/.test(t)) col.ncm = j;               // 1.3.0: dados fiscais para a NFC-e
+      else if (col.cfop === undefined && /\bcfop\b/.test(t)) col.cfop = j;
+      else if (col.cst === undefined && /\b(cst|csosn)\b/.test(t)) col.cst = j;
+      else if (col.barcode === undefined && /(barra|ean|gtin|qr)/.test(t)) col.barcode = j;
       else if (col.margin === undefined && /(margem|markup|lucro)/.test(t)) col.margin = j;
       else if (col.cost === undefined && /(custo|compra)/.test(t)) col.cost = j;
       else if (col.price === undefined && /(venda|preco|valor)/.test(t)) col.price = j;
@@ -60,7 +63,7 @@ function parse(fileName, data) {
   for (const r of rows.slice(col.header + 1)) {
     const get = k => col[k] === undefined ? '' : r.cells[col[k]];
     if (['code', 'name', 'category', 'cost', 'price', 'margin', 'barcode', 'stock'].every(k => str(get(k)) === '')) continue;
-    out.push({line: r.line, code: str(get('code')), name: str(get('name')), category: str(get('category')), costRaw: str(get('cost')), priceRaw: str(get('price')), marginRaw: str(get('margin')), barcode: str(get('barcode')), stockRaw: str(get('stock')),
+    out.push({line: r.line, code: str(get('code')), name: str(get('name')), category: str(get('category')), costRaw: str(get('cost')), priceRaw: str(get('price')), marginRaw: str(get('margin')), barcode: str(get('barcode')), stockRaw: str(get('stock')), ncm: str(get('ncm')).replace(/\D/g, ''), cfop: str(get('cfop')).replace(/\D/g, ''), cst: str(get('cst')).replace(/\D/g, ''),
       costCents: money(get('cost')), priceCents: money(get('price')), margin: percent(get('margin')), stock: (() => { const s = get('stock'); if (s === '' || s === undefined) return undefined; const n = Number(str(s).replace(',', '.')); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null; })()});
     if (out.length > MAX_ROWS) fail('A planilha tem mais de ' + MAX_ROWS + ' linhas.');
   }
@@ -82,6 +85,9 @@ function validate(store, rows) {
     else if (item.priceCents === null) item.error = 'Preço de venda não reconhecido: "' + r.priceRaw + '".';
     else if (item.margin === null) item.error = 'Margem não reconhecida: "' + r.marginRaw + '" (use 50 ou 50%).';
     else if (item.stock === null) item.error = 'Estoque não reconhecido: "' + r.stockRaw + '".';
+    else if (item.ncm && !/^\d{8}$/.test(item.ncm)) item.error = 'NCM inválido (8 dígitos).';
+    else if (item.cfop && !/^\d{4}$/.test(item.cfop)) item.error = 'CFOP inválido (4 dígitos).';
+    else if (item.cst && !/^\d{2,3}$/.test(item.cst)) item.error = 'CST/CSOSN inválido (2 ou 3 dígitos).';
     else if (item.barcode && !BARCODE.test(item.barcode)) item.error = 'Código de barras inválido.';
     else if (item.barcode && active.some(p => p.barcode === item.barcode && p.id !== target?.id)) item.error = 'Código de barras já usado em outro produto.';
     else if (seen.has(key)) item.error = 'Produto repetido na planilha.';
@@ -101,7 +107,7 @@ function validate(store, rows) {
 function importProducts(store, rows, actor) {
   if (!Array.isArray(rows) || !rows.length) fail('Nenhuma linha para importar.');
   if (rows.length > MAX_ROWS) fail('Muitas linhas.');
-  const checked = validate(store, rows.map(r => ({line: Number(r.line) || 0, code: r.code, name: r.name, category: r.category, barcode: r.barcode, costRaw: r.costRaw, priceRaw: r.priceRaw, marginRaw: r.marginRaw, stockRaw: r.stockRaw,
+  const checked = validate(store, rows.map(r => ({line: Number(r.line) || 0, code: r.code, name: r.name, category: r.category, barcode: r.barcode, ncm: String(r.ncm || '').replace(/\D/g, ''), cfop: String(r.cfop || '').replace(/\D/g, ''), cst: String(r.cst || '').replace(/\D/g, ''), costRaw: r.costRaw, priceRaw: r.priceRaw, marginRaw: r.marginRaw, stockRaw: r.stockRaw,
     costCents: r.costCents === null ? null : r.costCents === undefined || r.costCents === '' ? undefined : Number(r.costCents), priceCents: r.priceCents === null ? null : r.priceCents === undefined || r.priceCents === '' ? undefined : Number(r.priceCents),
     margin: r.margin === null ? null : r.margin === undefined || r.margin === '' ? undefined : Number(r.margin), stock: r.stock === null ? null : r.stock === undefined || r.stock === '' ? undefined : Number(r.stock)})));
   const ok = checked.filter(r => r.status === 'new' || r.status === 'update');
@@ -115,6 +121,7 @@ function importProducts(store, rows, actor) {
       if (!p) { p = {id: id(), createdAt: now, active: true, code: ++s.productSequence, stock: 0, barcode: ''}; s.products.push(p); }
       const before = p.stock || 0, stock = r.stock !== undefined ? r.stock : before;
       Object.assign(p, {name: r.name || p.name, category: r.finalCategory, costCents: r.finalCost, marginPercent: r.finalMargin, priceCents: r.finalPrice, barcode: r.barcode || p.barcode || '', stock, active: true, example: false, updatedAt: now});
+      const fis = Object.fromEntries(['ncm', 'cfop', 'cst'].filter(k => r[k]).map(k => [k, r[k]])); if (Object.keys(fis).length) p.fiscal = {...(p.fiscal || {}), ...fis};
       if (stock !== before || r.status === 'new') (s.stockMoves ??= []).push({id: id(), at: now, actor, productId: p.id, productName: p.name, type: r.status === 'new' ? 'cadastro' : 'ajuste', qty: stock - before, stockAfter: stock, reason: 'Importação de planilha'});
     }
     return null;

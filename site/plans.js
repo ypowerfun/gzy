@@ -17,7 +17,7 @@ const DEFAULT_PLANS = {
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
     features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Multi-Unidade', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
+    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
 
@@ -45,6 +45,12 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved) { for (const id of PLAN_IDS) if (saved[id]) saved[id].features = [...DEFAULT_PLANS[id].features]; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Itens dos planos Free/Standard/Pro atualizados para a lista nova'); }
     saveSetting('plans_features_v3', {at: Date.now()});
+  }
+  // 2.13: Pro passa a emitir NFC-e e NFS-e (Focus NFe): só ACRESCENTA o item no Pro salvo no /admin, uma vez, sem trocar a lista
+  if (!setting('plans_features_v4')) {
+    const saved = setting('plans');
+    if (saved?.pro?.features && !saved.pro.features.some(f => /NFC-e/i.test(f))) { const i = saved.pro.features.findIndex(f => /NF-e/i.test(f)); saved.pro.features.splice(i >= 0 ? i + 1 : saved.pro.features.length, 0, 'Emissão de NFC-e e NFS-e'); saved.pro.features = saved.pro.features.slice(0, 12); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item "Emissão de NFC-e e NFS-e" acrescentado'); }
+    saveSetting('plans_features_v4', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};
