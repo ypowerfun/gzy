@@ -51,7 +51,7 @@ Ordem: **Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Transferir
 
 1. Abra o **GameZoney Servidor**. A primeira abertura inicia o **teste grátis de 30 dias** (Configuração › Licença, seção 15); depois, entre com a sua conta gamezoney.com com plano ativo. Na primeira vez aparece **Prepare sua arena**: crie o administrador principal (usuário e senha de **4 a 24 caracteres**). Não existe senha padrão.
 2. No **Painel de controle**, confira o **valor da hora** (padrão R$ 7,00) pela **engrenagem** do card **Valor da hora**: digite o novo valor, **Confirmar** e informe a senha do administrador. **Data e hora** são sempre as do computador onde o servidor está instalado (as mesmas do relógio do Windows; para mudar, ajuste o relógio do Windows e reabra o servidor). O **endereço do servidor** usado pelas TVs e PCs já vem com o IP da máquina; confira em **Configuração > Servidor IP** (seção 15).
-3. A instalação nova já vem com duas estações de exemplo: **Exemplo Console** e **Exemplo PC**. Remova-as com **Remover console** / **Remover computador** (clique na estação) e cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
+3. A instalação nova vem sem estações (sem TV ou PC de exemplo). Cadastre as suas em **Painel de controle > + Nova estação** (seção 3) e as promoções em **Fidelidade > Promoções** (seção 10).
 4. Crie as contas da equipe em **Configuração > Contas de acesso**: **Administrador** (tudo) ou **Operador** (atendimento: clientes, recargas, sessões, visitantes, PDV, histórico). Cada um troca a própria senha em **Perfil > Alterar senha** (botão **Perfil**, ao lado de **Sair**). Só o administrador principal (primeira conta) ativa/desativa contas.
 
 ---

@@ -19,3 +19,17 @@ test('1.2.9: encerrar não espera TV que não responde nem conexão mantida aber
  const {Store}=require('../store'),s=new Store(dir);try{assert.equal(s.state.runtime.cleanShutdown,true);assert.ok(s.state.logs?true:true)}finally{s.close()}
  stuck.then(()=>{});
 });
+test('1.2.9: instalação nova sem TV/PC de exemplo; instalação antiga perde só os exemplos nunca usados e sem alteração',async t=>{
+ const {Store}=require('../store'),mk=()=>{const d=fs.mkdtempSync(path.join(os.tmpdir(),'gz-ex-'));t.after(()=>fs.rmSync(d,{recursive:true,force:true,maxRetries:5}));return d};
+ // nova (como o GameZoney.exe): sem estações
+ let d=mk(),app=createServer({directory:d,examples:false,noTimer:true});assert.deepEqual(app.store.state.stations,[]);await app.close();
+ // antiga, exemplos intactos: os dois saem, com registro no Log; reabrir não mexe de novo
+ d=mk();let s=new Store(d);assert.equal(s.state.stations.length,2);s.close();
+ app=createServer({directory:d,examples:false,noTimer:true});assert.deepEqual(app.store.state.stations,[]);assert.ok(app.store.logs?true:true);await app.close();
+ s=new Store(d);try{assert.ok(s.db.prepare("SELECT 1 FROM logs WHERE detail LIKE 'Estações de exemplo retiradas: Exemplo Console, Exemplo PC'").get())}finally{s.close()}
+ // antiga, exemplos usados/alterados: ficam
+ d=mk();s=new Store(d);const m=s.memberSave({name:'Ana',username:'ana'},'admin');s.credit(m.id,{minutes:10,paymentMethod:'cash'},'admin');s.start('1',m.id,'admin');s.finish('1','admin');s.state.stations.find(x=>x.id==='2').name='PC 01';s.persist();s.close();
+ app=createServer({directory:d,examples:false,noTimer:true});assert.deepEqual(app.store.state.stations.map(x=>x.id).sort(),['1','2']);await app.close();
+ // os testes (com pasta própria) continuam com os exemplos
+ d=mk();app=createServer({directory:d,noTimer:true});assert.equal(app.store.state.stations.length,2);await app.close();
+});

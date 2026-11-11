@@ -6,13 +6,15 @@ const Vidaa=require('./vidaa');const netinfo=require('./netinfo');
 const CLIENT_VERSION='1.0.19';const SERVER_VERSION='1.2.9';const AndroidTv=require('./androidtv');
 function createServer(options={}){
  const directory=options.directory||process.env.GZ_DATA_DIR||path.join(process.env.LOCALAPPDATA||os.homedir(),'GameZoney','data');
- const store=new Store(directory),app=express(),server=http.createServer(app),sessions=require('./panel-sessions')(store),clients=new Map(),status=new Map(),attempts=new Map();
+ const examples=options.examples??!!options.directory,store=new Store(directory,{examples}),app=express(),server=http.createServer(app),sessions=require('./panel-sessions')(store),clients=new Map(),status=new Map(),attempts=new Map();
  const previousRuntime={...(store.state.runtime||{})},bootAt=Date.now(),bootId=crypto.randomBytes(12).toString('hex');
  const previousAliveAt=Number(previousRuntime.lastAliveAt)||0,previousAbrupt=previousRuntime.cleanShutdown===false&&previousAliveAt>0;
  store.state.runtime={...previousRuntime,bootId,bootAt,previousAliveAt,previousAbrupt,lastAliveAt:bootAt,cleanShutdown:false};
  if(previousAbrupt){for(const session of store.state.sessions.filter(s=>s.status==='active')){const station=store.state.stations.find(x=>x.id===session.stationId);if(!station||station.kind!=='computer')continue;if(!store.state.recoveryReviews.some(r=>r.bootId===bootId&&r.sessionId===session.id))store.state.recoveryReviews.push({id:id(),bootId,sessionId:session.id,stationId:station.id,stationName:station.name,memberId:session.memberId,memberName:session.memberName,memberUsername:session.memberUsername||'',detectedAt:bootAt,status:'pending',simultaneous:null,safeRemainingSeconds:null,refundedSeconds:null,potentialLossSeconds:0,note:'Servidor reiniciou após encerramento inesperado com esta sessão ativa.'});}}
  if(store.state.recoveryReviews.length>200)store.state.recoveryReviews.splice(0,store.state.recoveryReviews.length-200);store.persist();
- const Factory=options.Vidaa||Vidaa,AndroidFactory=options.AndroidTv||AndroidTv;let queue=Promise.resolve();const SHUTDOWN={queueMs:2000,backupMs:10000,...options.shutdown};
+ const Factory=options.Vidaa||Vidaa,AndroidFactory=options.AndroidTv||AndroidTv;let queue=Promise.resolve();const SHUTDOWN={queueMs:1500,backupMs:1500,...options.shutdown};
+ /* 1.2.9: retira a TV e o PC de exemplo das instalações que já existem, só se continuam iguais ao padrão e nunca foram usados (TV de exemplo sem resposta segurava comandos e o encerramento) */
+ if(!examples&&!store.state.settings.examplesRemoved){const used=id=>store.history('sessions',0,Date.now()+864e5).some(x=>x.stationId===id)||store.state.sessions.some(x=>x.stationId===id),gone=store.state.stations.filter(st=>!st.removedAt&&((st.id==='1'&&st.kind==='tv'&&st.name==='Exemplo Console'&&st.ip==='192.168.1.111')||(st.id==='2'&&st.kind==='computer'&&st.name==='Exemplo PC'&&!st.ip&&!st.pcDevice&&!st.pcTokenHash&&!st.network))&&!used(st.id));if(gone.length)store.change('sistema','estacao','Estações de exemplo retiradas: '+gone.map(st=>st.name).join(', '),()=>{store.state.stations=store.state.stations.filter(st=>!gone.includes(st));store.state.settings.examplesRemoved=Date.now()});else{store.state.settings.examplesRemoved=Date.now();store.persist();}}
  const serialized=fn=>{const next=queue.then(fn);queue=next.catch(()=>{});return next};
  const backups=require('./backups')(store,{serialize:serialized,...options.backups});
  const local=req=>['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);

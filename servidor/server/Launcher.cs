@@ -73,7 +73,7 @@ class Launcher : ApplicationContext {
     void ShowPanel(){if(panel!=null)panel.Show();else OpenPanel(address);}
     void Log(string line) { if(line==null)return; lock(logLock) {try{File.AppendAllText(Path.Combine(data,"server.log"),DateTime.Now.ToString("s")+" "+line+Environment.NewLine);}catch{}} }
     string Request(string path,bool stop=false) {
-        HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=stop?3000:1000;r.ReadWriteTimeout=stop?3000:1000;r.KeepAlive=false;
+        HttpWebRequest r=(HttpWebRequest)WebRequest.Create(address+path);r.Proxy=null;r.Timeout=1000;r.ReadWriteTimeout=1000;r.KeepAlive=false;
         if(stop){r.Method="POST";r.Headers["X-GZ-Control"]=token;r.ContentLength=0;}
         using(var response=r.GetResponse())using(var reader=new StreamReader(response.GetResponseStream()))return reader.ReadToEnd();
     }
@@ -112,7 +112,7 @@ class Launcher : ApplicationContext {
     void OnSessionEnding(object sender,SessionEndingEventArgs e){SessionEnded=true;Stop();}
     public static bool SessionEnded,Ran;
     // 1.2.9: encerrar rápido e com aviso — pede o fim ao Node PRIMEIRO (ele fecha enquanto a janela do painel é descartada), some com o ícone na hora e mostra "Encerrando…"
-    void Stop(){if(stopping)return;stopping=true;var watch=Stopwatch.StartNew();bool show=!SessionEnded&&tray!=null;try{if(tray!=null)tray.Visible=false;if(show)Splash.Open("Encerrando o servidor… aguarde alguns segundos.");if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}}if(panel!=null){try{panel.Dispose();}catch{}}if(child!=null&&!child.HasExited&&!child.WaitForExit(12000)){Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");try{child.Kill();child.WaitForExit(3000);}catch{}}Log("GameZoney encerrado em "+watch.ElapsedMilliseconds+" ms.");}finally{Splash.Close();if(tray!=null){tray.Visible=false;tray.Dispose();}}}
+    void Stop(){if(stopping)return;stopping=true;var watch=Stopwatch.StartNew();bool show=!SessionEnded&&tray!=null;try{if(tray!=null)tray.Visible=false;if(show)Splash.Open("Encerrando o servidor… aguarde alguns segundos.");if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}}if(panel!=null){try{panel.Dispose();}catch{}}if(child!=null&&!child.HasExited&&!child.WaitForExit(4000)){/* 1.2.9: mais de 4 s = força o fechamento (pedido do dono); a sessão continua contando e é retomada ao abrir */Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");try{child.Kill();child.WaitForExit(3000);}catch{}}Log("GameZoney encerrado em "+watch.ElapsedMilliseconds+" ms.");}finally{Splash.Close();if(tray!=null){tray.Visible=false;tray.Dispose();}}}
     protected override void ExitThreadCore(){SystemEvents.SessionEnding-=OnSessionEnding;if(monitor!=null)monitor.Stop();Stop();base.ExitThreadCore();}
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
     [STAThread] static int Main(string[] args){
