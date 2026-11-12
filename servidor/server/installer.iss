@@ -4,7 +4,7 @@ AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
 ; 1.1.9: sem número de versão nas telas do instalador (a versão continua nos detalhes do arquivo, para a equipe)
 AppVerName=GameZoney Servidor
-AppVersion=1.3.6
+AppVersion=1.3.7
 AppPublisher=GameZoney
 ; 1.1.9: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
@@ -27,7 +27,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.3.6-Setup
+OutputBaseFilename=GameZoney-Servidor-1.3.7-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -39,7 +39,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.3.6.0
+VersionInfoVersion=1.3.7.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -95,6 +95,8 @@ Source: "nfe.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "fiscal.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "app-manager.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "units.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "achievements.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "member-app.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "pc-devices.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "diskless.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "member-photos.js"; DestDir: "{app}"; Flags: ignoreversion

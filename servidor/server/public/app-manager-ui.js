@@ -64,8 +64,11 @@ function unitsSection(u) {
 async function renderAppManager() {
   const node = $('#view'); $('#view-title').textContent = 'Gerenciar App';
   if (!isAdmin() || !state?.pro) { node.innerHTML = '<div class="panel"><h2>Gerenciar App</h2><p class="hint">Recurso do plano Pro.</p></div>'; return; }
-  const r = await api('/app-manager'); if (view !== 'app') return;
-  node.innerHTML = ''; node.append(appManagerSection(r));
+  // 1.3.7: abas App do cliente / Conquistas / Servidor em nuvem (member-app-ui.js)
+  const tab = typeof gzAppTab === 'string' ? gzAppTab : 'cloud';
+  const r = tab === 'client' ? memberAppSection(await api('/member-app')) : tab === 'achievements' ? achievementsSection(await api('/achievements')) : appManagerSection(await api('/app-manager'));
+  if (view !== 'app') return;
+  node.innerHTML = typeof gzAppTabs === 'function' ? gzAppTabs() : ''; node.append(r);
 }
 (function () {
   const original = renderSettings;

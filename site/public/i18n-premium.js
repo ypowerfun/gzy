@@ -99,6 +99,7 @@ Object.assign(window.GZ_SITE_DICT.exact, {
   "PCs e consoles ilimitados":["Unlimited PCs and consoles", "PCs y consolas ilimitados"],
   "1 layout personalizado (Servidor/Cliente)":["1 custom layout (Server/Client)", "1 diseño personalizado (Servidor/Cliente)"],
   "1 app (Servidor/Cliente)":["1 app (Server/Client)", "1 app (Servidor/Cliente)"],
+  "App do cliente com conquistas (app.gamezoney.com)":["Customer app with achievements (app.gamezoney.com)", "App del cliente con logros (app.gamezoney.com)"],
   "Suporte completo":["Full support", "Soporte completo"],
   "Novas atualizações":["New updates", "Nuevas actualizaciones"],
   "Ver planos":["See plans", "Ver planes"],

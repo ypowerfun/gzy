@@ -46,7 +46,7 @@ cp "$APP/deploy/gamezoney-site.service" /etc/systemd/system/gamezoney-site.servi
 install -m 755 "$APP/deploy/backup-site.sh" /etc/cron.daily/gamezoney-site-backup
 systemctl daemon-reload && systemctl enable gamezoney-site && systemctl restart gamezoney-site
 
-echo "== 6/7 Caddy (gamezoney.com e www)"
+echo "== 6/7 Caddy (gamezoney.com, www e app)"
 # 1.3: valida o Caddyfile novo ANTES de trocar; se tiver erro, o atual continua valendo
 if caddy validate --adapter caddyfile --config "$APP/deploy/Caddyfile"; then
   cp "$APP/deploy/Caddyfile" /etc/caddy/Caddyfile

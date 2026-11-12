@@ -1,0 +1,68 @@
+/* GameZoney — app do cliente (app.gamezoney.com). Software proprietário e confidencial. */
+:root{--bg:#0b0b12;--card:#15151f;--card2:#1c1c29;--line:#2a2a3a;--text:#f2f2f7;--muted:#9a9ab0;--accent:#d4a017;--accent2:#ffce3a;--green:#3ddc84;--red:#ff5a6a;--amber:#ffb84d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;background:radial-gradient(120% 60% at 50% -10%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),var(--bg)}
+#app{max-width:560px;margin:0 auto;min-height:100vh;padding:0 16px calc(84px + env(safe-area-inset-bottom))}
+.hidden{display:none!important}
+.top{display:flex;align-items:center;gap:12px;padding:18px 0 14px;position:sticky;top:0;background:linear-gradient(var(--bg) 75%,transparent);z-index:5}
+.top img{height:44px;width:auto;max-width:130px;object-fit:contain;border-radius:10px}
+.top strong{display:block;font:italic 900 19px/1.1 Montserrat,system-ui,sans-serif;letter-spacing:.3px;text-transform:uppercase}
+.top small{color:var(--muted);font-size:12px}
+.top small.on{color:var(--green)}
+h1{font:italic 900 24px/1.15 Montserrat,system-ui,sans-serif;margin:8px 0 4px;text-transform:uppercase}
+h2{font:800 15px Montserrat,system-ui,sans-serif;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent2)}
+p.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.stat strong{display:block;font:800 26px/1.2 Montserrat,system-ui,sans-serif;margin-top:4px;color:var(--accent2)}
+.stat small{color:var(--muted)}
+.live{border-color:color-mix(in srgb,var(--accent) 60%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,var(--card)),var(--card))}
+.live .big{font:800 34px/1.1 Montserrat,system-ui,sans-serif;color:var(--text);font-variant-numeric:tabular-nums}
+label{display:block;color:var(--muted);font-size:13px;margin:0 0 12px}
+input{display:block;width:100%;margin-top:6px;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:16px}
+input:focus{outline:2px solid var(--accent);border-color:transparent}
+button{font:inherit;cursor:pointer}
+.btn{display:block;width:100%;padding:15px;border:0;border-radius:12px;background:linear-gradient(180deg,var(--accent2),var(--accent));color:#141008;font:800 15px Montserrat,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.5px}
+.btn:disabled{opacity:.6}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.error{color:var(--red);min-height:20px;margin:8px 0 0;font-size:14px}
+.loading,.empty{color:var(--muted);text-align:center;padding:40px 0}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chips button{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:600;font-size:14px}
+.chips button.active{background:var(--accent);border-color:var(--accent);color:#141008}
+.stations{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.station{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:96px;display:flex;flex-direction:column;gap:4px}
+.station .name{font-weight:700}
+.station .type{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.station .st{margin-top:auto;font-weight:700;font-size:14px}
+.station.free .st{color:var(--green)}
+.station.busy{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.station.busy .st{color:var(--accent2);font-variant-numeric:tabular-nums}
+.station.maintenance .st,.station.offline .st{color:var(--muted)}
+.ach{display:flex;gap:12px;align-items:flex-start}
+.ach .ic{font-size:30px;line-height:1;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--card2);flex:none}
+.ach.done .ic{background:color-mix(in srgb,var(--accent) 30%,var(--card2))}
+.ach .body{flex:1;min-width:0}
+.ach .body strong{display:block}
+.ach .body small{color:var(--muted);display:block}
+.bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}
+.medal{color:var(--accent2);font-weight:700;font-size:13px;white-space:nowrap}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green);margin-top:4px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:12px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font-weight:600}
+.seg button.active{background:var(--card2);color:var(--text)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row small{display:block;color:var(--muted)}
+.row .v{text-align:right;font-weight:700;white-space:nowrap}
+.row .v.plus{color:var(--green)}
+.row .v.minus{color:var(--red)}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);max-width:560px;margin:0 auto;background:rgba(17,17,26,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:10}
+.tabs button{border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:4px 0}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.active{color:var(--accent2)}
+.foot{color:var(--muted);text-align:center;font-size:12px;margin:24px 0 8px}
+.foot a{color:var(--muted)}

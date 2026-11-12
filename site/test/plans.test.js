@@ -41,7 +41,7 @@ async function boot(t, {env = {}, before} = {}) {
 test('2.0: planos — padrão Standard 29,90 e Pro 129,90; preços editáveis no /admin; vitalícia não é mais vendida', async t => {
   const s = await boot(t); const anon = s.client(), ana = s.client();
   const cfg = await anon('/api/config'); assert.equal(cfg.subscriptions, true); assert.equal(cfg.legacySales, false);
-  assert.deepEqual(cfg.plans.map(p => [p.id, p.monthly, p.popular]), [['free', 0, false], ['standard', 2990, true], ['pro', 12990, false]]); assert.ok(cfg.plans[2].features.includes('1 app (Servidor/Cliente)')); assert.equal(cfg.plans[0].free, true);
+  assert.deepEqual(cfg.plans.map(p => [p.id, p.monthly, p.popular]), [['free', 0, false], ['standard', 2990, true], ['pro', 12990, false]]); assert.ok(cfg.plans[2].features.includes('App do cliente com conquistas (app.gamezoney.com)')); assert.equal(cfg.plans[0].free, true);
   await ana('/api/auth/register', {name: 'Ana', email: 'ana@x.com', password: 'senha-forte-1'});
   const old = await ana('/api/checkout', {}, 410); assert.match(old.error, /não é mais vendida/);
   await ana('/api/subscriptions', {plan: 'free', period: 'mensal', token: 'TOKEN_OK_1234'}, 400);

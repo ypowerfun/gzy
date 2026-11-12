@@ -23,6 +23,24 @@ gamezoney.com {
 	}
 }
 
+# Servidor 1.3.7: app do cliente das arenas (app.gamezoney.com/<endereço>). O mesmo site (porta 8080) entrega o app.
+# Precisa do registro DNS "app" (tipo A → 137.131.177.64) na HostGator; sem ele, o Caddy só não consegue o certificado
+# deste nome (gamezoney.com continua funcionando normalmente).
+app.gamezoney.com {
+	encode zstd gzip
+	request_body {
+		max_size 4MB
+	}
+	header -Server
+	reverse_proxy 127.0.0.1:8080
+	log {
+		output file /var/log/caddy/gamezoney-app.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
 www.gamezoney.com {
 	redir https://gamezoney.com{uri} permanent
 }

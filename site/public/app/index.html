@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<meta name="robots" content="noindex">
+<title>GameZoney App</title>
+<link rel="icon" href="/logo-gamezoney.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,800;1,900&display=swap">
+<link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+<div id="app">
+  <header class="top"><img id="logo" src="/logo-gamezoney.png" alt=""><div><strong id="arena-name">GameZoney</strong><small id="arena-status"></small></div></header>
+  <main id="screen"><div class="loading">Carregando…</div></main>
+  <nav class="tabs hidden" id="tabs">
+    <button data-tab="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
+    <button data-tab="stations"><svg viewBox="0 0 24 24"><path d="M3 5h18v11H3zM8 20h8M12 16v4"/></svg><span>Estações</span></button>
+    <button data-tab="achievements"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4a4 4 0 0 0 4 4M16 6h4a4 4 0 0 1-4 4M12 13v4M8 21h8M10 17h4"/></svg><span>Conquistas</span></button>
+    <button data-tab="history"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg><span>Histórico</span></button>
+  </nav>
+</div>
+<script src="/app/app.js"></script>
+</body>
+</html>
