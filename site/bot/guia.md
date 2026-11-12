@@ -86,7 +86,7 @@ Cadastre a TV em **Painel de controle > + Nova estação**: nome, tipo **Console
 
 **Remover console** (em vermelho, ao clicar na estação; só administrador e sem sessão em andamento): tira o console da lista; o histórico de sessões e faturas fica. Para usar de novo, cadastre em **+ Nova estação**.
 
-Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a TV abre a página de **sessão finalizada** (logo, nome, início, término, tempo usado e devolvido; com o plano Pro e o **Personalizar visual**, aparecem a logo e a cor da sua arena). A TV precisa alcançar a porta 3000 do servidor (e, no Android, ter um navegador instalado). **Testar HDMI** confere o controle. Se a troca falhar, a recarga com início imediato não é registrada — corrija a TV e tente de novo.
+Ao iniciar a sessão, a TV troca para a entrada HDMI do console. Ao terminar, a TV abre a página de **sessão finalizada** (logo, nome, início, término, tempo usado e devolvido; com o plano Pro e o **Personalizar visual**, aparecem a logo e a cor da sua arena). Depois de **10 segundos** o resumo some e entra um **wallpaper** em tela cheia, que fica até a recepção liberar o console de novo (assim o tempo do cliente não fica exposto na TV). A TV precisa alcançar a porta 3000 do servidor (e, no Android, ter um navegador instalado). **Testar HDMI** confere o controle. Se a troca falhar, a recarga com início imediato não é registrada — corrija a TV e tente de novo.
 
 ---
 

@@ -2,12 +2,12 @@
 // Proteção de rede do GameZoney. Quem está na rede da arena (PCs dos clientes, Wi-Fi, TVs) só alcança o que precisa:
 //  - próprio servidor (127.0.0.1, sem proxy): tudo (painel da recepção)
 //  - computadores da arena: somente o canal HTTPS dos PCs (/pc e /pc-setup, porta 3443)
-//  - TVs cadastradas: somente o resumo da sessão (/cliente.html, /logo.jpg, /tv/*) e apenas do IP da própria TV
+//  - TVs cadastradas: somente o resumo da sessão (/cliente.html, /logo.jpg, /tv-wallpaper.jpg, /tv/*) e apenas do IP da própria TV
 //  - qualquer outro aparelho, e pedidos repassados por proxy (X-Forwarded-*): nada
 // Todo o resto responde 404, sem revelar o que existe no servidor. O painel nunca fica na rede local.
 const loopback = value => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(value);
 const forwarded = req => !!(req.headers['x-forwarded-for'] || req.headers['x-forwarded-proto'] || req.headers['x-forwarded-host']);
-const TV_FILES = new Set(['/cliente.html', '/logo.jpg']);
+const TV_FILES = new Set(['/cliente.html', '/logo.jpg', '/tv-wallpaper.jpg']);
 
 function origin(req) {
   const address = String(req.socket.remoteAddress || '');

@@ -26,7 +26,7 @@ test('guarda de rede por origem (servidor, proxy, PCs, TVs, Wi-Fi)',()=>{
  for(const p of ['/','/index.html','/app.js','/lockdown.js','/api/state','/api/login','/health','/mobile','/mobile/client','/mobile/api/auth','/logo-gamezoney.png','/favicon.ico','/pc/heartbeat','/pc-setup/request','/internal/stop','/cliente.html','/tv/session/x'])assert.equal(guarded(store,fakeReq(p)),404,p);
  // TV: somente do IP da TV cadastrada
  assert.equal(guarded(store,fakeReq('/cliente.html',{address:'192.168.1.111'})),'next');
- assert.equal(guarded(store,fakeReq('/logo.jpg',{address:'192.168.1.111'})),'next');
+ assert.equal(guarded(store,fakeReq('/logo.jpg',{address:'192.168.1.111'})),'next'); assert.equal(guarded(store,fakeReq('/tv-wallpaper.jpg',{address:'192.168.1.111'})),'next','1.3.5: wallpaper da TV depois do resumo');assert.equal(guarded(store,fakeReq('/tv-wallpaper.jpg',{address:'192.168.1.50'})),404,'outro aparelho não abre');
  assert.equal(guarded(store,fakeReq('/tv/session/x',{address:'::ffff:192.168.1.111'})),'next');
  assert.equal(guarded(store,fakeReq('/api/state',{address:'192.168.1.111'})),404);
  store.state.stations[0].active=false;assert.equal(guarded(store,fakeReq('/cliente.html',{address:'192.168.1.111'})),404);
