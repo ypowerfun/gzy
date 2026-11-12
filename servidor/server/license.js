@@ -222,7 +222,7 @@ module.exports = function license(store, options = {}) {
   const isPro = () => { const st = status(); return (st.mode === 'plan' || st.mode === 'plan-grace') && st.plan === 'pro'; };
   // 1.2.8: recursos por plano (pedido do dono). Teste grátis (sem entrar na conta) = Free: só o essencial + Autoatendimento.
   //  Standard: + Controle de impressão. Pro: + NF-e, Gerenciar App e Multi-Unidade. Licença vitalícia antiga = Standard.
-  const features = () => { const st = status(); if (st.mode === 'plan' || st.mode === 'plan-grace') return st.plan === 'pro' ? {print: true, nfe: true, app: true, units: true} : {print: true}; if (st.mode === 'licensed') return {print: true}; return {}; };
+  const features = () => { const st = status(); if (st.mode === 'plan' || st.mode === 'plan-grace') return st.plan === 'pro' ? {print: true, nfe: true, app: true, units: true, layout: true} : {print: true}; if (st.mode === 'licensed') return {print: true}; return {}; };
   // (1.1.9 deixava o teste grátis com tudo; desfeito na 1.2.8)
   // 1.1.9: o plano Free (teste de 30 dias) libera TODAS as funções, inclusive as do Pro que rodam só no servidor (Notas Fiscais e
   // Gerenciamento do App). Multi-Unidade continua exigindo o Pro de verdade (o site confere o certificado do plano).

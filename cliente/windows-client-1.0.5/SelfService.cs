@@ -19,9 +19,9 @@ public abstract class SelfForm : Form {
  protected readonly SelfPost post;protected readonly Label error=new Label();protected bool busy;
  protected SelfForm(SelfPost post,string title,int height){this.post=post;Text=title;ClientSize=new Size(460,height);AutoScaleMode=AutoScaleMode.Dpi;StartPosition=FormStartPosition.CenterScreen;FormBorderStyle=FormBorderStyle.FixedDialog;MinimizeBox=false;MaximizeBox=false;ShowInTaskbar=false;TopMost=true;BackColor=GzTheme.Panel;ForeColor=Color.White;Font=new Font("Segoe UI",10);KeyPreview=true;
   Controls.Add(new Label{Text=title,Font=new Font("Segoe UI",17,FontStyle.Bold),ForeColor=GzTheme.Red2,Left=22,Top=16,Width=410,Height=36});
-  error.ForeColor=Color.FromArgb(255,138,144);error.AutoSize=false;Controls.Add(error);
+  error.ForeColor=GzTheme.Tone(255,138,144);error.AutoSize=false;Controls.Add(error);
   KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape){e.Handled=true;e.SuppressKeyPress=true;Close();}};}
- protected TextBox Field(string label,int top,bool secret=false,int max=60){Controls.Add(new Label{Text=label,Left=22,Top=top,Width=410,Height=22,ForeColor=Color.FromArgb(200,200,205)});var t=new TextBox{Left=22,Top=top+24,Width=410,MaxLength=max,UseSystemPasswordChar=secret,BackColor=Color.FromArgb(10,10,12),ForeColor=Color.White,BorderStyle=BorderStyle.FixedSingle};Controls.Add(t);return t;}
+ protected TextBox Field(string label,int top,bool secret=false,int max=60){Controls.Add(new Label{Text=label,Left=22,Top=top,Width=410,Height=22,ForeColor=GzTheme.Tone(200,200,205)});var t=new TextBox{Left=22,Top=top+24,Width=410,MaxLength=max,UseSystemPasswordChar=secret,BackColor=GzTheme.Tone(10,10,12),ForeColor=Color.White,BorderStyle=BorderStyle.FixedSingle};Controls.Add(t);return t;}
  protected static string V(Dictionary<string,object> d,string k){return d!=null&&d.ContainsKey(k)&&d[k]!=null?Convert.ToString(d[k]):"";}
  protected static string Clean(Exception e){var m=e.Message??"";return m.StartsWith("Falha")||m.Length>0?m:"Não foi possível concluir. Procure a recepção.";}
 }
@@ -32,7 +32,7 @@ public sealed class SignupForm : SelfForm {
  public string Password{get;private set;}
  public SignupForm(SelfPost post):base(post,"Criar conta",520){
   name=Field("Seu nome",62,false,120);nick=Field("Usuário/Nick (para entrar no PC)",116,false,32);phone=Field("Telefone (WhatsApp)",170,false,40);password=Field("Senha (4 a 20 caracteres)",224,true,20);repeat=Field("Repetir senha",278,true,20);
-  Controls.Add(new Label{Text="O nick pode ter letras sem acento, números, espaço, ponto, hífen ou sublinhado (3 a 32).",Left=22,Top=336,Width=410,Height=40,ForeColor=Color.FromArgb(150,150,158),Font=new Font("Segoe UI",8.5f)});
+  Controls.Add(new Label{Text="O nick pode ter letras sem acento, números, espaço, ponto, hífen ou sublinhado (3 a 32).",Left=22,Top=336,Width=410,Height=40,ForeColor=GzTheme.Tone(150,150,158),Font=new Font("Segoe UI",8.5f)});
   error.SetBounds(22,378,410,48);confirm.SetBounds(22,440,200,42);cancel.SetBounds(232,440,200,42);Controls.Add(confirm);Controls.Add(cancel);AcceptButton=confirm;
   confirm.Click+=async(s,e)=>await Submit();cancel.Click+=(s,e)=>Close();Shown+=(s,e)=>{Activate();name.Focus();};
  }
@@ -68,20 +68,20 @@ public sealed class PixForm : SelfForm {
   int before=Controls.Count;email=Field("Seu e-mail (para o comprovante do PIX)",62,false,120);nick=Field("Usuário/Nick",62,false,32);nick.Text=presetNick??"";password=Field("Senha",116,true,20);
   for(int k=before;k<Controls.Count;k++)fieldControls.Add(Controls[k]);
   switchLink.SetBounds(22,118,410,22);switchLink.LinkColor=GzTheme.Red2;switchLink.ActiveLinkColor=Color.White;switchLink.LinkClicked+=(s,e)=>SetMode(mode==PixMode.Guest?PixMode.Account:PixMode.Guest);Controls.Add(switchLink);
-  who.SetBounds(22,66,410,60);who.ForeColor=Color.FromArgb(200,200,205);who.Font=new Font("Segoe UI",11);Controls.Add(who);
-  payLabel.Text="Forma de pagamento";payLabel.SetBounds(22,170,200,22);payLabel.ForeColor=Color.FromArgb(200,200,205);Controls.Add(payLabel);
+  who.SetBounds(22,66,410,60);who.ForeColor=GzTheme.Tone(200,200,205);who.Font=new Font("Segoe UI",11);Controls.Add(who);
+  payLabel.Text="Forma de pagamento";payLabel.SetBounds(22,170,200,22);payLabel.ForeColor=GzTheme.Tone(200,200,205);Controls.Add(payLabel);
   pixRadio.Text="PIX (QR Code ou copia e cola)";pixRadio.Checked=true;pixRadio.SetBounds(22,192,410,26);pixRadio.ForeColor=Color.White;Controls.Add(pixRadio);
-  Controls.Add(new Label{Text="Escolha o pacote",Left=22,Top=226,Width=410,Height=22,ForeColor=Color.FromArgb(200,200,205)});
-  options.SetBounds(22,250,410,170);options.BackColor=Color.FromArgb(10,10,12);options.ForeColor=Color.White;options.BorderStyle=BorderStyle.FixedSingle;options.Font=new Font("Segoe UI",12);options.ItemHeight=28;Controls.Add(options);
-  customLabel.SetBounds(22,426,410,22);customLabel.ForeColor=Color.FromArgb(200,200,205);customLabel.Visible=false;Controls.Add(customLabel);
-  customValue.SetBounds(22,450,150,30);customValue.MaxLength=10;customValue.Font=new Font("Segoe UI",12);customValue.BackColor=Color.FromArgb(10,10,12);customValue.ForeColor=Color.White;customValue.BorderStyle=BorderStyle.FixedSingle;customValue.Visible=false;Controls.Add(customValue);
+  Controls.Add(new Label{Text="Escolha o pacote",Left=22,Top=226,Width=410,Height=22,ForeColor=GzTheme.Tone(200,200,205)});
+  options.SetBounds(22,250,410,170);options.BackColor=GzTheme.Tone(10,10,12);options.ForeColor=Color.White;options.BorderStyle=BorderStyle.FixedSingle;options.Font=new Font("Segoe UI",12);options.ItemHeight=28;Controls.Add(options);
+  customLabel.SetBounds(22,426,410,22);customLabel.ForeColor=GzTheme.Tone(200,200,205);customLabel.Visible=false;Controls.Add(customLabel);
+  customValue.SetBounds(22,450,150,30);customValue.MaxLength=10;customValue.Font=new Font("Segoe UI",12);customValue.BackColor=GzTheme.Tone(10,10,12);customValue.ForeColor=Color.White;customValue.BorderStyle=BorderStyle.FixedSingle;customValue.Visible=false;Controls.Add(customValue);
   error.SetBounds(22,490,410,80);generate.SetBounds(22,586,200,44);cancel.SetBounds(232,586,200,44);Controls.Add(generate);Controls.Add(cancel);AcceptButton=generate;
-  payee.SetBounds(22,60,410,40);payee.Font=new Font("Segoe UI",10.5f,FontStyle.Bold);payee.ForeColor=Color.FromArgb(253,208,52);payee.TextAlign=ContentAlignment.MiddleCenter;payee.Visible=false;Controls.Add(payee);
+  payee.SetBounds(22,60,410,40);payee.Font=new Font("Segoe UI",10.5f,FontStyle.Bold);payee.ForeColor=GzTheme.Tone(253,208,52);payee.TextAlign=ContentAlignment.MiddleCenter;payee.Visible=false;Controls.Add(payee);
   qr.SetBounds(105,104,250,250);qr.SizeMode=PictureBoxSizeMode.Zoom;qr.BackColor=Color.White;qr.Visible=false;Controls.Add(qr);
   info.SetBounds(22,360,410,46);info.Font=new Font("Segoe UI",11,FontStyle.Bold);info.TextAlign=ContentAlignment.MiddleCenter;info.Visible=false;Controls.Add(info);
-  code.SetBounds(22,412,300,28);code.ReadOnly=true;code.BackColor=Color.FromArgb(10,10,12);code.ForeColor=Color.White;code.Visible=false;Controls.Add(code);
+  code.SetBounds(22,412,300,28);code.ReadOnly=true;code.BackColor=GzTheme.Tone(10,10,12);code.ForeColor=Color.White;code.Visible=false;Controls.Add(code);
   copy.SetBounds(330,410,102,32);copy.Visible=false;Controls.Add(copy);
-  status.SetBounds(22,450,410,120);status.TextAlign=ContentAlignment.TopCenter;status.ForeColor=Color.FromArgb(200,200,205);status.Visible=false;Controls.Add(status);
+  status.SetBounds(22,450,410,120);status.TextAlign=ContentAlignment.TopCenter;status.ForeColor=GzTheme.Tone(200,200,205);status.Visible=false;Controls.Add(status);
   options.SelectedIndexChanged+=(s,e)=>ToggleCustom();customValue.TextChanged+=(s,e)=>UpdateCustomHint();
   generate.Click+=async(s,e)=>await Generate();cancel.Click+=async(s,e)=>await CancelCharge();copy.Click+=(s,e)=>{try{Clipboard.SetText(code.Text);status.Text="Código copiado. Cole no app do banco (PIX copia e cola).";}catch{}};
   poll.Tick+=async(s,e)=>await Check();FormClosed+=(s,e)=>poll.Stop();
@@ -129,8 +129,8 @@ public sealed class PixForm : SelfForm {
  }
  async Task Check(){if(busy||chargeId==null)return;busy=true;
   try{var r=await post("pix/status",new {id=chargeId});string st=V(r,"status");
-   if(st=="approved"){poll.Stop();status.ForeColor=Color.FromArgb(120,220,140);status.Text=mode==PixMode.Session?"Pagamento aprovado! Tempo adicionado.":mode==PixMode.Guest?"Pagamento aprovado! Liberando o PC…":"Pagamento aprovado! Tempo adicionado à sua conta.";DialogResult=DialogResult.OK;/* 1.0.18: só e-mail = libera o PC na hora */await Task.Delay(mode==PixMode.Guest?250:900);Close();return;}
-   if(st=="expired"||st=="error"){poll.Stop();status.ForeColor=Color.FromArgb(255,138,144);status.Text=st=="expired"?"O PIX expirou. Feche e gere outro.":"Pagamento recebido, mas o tempo não entrou sozinho. Procure a recepção.";return;}
+   if(st=="approved"){poll.Stop();status.ForeColor=GzTheme.Tone(120,220,140);status.Text=mode==PixMode.Session?"Pagamento aprovado! Tempo adicionado.":mode==PixMode.Guest?"Pagamento aprovado! Liberando o PC…":"Pagamento aprovado! Tempo adicionado à sua conta.";DialogResult=DialogResult.OK;/* 1.0.18: só e-mail = libera o PC na hora */await Task.Delay(mode==PixMode.Guest?250:900);Close();return;}
+   if(st=="expired"||st=="error"){poll.Stop();status.ForeColor=GzTheme.Tone(255,138,144);status.Text=st=="expired"?"O PIX expirou. Feche e gere outro.":"Pagamento recebido, mas o tempo não entrou sozinho. Procure a recepção.";return;}
    int left=(int)Math.Max(0,(expires-DateTime.Now).TotalSeconds);status.Text="Aguardando o pagamento… expira em "+(left/60)+":"+(left%60).ToString("00")+".\n"+(mode==PixMode.Session?"O tempo entra sozinho na sua sessão":mode==PixMode.Guest?"O PC é liberado sozinho":"O tempo entra sozinho na sua conta")+" quando o PIX for aprovado.";}
   catch{}finally{busy=false;}
  }
@@ -140,8 +140,8 @@ public sealed class PixForm : SelfForm {
 // 1.0.18: caixa "Pagamento aprovado" depois do PIX com conta (ou logo após Criar conta): o cliente entra com o login e a senha dele.
 public sealed class PaidNotice : Form {
  public PaidNotice(string nick){Text="Pagamento aprovado";ClientSize=new Size(460,250);AutoScaleMode=AutoScaleMode.Dpi;StartPosition=FormStartPosition.CenterScreen;FormBorderStyle=FormBorderStyle.FixedDialog;MinimizeBox=false;MaximizeBox=false;ShowInTaskbar=false;TopMost=true;BackColor=GzTheme.Panel;ForeColor=Color.White;Font=new Font("Segoe UI",10);KeyPreview=true;
-  Controls.Add(new Label{Text="Pagamento aprovado!",Font=new Font("Segoe UI",17,FontStyle.Bold),ForeColor=Color.FromArgb(120,220,140),Left=22,Top=18,Width=410,Height=36});
-  Controls.Add(new Label{Text="O tempo já entrou na sua conta"+(String.IsNullOrEmpty(nick)?"":" ("+nick+")")+".\n\nPara começar, digite o seu login (nick) e a sua senha na tela e clique em Entrar.",Left=22,Top=64,Width=410,Height=110,ForeColor=Color.FromArgb(215,217,222)});
+  Controls.Add(new Label{Text="Pagamento aprovado!",Font=new Font("Segoe UI",17,FontStyle.Bold),ForeColor=GzTheme.Tone(120,220,140),Left=22,Top=18,Width=410,Height=36});
+  Controls.Add(new Label{Text="O tempo já entrou na sua conta"+(String.IsNullOrEmpty(nick)?"":" ("+nick+")")+".\n\nPara começar, digite o seu login (nick) e a sua senha na tela e clique em Entrar.",Left=22,Top=64,Width=410,Height=110,ForeColor=GzTheme.Tone(215,217,222)});
   var ok=new GzButton("OK, vou entrar",GzButtonKind.Primary);ok.SetBounds(22,186,410,44);ok.Click+=(s,e)=>{DialogResult=DialogResult.OK;Close();};Controls.Add(ok);AcceptButton=ok;
   KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Escape||e.KeyCode==Keys.Enter){e.Handled=true;e.SuppressKeyPress=true;DialogResult=DialogResult.OK;Close();}};Shown+=(s,e)=>{Activate();ok.Focus();};
  }

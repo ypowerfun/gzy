@@ -17,7 +17,7 @@ const DEFAULT_PLANS = {
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
     features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
+    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Logo e cor da sua arena', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
 
@@ -57,6 +57,12 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved?.standard?.features?.some(f => /layout personalizado/i.test(f))) { saved.standard.features = saved.standard.features.filter(f => !/layout personalizado/i.test(f)); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Standard: item "1 layout personalizado" retirado'); }
     saveSetting('plans_features_v5', {at: Date.now()});
+  }
+  // 2.15: Pro ganha "Logo e cor da sua arena" (Personalizar visual): só ACRESCENTA no Pro salvo no /admin, uma vez
+  if (!setting('plans_features_v6')) {
+    const saved = setting('plans');
+    if (saved?.pro?.features && !saved.pro.features.some(f => /logo e cor/i.test(f))) { const i = saved.pro.features.findIndex(f => /Multi-Unidade/i.test(f)); saved.pro.features.splice(i >= 0 ? i + 1 : saved.pro.features.length, 0, 'Logo e cor da sua arena'); saved.pro.features = saved.pro.features.slice(0, 13); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item "Logo e cor da sua arena" acrescentado'); }
+    saveSetting('plans_features_v6', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};

@@ -29,7 +29,7 @@ public class SystemMessage : Form {
  [StructLayout(LayoutKind.Sequential)] struct MsgSize { public int cx, cy; public MsgSize(int a, int b) { cx = a; cy = b; } }
  [StructLayout(LayoutKind.Sequential, Pack = 1)] struct MsgBlend { public byte op, flags, alpha, format; }
 
- static readonly Color Gold = Color.FromArgb(255, 201, 38), GoldTop = Color.FromArgb(255, 220, 92), GoldBottom = Color.FromArgb(232, 168, 18);
+ static readonly Color Gold = GzTheme.Tone(255,201,38), GoldTop = GzTheme.Tone(255,220,92), GoldBottom = GzTheme.Tone(232,168,18);
  static PrivateFontCollection privateFonts; static FontFamily family; static FontStyle familyStyle;
  readonly string text; readonly int seconds; readonly Stopwatch clock = new Stopwatch(); Timer timer; Rectangle screen;
 

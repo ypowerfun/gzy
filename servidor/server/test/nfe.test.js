@@ -30,7 +30,7 @@ test('1.0.8/1.2.8: notas fiscais de entrada (só Pro; teste grátis e Standard n
   assert.match((await call('/api/nfe', undefined, 400)).error, /plano Pro/);
   // Standard: PIX no PC (autoatendimento) e Controle de impressão funcionam
   await call('/api/self-service'); await call('/api/prints'); await call('/api/pc-notices');
-  plan('pro'); { const st = await call('/api/state'); assert.equal(st.pro, true); assert.deepEqual(st.features, {print: true, nfe: true, app: true, units: true}); }
+  plan('pro'); { const st = await call('/api/state'); assert.equal(st.pro, true); assert.deepEqual(st.features, {print: true, nfe: true, app: true, units: true, layout: true}); }
 
   // produtos com código sequencial; a Coca tem o EAN da nota
   const coke = S.products.find(p => p.name === 'Coca-cola'), bisc = S.products.find(p => p.name === 'Biscoito');
