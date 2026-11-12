@@ -111,3 +111,13 @@ test('assistente: sem resposta do cliente em 5 min (sem especialista) a conversa
  r=await b('/api/chat');assert.equal(r.chat.status,'open','pediu especialista: não encerra sozinho');
  await a('/api/chat/end',{});r=await a('/api/chat/start',{name:'Ana',email:'ana@x.com',message:'oi'});assert.equal(r.chat.status,'open');
 });
+
+test('assistente acompanha as atualizações: cards novos respondidos, guia em dia, nada de recurso que saiu',()=>{
+ const createBot=require('../bot'),base=require('../bot/perguntas');
+ const bot=createBot({root:path.join(__dirname,'..'),answers:()=>base,plansInfo:()=>[{name:'Standard',monthly:2990,annual:29900,features:[]}]});
+ const news=bot.news();assert.ok(news.length>=5,'lê os cards de Atualizações');
+ for(const n of news){const r=bot.reply(n.q,{lang:'pt'});assert.ok(!r.unknown,'card sem resposta no assistente: '+n.q);}
+ const nov=bot.reply('quais as novidades?',{lang:'pt'});assert.equal(nov.id,'novidades');assert.ok(nov.text.includes(news[0].q),'novidades começam pelo card mais novo');
+ // recursos que saíram do produto não podem aparecer nas respostas
+ for(const b of base)assert.doesNotMatch(b.a,/Atualização do sistema|Verificar atualização|licença vitalícia|R\$ ?89,90|Pacote (Padrão|Premium)|layout personalizado/i,b.id);
+});

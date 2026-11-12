@@ -30,7 +30,9 @@ const TEXTS = {
     unknownOffline: e => `Não encontrei essa resposta na minha base. No momento não temos um especialista online, mas registramos a sua pergunta e vamos dar a devolutiva pelo e-mail ${e} o quanto antes. Enquanto isso, posso ajudar com outras dúvidas.`,
     thanks: 'Por nada! Se tiver mais alguma dúvida, é só escrever. Quando terminar, use "Encerrar e avaliar".',
     more: 'Passo a passo completo com imagens: gamezoney.com/guia (entre na sua conta).',
-    also: 'Também pode ajudar:'
+    also: 'Também pode ajudar:',
+    news: 'Novidades mais recentes do GameZoney:',
+    newsMore: 'Todas as novidades: gamezoney.com/atualizacoes.html'
   },
   en: {
     hello: n => `Hi${n ? ' ' + n : ''}! I'm GameZoney's virtual assistant.`,
@@ -41,7 +43,9 @@ const TEXTS = {
     unknownOffline: e => `I couldn't find that answer in my knowledge base. There's no specialist online right now, but we've recorded your question and will reply to ${e} as soon as possible. Meanwhile, I can help with other questions.`,
     thanks: "You're welcome! If you have any other question, just type it. When you're done, use \"End and rate\".",
     more: 'Full step-by-step guide with pictures: gamezoney.com/guia (sign in to your account).',
-    also: 'This may also help:'
+    also: 'This may also help:',
+    news: "GameZoney's latest updates:",
+    newsMore: 'All updates: gamezoney.com/atualizacoes.html'
   },
   es: {
     hello: n => `¡Hola${n ? ', ' + n : ''}! Soy el asistente virtual de GameZoney.`,
@@ -52,7 +56,9 @@ const TEXTS = {
     unknownOffline: e => `No encontré esa respuesta en mi base. En este momento no hay un especialista en línea, pero registramos tu pregunta y te responderemos al correo ${e} lo antes posible. Mientras tanto, puedo ayudarte con otras dudas.`,
     thanks: '¡De nada! Si tienes otra duda, solo escríbela. Cuando termines, usa "Finalizar y evaluar".',
     more: 'Paso a paso completo con imágenes: gamezoney.com/guia (inicia sesión en tu cuenta).',
-    also: 'También puede ayudar:'
+    also: 'También puede ayudar:',
+    news: 'Novedades más recientes de GameZoney:',
+    newsMore: 'Todas las novedades: gamezoney.com/atualizacoes.html'
   }
 };
 const langOf = l => (TEXTS[l] ? l : 'pt');
@@ -60,6 +66,10 @@ const langOf = l => (TEXTS[l] ? l : 'pt');
 module.exports = function createBot({plansInfo = () => [], answers = () => [], root = __dirname} = {}) {
   const read = f => { try { return fs.readFileSync(path.join(root, f), 'utf8'); } catch { return ''; } };
   const guide = read('bot/guia.md');
+  // 2.14: novidades = os cards mais recentes da página Atualizações (o card novo entra no topo e o assistente já responde sobre ele)
+  const NEWS_MAX = 12;
+  const news = [...read('public/atualizacoes.html').matchAll(/<div class="card"><h3>([\s\S]*?)<\/h3><p>([\s\S]*?)<\/p><\/div>/g)].slice(0, NEWS_MAX)
+    .map(m => ({q: m[1].replace(/<[^>]+>/g, '').trim(), a: m[2].replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()}));
   const faq = [...read('public/index.html').matchAll(/<details><summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/g)]
     .map(m => ({q: m[1].replace(/<[^>]+>/g, '').trim(), a: m[2].replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim()}));
 
@@ -78,6 +88,7 @@ module.exports = function createBot({plansInfo = () => [], answers = () => [], r
       put(r.a, 0.6); put([r.q, ...(r.alt || [])].join(' '), 3); put((r.kw || []).join(' '), 4);
       docs.push({kind: 'qa', r, f});
     }
+    for (const x of news) { const f = new Map(); for (const t of tokens(x.a)) f.set(t, 0.7); for (const t of tokens(x.q)) f.set(t, 2.5); docs.push({kind: 'news', r: {q: x.q, a: x.a}, f}); }
     for (const x of faq) { const f = new Map(); for (const t of tokens(x.a)) f.set(t, 0.6); for (const t of tokens(x.q)) f.set(t, 3); docs.push({kind: 'faq', r: {q: x.q, a: x.a}, f}); }
     let head = '';
     for (const block of guide.split(/\n(?=- |#{1,3} )/)) {
@@ -96,7 +107,7 @@ module.exports = function createBot({plansInfo = () => [], answers = () => [], r
     const q = [...new Set(tokens(text))]; if (!q.length) return [];
     const max = q.reduce((a, t) => a + idf(t) * 4, 0);
     return index.map(d => { let s = 0, hit = 0; for (const t of q) { const w = d.f.get(t); if (w) { s += w * idf(t); hit++; } }
-      return {d, s: s * (d.kind === 'guide' ? 0.8 : d.kind === 'faq' ? 0.95 : 1), hit, cover: hit / q.length, rel: s / max}; })
+      return {d, s: s * (d.kind === 'guide' ? 0.8 : d.kind === 'faq' || d.kind === 'news' ? 0.95 : 1), hit, cover: hit / q.length, rel: s / max}; })
       .filter(x => x.hit).sort((a, b) => b.s - a.s);
   }
   const short = (t, n = 750) => t.length <= n ? t : t.slice(0, t.lastIndexOf(' ', n)) + '…';
@@ -106,6 +117,8 @@ module.exports = function createBot({plansInfo = () => [], answers = () => [], r
     const T = TEXTS[langOf(lang)], n = norm(text).trim(), pre = first ? T.hello(name) + '\n' : '';
     if (wantsHuman(text)) return {handoff: true, text: ''};
     if (/^(muito )?(obrigad[oa]s?|valeu|vlw|thanks|thank you|gracias|perfeito|otimo|show|blz|beleza|ok|entendi)\b/.test(n) && n.length < 40) return {text: T.thanks, id: 'obrigado'};
+    if (/(novidade|o que (ha|tem) de novo|ultimas? atualiza|o que mudou|lancamento|what'?s new|whats new|latest update|novedad)/.test(n) && news.length)
+      return {text: pre + T.news + '\n' + news.slice(0, 5).map(x => '• ' + x.q + ': ' + x.a).join('\n') + '\n' + T.newsMore, id: 'novidades'};
     if (/^(oi|ola|opa|bom dia|boa tarde|boa noite|hello|hi|hey|hola|buenas|e ai|eai)\b[\s!.?,]*$/.test(n)) return {text: (first ? T.hello(name) + ' ' : '') + T.ask, id: 'saudacao'};
     const list = rank(text), best = list[0];
     // aceita: pergunta do banco com boa parte das palavras; guia/dúvida só com força maior
@@ -119,7 +132,7 @@ module.exports = function createBot({plansInfo = () => [], answers = () => [], r
     return {text: pre + body, id: best.d.kind === 'qa' ? r.id : best.d.kind, handoff: !!r.human};
   }
 
-  return {reply, wantsHuman, texts: l => TEXTS[langOf(l)], langOf, rank, plansText};
+  return {news: () => news, reply, wantsHuman, texts: l => TEXTS[langOf(l)], langOf, rank, plansText};
 };
 module.exports.wantsHuman = wantsHuman;
 module.exports.tokens = tokens;
