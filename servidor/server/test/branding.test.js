@@ -56,8 +56,13 @@ test('1.3.3: personalizar visual só no Pro; logo e cor no painel e nos PCs; vol
   // logo própria para os PCs; manter a do servidor
   st = await call('/branding', {color: '#3cd27a', clientLogo: pcLogo}); d = app.brand.pcData(); assert.equal(d.logo, pcLogo.split(',')[1]); assert.notEqual(app.brand.pcRev(), rev);
   assert.ok(fs.existsSync(path.join(directory, 'branding', 'server.png')), 'logos na pasta de dados (entram no backup completo)');
+  // 1.3.4: tela da TV no fim da sessão (cliente.html): logo dos PCs no lugar do GZ, cores trocadas, logo larga sem corte
+  r = await fetch(base + '/logo.jpg'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), Buffer.from(pcLogo.split(',')[1], 'base64'), 'TV mostra a logo da arena');
+  const tv = await (await fetch(base + '/cliente.html')).text(); assert.ok(!tv.includes('#ffce3a'), 'título da TV na cor da arena'); assert.match(tv, /object-fit:contain/);
   // plano vencido/trocado: volta ao padrão sozinho (guardado)
   plan(app, 'standard'); assert.equal(app.brand.pcRev(), ''); r = await fetch(base + '/logo-gamezoney.png'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), original);
+  r = await fetch(base + '/logo.jpg'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), fs.readFileSync(path.join(__dirname, '../public/logo.jpg')), 'sem Pro a TV volta ao GZ');
+  assert.ok((await (await fetch(base + '/cliente.html')).text()).includes('#ffce3a'));
   assert.ok((await (await fetch(base + '/theme-gamezoney.css')).text()).includes('#d4a017'));
   assert.equal((await call('/branding')).enabled, true);
   // voltar ao padrão (vale sem o Pro)

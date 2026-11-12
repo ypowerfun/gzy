@@ -119,9 +119,11 @@ module.exports = function branding(store, options = {}) {
   }
   // painel
   const serverLogoFile = () => (active() && has('server') ? file('server') : null);
+  // 1.3.4: tela da TV no fim da sessão (cliente.html → /logo.jpg) = a mesma logo dos PCs (a dos clientes); sem logo dos PCs, a do Servidor
+  const tvLogoFile = () => { if (!active()) return null; const which = clientLogo(); return which ? file(which) : null; };
   const css = text => (active() ? recolor(text, cfg().color) : text);
   const version = () => (active() ? String(cfg().rev || 0) : '0');
-  return {status, save, reset, pcRev, pcData, serverLogoFile, css, version, active};
+  return {status, save, reset, pcRev, pcData, serverLogoFile, tvLogoFile, css, version, active};
 };
 module.exports.recolor = recolor;
 module.exports.decodePng = decodePng;
