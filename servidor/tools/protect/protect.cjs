@@ -19,11 +19,16 @@ const BASE = {compact: true, target: 'node', selfDefending: true, simplify: true
 // licença, atualização e conferências: embaralhamento mais forte (custa um pouco de velocidade, só aqui)
 const STRONG = new Set(['license.js', 'updater.js', 'server.js', 'network-guard.js', 'panel-sessions.js']);
 const HEAVY = {controlFlowFlattening: true, controlFlowFlatteningThreshold: 0.6, deadCodeInjection: true, deadCodeInjectionThreshold: 0.3};
+// 1.3.6: os demais arquivos percorrem os dados (sessões, vendas, medalhas…) milhares de vezes: com os textos em base64 e
+// duas funções intermediárias, cada nome de campo virava uma decodificação e a abertura com 1 ano de dados ia de ~2 s
+// para ~5,5 s (o painel e os relatórios também ficavam mais lentos). Aqui os textos continuam escondidos na lista
+// embaralhada, só sem a codificação base64 e sem as funções intermediárias (mesma velocidade do código original).
+const LIGHT = {stringArrayEncoding: [], stringArrayWrappersCount: 0};
 
 let n = 0;
 for (const f of fs.readdirSync(stage).filter(f => f.endsWith('.js')).sort()) {
   const file = path.join(stage, f), src = fs.readFileSync(file, 'utf8');
-  const out = JavaScriptObfuscator.obfuscate(src.replace(/^#!.*\n/, ''), {...BASE, ...(STRONG.has(f) ? HEAVY : {})}).getObfuscatedCode();
+  const out = JavaScriptObfuscator.obfuscate(src.replace(/^#!.*\n/, ''), {...BASE, ...(STRONG.has(f) ? HEAVY : LIGHT)}).getObfuscatedCode();
   fs.writeFileSync(file, out); n++;
 }
 console.log(`Código embaralhado: ${n} arquivo(s) .js`);
@@ -32,13 +37,17 @@ console.log(`Código embaralhado: ${n} arquivo(s) .js`);
 const list = [];
 const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const add = rel => { const full = path.join(stage, rel); if (fs.statSync(full).isFile()) list.push([rel.split(path.sep).join('\\'), sha(full)]); };
-const walk = rel => { for (const e of fs.readdirSync(path.join(stage, rel), {withFileTypes: true})) { const r = path.join(rel, e.name); if (e.isDirectory()) walk(r); else add(r); } };
+// 1.3.6: em node_modules só o que o Node carrega (.js/.cjs/.mjs/.json/.node). Os .ts, .md, .map, .yml… (metade dos ~2.200
+// arquivos) nunca são executados e cada um custava uma leitura (e um exame do antivírus) a cada abertura do GameZoney.
+const LOADABLE = /\.(js|cjs|mjs|json|node)$/i;
+const walk = (rel, only) => { for (const e of fs.readdirSync(path.join(stage, rel), {withFileTypes: true})) { const r = path.join(rel, e.name); if (e.isDirectory()) walk(r, only); else if (!only || only.test(e.name)) add(r); } };
 // só os arquivos da raiz que o instalador realmente leva (linhas Source: "x.js" do installer.iss)
 const iss = fs.existsSync(path.join(stage, 'installer.iss')) ? fs.readFileSync(path.join(stage, 'installer.iss'), 'utf8') : '';
 const shipped = new Set([...iss.matchAll(/^Source:\s*"([^"\\*?]+\.(?:js|json|ps1))"/gmi)].map(m => m[1].toLowerCase()));
 for (const f of fs.readdirSync(stage).sort()) if (/\.(js|json|ps1)$/i.test(f) && shipped.has(f.toLowerCase())) add(f);
 if (!shipped.has('server.js') || !shipped.has('license.js')) { console.error('installer.iss sem server.js/license.js: lista de integridade não gerada.'); process.exit(1); }
-for (const d of ['node_modules', 'public']) if (fs.existsSync(path.join(stage, d))) walk(d);
+if (fs.existsSync(path.join(stage, 'node_modules'))) walk('node_modules', LOADABLE);
+if (fs.existsSync(path.join(stage, 'public'))) walk('public');
 if (fs.existsSync(path.join(stage, 'runtime', 'node.exe'))) add(path.join('runtime', 'node.exe'));
 else if (process.platform === 'win32') { console.error('runtime\\node.exe não encontrado na pasta temporária.'); process.exit(1); }
 list.sort((a, b) => a[0].localeCompare(b[0]));

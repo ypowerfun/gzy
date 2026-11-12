@@ -351,3 +351,36 @@ details.fiscal-fields{margin:10px 0;border:1px solid #2b303a;padding:8px 12px}de
 .brand-preview img{max-width:180px;max-height:64px;object-fit:contain}.brand-preview div{display:grid;gap:8px}
 .brand-preview-title{color:var(--brand);letter-spacing:.08em;text-transform:uppercase;font-size:13px}.brand-preview-line{display:block;height:2px;width:160px;background:var(--brand);box-shadow:0 0 10px var(--brand)}
 .brand-preview-btn{background:var(--brand)!important;color:#111!important;border:0!important;font-weight:700;padding:8px 14px;width:max-content;pointer-events:none}
+/* 1.3.6: Novo cliente, Nova estação e Ações dos PCs cabem na tela sem barra de rolagem (campos lado a lado; só aparência) */
+#modal:has(.member-form){width:min(980px,96vw);max-width:96vw}
+.member-form{display:grid;grid-template-columns:150px 1fr 1fr;column-gap:18px;align-items:start}
+.member-form>label{margin:0 0 10px}
+.member-form>#member-photo{grid-column:1;grid-row:1/span 3;flex-direction:column;align-items:stretch;gap:8px;margin:0}
+.member-form>#member-photo .mp-frame{width:150px;height:150px;flex:0 0 150px}
+.member-form>#member-photo button{width:100%}
+.member-form>label:has(textarea),.member-form>p,.member-form>.hint{grid-column:2/4}
+.member-form textarea{min-height:58px;height:58px;resize:vertical}
+.member-form>label:has(input[type=checkbox]){align-self:center}
+.member-form>label:has(input[name=active]){grid-column:2}
+.member-form>label:has(input[name=loyaltyEnabled]){grid-column:3}
+.member-form>button.primary{grid-column:2/4;justify-self:start}
+#modal:has(.station-form){width:min(900px,96vw);max-width:96vw}
+.station-form{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;align-items:start}
+.station-form>label{margin:0 0 10px}.station-form>.row{margin:0;gap:14px}.station-form>.row>label{margin:0 0 10px}
+.station-form>label:has(input[type=checkbox]){align-self:center}
+.station-form>p.hint,.station-form>button.primary{grid-column:1/-1}
+.station-form>button.primary{justify-self:start}
+#modal:has(.pc-actions-compact){width:min(1000px,96vw);max-width:96vw}
+.pc-actions-compact{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.pc-actions-compact>p.hint,.pc-actions-compact>label,.pc-actions-compact>#pc-action-result{grid-column:1/-1;margin:0}
+.pc-actions-compact>.panel{margin:0}
+/* 1.3.6: Configuração em abas no topo (uma área por vez) */
+.cfg-off{display:none!important}
+#cfg-tabs{flex-wrap:wrap;row-gap:4px}
+#cfg-tabs button{padding:10px 13px}
+/* 1.3.6: Arena/Organização no topo do Perfil */
+.profile-box .org-field{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:end;margin:0 0 14px}
+.profile-box .org-field label{margin:0}
+.profile-box .org-field .hint{grid-column:1/-1;margin:0}
+.profile-box .org-field .org-label{grid-column:1/-1;color:var(--muted);font-size:13px}
+.profile-box .org-field .org-name{grid-column:1/-1;font-size:18px}

@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.3.5.0")]
+[assembly: AssemblyVersion("1.3.6.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -93,6 +93,8 @@ class Launcher : ApplicationContext {
         // 1.3.2: a conferência dos arquivos roda junto com a partida do Node (antes era um passo inteiro antes dele).
         // O painel só abre depois que ela termina; arquivo alterado = o Node é fechado e o GameZoney não abre, como antes.
         var integrity=System.Threading.Tasks.Task.Run(()=>CheckIntegrity());
+        // 1.3.6: o motor do WebView2 (msedgewebview2) começa a abrir junto com o Node; antes só começava depois do servidor pronto
+        if(!silent&&!selftest)PanelWindow.Prewarm(PanelHost.DefaultUserData());
         var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning --disable-sigusr1 server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
         // 1.0.7: nada de fora entra no Node (NODE_OPTIONS=--require..., NODE_PATH etc. permitiriam trocar a conferência da licença)
@@ -101,10 +103,26 @@ class Launcher : ApplicationContext {
         Environment.SetEnvironmentVariable("GZ_DATA_DIR",data);Environment.SetEnvironmentVariable("GZ_CONTROL_TOKEN",token);Environment.SetEnvironmentVariable("PORT",port.ToString());
         Environment.SetEnvironmentVariable("GZ_DOCUMENTS_DIR",Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
-        child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
+        child=new Process();child.StartInfo=info;var listening=new ManualResetEvent(false);child.OutputDataReceived+=(s,e)=>{if(e.Data!=null&&e.Data.StartsWith("GameZoney SERVER "))listening.Set();Log(e.Data);};child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
-        bool ready=false;for(int i=0;i<240;i++){if(integrity.IsFaulted)break;if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(i<40?100:250);/* 1.3.1: primeiros 4 s conferindo a cada 0,1 s (abre o painel assim que o servidor responde) */}
-        try{integrity.Wait();}catch(AggregateException e){try{if(!child.HasExited){child.Kill();child.WaitForExit(3000);}}catch{}Splash.Close();throw e.InnerException??e;}
+        // 1.3.6: espera o aviso "GameZoney SERVER …" que o Node escreve ao abrir a porta e só então confere o /health.
+        // No Windows, uma tentativa em 127.0.0.1 antes de a porta abrir fica parada até 1 s (conexão recusada demora) e
+        // atrasava o painel. Sem o aviso (versão diferente), confere a cada 1 s como reserva. Enquanto espera, a tela
+        // "Iniciando…" e o WebView2 continuam trabalhando (antes a janela ficava parada).
+        bool ready=false;var clock=Stopwatch.StartNew();long nextProbe=1500;
+        while(clock.ElapsedMilliseconds<60000){
+            if(integrity.IsFaulted||child.HasExited)break;
+            Application.DoEvents();
+            bool heard=listening.WaitOne(15);
+            if(!heard&&clock.ElapsedMilliseconds<nextProbe)continue;
+            try{ready=Request("/health").Contains("gamezoney-server");}catch{}
+            if(ready)break;
+            if(heard)Thread.Sleep(50);else nextProbe=clock.ElapsedMilliseconds+1000;
+        }
+        if(ready)Log("Servidor pronto em "+clock.ElapsedMilliseconds+" ms.");
+        // 1.3.6: a conferência dos arquivos não segura mais a abertura do painel (o Node já roda em paralelo desde a 1.3.2,
+        // então esperar não protegia nada a mais). Se ela falhar depois, o Node é fechado na hora e o GameZoney sai com o erro.
+        if(integrity.IsFaulted||selftest||!ready){try{integrity.Wait();}catch(AggregateException e){try{if(!child.HasExited){child.Kill();child.WaitForExit(3000);}}catch{}Splash.Close();throw e.InnerException??e;}}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
         var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());/* 1.0.5: "Abrir no navegador" e "Abrir pasta de dados" retirados do menu */menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));
@@ -115,13 +133,24 @@ class Launcher : ApplicationContext {
         panel.Hidden=()=>{if(panelHintShown||tray==null)return;panelHintShown=true;tray.ShowBalloonTip(6000,"GameZoney","O servidor continua ativo. Para abrir o painel de novo, use o ícone perto do relógio.",ToolTipIcon.Info);};
         SystemEvents.SessionEnding+=OnSessionEnding;
         monitor=new System.Windows.Forms.Timer();monitor.Interval=2000;monitor.Tick+=(s,e)=>{if(child.HasExited&&!stopping){monitor.Stop();/* 1.0.6: código 75 = o servidor fechou para instalar a atualização (Configuração › Verificar atualização): fecha sem aviso de erro */if(child.ExitCode==75){Log("Servidor fechado para instalar a atualização.");ExitThread();return;}MessageBox.Show("O servidor encerrou inesperadamente. Abra o GameZoney novamente e consulte o diagnóstico.","GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);ExitThread();}};monitor.Start();
+        if(!integrity.IsCompleted){var guard=new System.Windows.Forms.Timer();guard.Interval=150;guard.Tick+=(s,e)=>{if(!integrity.IsCompleted)return;guard.Stop();guard.Dispose();if(integrity.IsFaulted)IntegrityFailed(integrity.Exception.InnerException??integrity.Exception);};guard.Start();}
         Splash.Close();
         if(!silent)ShowPanel();
+    }
+    // 1.3.6: arquivo alterado descoberto depois que o painel abriu: fecha o Node na hora (sem encerramento normal), some com o painel e avisa.
+    void IntegrityFailed(Exception e){
+        if(stopping)return;stopping=true;MainCode=1;
+        try{if(child!=null&&!child.HasExited){child.Kill();child.WaitForExit(3000);}}catch{}
+        try{if(panel!=null)panel.Dispose();}catch{}
+        try{if(tray!=null){tray.Visible=false;tray.Dispose();tray=null;}}catch{}
+        try{Directory.CreateDirectory(data);File.AppendAllText(Path.Combine(data,"launcher-error.log"),DateTime.Now+" "+e+Environment.NewLine);}catch{}
+        MessageBox.Show(e.Message,"GameZoney",MessageBoxButtons.OK,MessageBoxIcon.Error);
+        ExitThread();
     }
     void OnSessionEnding(object sender,SessionEndingEventArgs e){SessionEnded=true;Stop();}
     public static bool SessionEnded,Ran;
     // 1.3.1: encerrar rápido e com aviso — pede o fim ao Node PRIMEIRO (ele fecha enquanto a janela do painel é descartada), some com o ícone na hora e mostra "Encerrando…"
-    void Stop(){if(stopping)return;stopping=true;var watch=Stopwatch.StartNew();bool show=!SessionEnded&&tray!=null;try{if(tray!=null)tray.Visible=false;if(show)Splash.Open("Encerrando o servidor… aguarde alguns segundos.");if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}}if(panel!=null){try{panel.Dispose();}catch{}}if(child!=null&&!child.HasExited&&!child.WaitForExit(4000)){/* 1.3.1: mais de 4 s = força o fechamento (pedido do dono); a sessão continua contando e é retomada ao abrir */Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");try{child.Kill();child.WaitForExit(3000);}catch{}}Log("GameZoney encerrado em "+watch.ElapsedMilliseconds+" ms.");}finally{Splash.Close();if(tray!=null){tray.Visible=false;tray.Dispose();}}}
+    void Stop(){if(stopping)return;stopping=true;var watch=Stopwatch.StartNew();bool show=!SessionEnded&&tray!=null;try{if(tray!=null)tray.Visible=false;if(panel!=null){try{panel.HideNow();}catch{}}if(show)Splash.Open("Encerrando o servidor… aguarde alguns segundos.");if(child!=null&&!child.HasExited){try{Request("/internal/stop",true);}catch{}}if(panel!=null){try{panel.Dispose();}catch{}}if(child!=null&&!child.HasExited&&!child.WaitForExit(4000)){/* 1.3.1: mais de 4 s = força o fechamento (pedido do dono); a sessão continua contando e é retomada ao abrir */Log("Encerramento forçado após espera; sessões serão recuperadas ao iniciar.");try{child.Kill();child.WaitForExit(3000);}catch{}}Log("GameZoney encerrado em "+watch.ElapsedMilliseconds+" ms.");}finally{Splash.Close();if(tray!=null){tray.Visible=false;tray.Dispose();}}}
     protected override void ExitThreadCore(){SystemEvents.SessionEnding-=OnSessionEnding;if(monitor!=null)monitor.Stop();Stop();base.ExitThreadCore();}
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
     [STAThread] static int Main(string[] args){
@@ -189,9 +218,12 @@ class PanelHost : IDisposable {
     EventWaitHandle signal; volatile bool disposed; Form window; bool unavailable; int crashes;
     public PanelHost(string address,int port,Icon icon,Action<string> log,Action<string> fallback,string userData=null){
         Address=address;AppIcon=icon;Log=log;this.fallback=fallback;signalName=SignalName(port);
-        UserData=userData??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoney","painel");
+        UserData=userData??DefaultUserData();
         ui=new Control();ui.CreateControl();var handle=ui.Handle;
     }
+    public static string DefaultUserData(){return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameZoney","painel");}
+    // 1.3.6: ao encerrar, a janela some na hora (o descarte do WebView2 vem depois)
+    public void HideNow(){var w=window;if(w==null||w.IsDisposed||ui.InvokeRequired)return;try{w.Hide();}catch{}}
     public bool Unavailable{get{return unavailable;}}
     public bool WindowOpen{get{return window!=null&&!window.IsDisposed&&window.Visible;}}
     static string SignalName(int port){return "Local\\GameZoneyPanel_"+port;}
@@ -253,6 +285,12 @@ class PanelHost : IDisposable {
 }
 class PanelWindow : Form {
     static CoreWebView2Environment shared;static bool loaderReady;
+    static System.Threading.Tasks.Task<CoreWebView2Environment> warming;static string warmingDir;
+    // 1.3.6: cria o ambiente do WebView2 (abre o motor do Edge) enquanto o servidor ainda está subindo
+    public static void Prewarm(string userData){
+        try{PrepareLoader();var options=new CoreWebView2EnvironmentOptions();options.Language="pt-BR";Directory.CreateDirectory(userData);warmingDir=userData;warming=CoreWebView2Environment.CreateAsync(null,userData,options);}
+        catch{warming=null;}
+    }
     readonly PanelHost host;readonly bool popup;readonly WebView2 web;
     FormWindowState restoreState=FormWindowState.Maximized;bool started;
     public PanelWindow(PanelHost host,bool popup){
@@ -275,6 +313,7 @@ class PanelWindow : Form {
     async void Start(){
         started=true;
         try{
+            if(shared==null&&warming!=null){var pending=warming;warming=null;if(String.Equals(warmingDir,host.UserData,StringComparison.OrdinalIgnoreCase)){try{shared=await pending;}catch{shared=null;}}}
             if(shared==null){
                 PrepareLoader();
                 var options=new CoreWebView2EnvironmentOptions();options.Language="pt-BR";
