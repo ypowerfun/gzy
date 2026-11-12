@@ -546,7 +546,7 @@ function createApp(options = {}) {
   }));
 
   // ---------- avaliações e chat ao vivo (community.js) ----------
-  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie, plansInfo: () => plans.publicPlans()});
+  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie, plansInfo: () => plans.publicPlans(), chatIdleMs: options.chatIdleMs});
   // 1.7: design do site (editor visual) e parceiros do rodapé
   require('./design')(app, {db, needAdmin, jsonOnly, api, fail, str, dataDir});
   // 1.8: comunicados e promoções por e-mail (fila) e cancelar inscrição
@@ -560,7 +560,7 @@ function createApp(options = {}) {
   // 2.3: atualização do GameZoney Servidor (manifesto assinado + download só com plano ativo)
   require('./updates')(app, {db, needAdmin, jsonOnly, api, fail, str, limit, privateKey, downloadsDir, plans, planActivation, SITE, log});
   // 2.9: Multi-Unidade (plano Pro): resumo de cada loja em Minha conta › Unidades
-  require('./units')(app, {db, needUser, jsonOnly, api, fail, str, limit, plans, planActivation, log});
+  require('./units')(app, {db, needUser, needAdmin, jsonOnly, api, fail, str, limit, plans, planActivation, log});
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
   app.use('/img', (req, res, next) => { // 1.4: vale para todas as imagens do site (capturas e foto do topo)
@@ -597,7 +597,7 @@ function createApp(options = {}) {
     if (req.path.startsWith('/api')) return res.status(status).json({error: status === 413 ? 'Arquivo grande demais.' : status < 500 ? 'Requisição inválida.' : 'Erro interno. Tente de novo.'});
     res.status(status === 404 ? 404 : status).sendFile(path.join(__dirname, 'public', '404.html'));
   });
-  app.locals.close = () => { clearInterval(sweep); campaigns.stop(); plans.stop(); db.close(); };
+  app.locals.close = () => { clearInterval(sweep); extra.stop(); campaigns.stop(); plans.stop(); db.close(); };
   return app;
 }
 

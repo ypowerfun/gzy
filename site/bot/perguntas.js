@@ -155,7 +155,9 @@ module.exports = [
 
   // ---------- Pro: unidades e app ----------
   {id: 'multi-unidade', q: 'Tenho mais de uma loja. Como acompanho?', alt: ['varias unidades', 'filiais', 'multi unidade', 'duas lojas'], kw: ['unidade', 'unidades', 'lojas', 'filial', 'filiais'],
-    a: 'No Pro, o Multi-Unidade envia um resumo de cada loja (faturamento do dia e do mês, caixa, PCs em uso, clientes ativos, produtos sem estoque) para gamezoney.com › Minha conta › Unidades. Cada loja tem o próprio servidor e precisa de internet. Ligue em Configuração › Multi-Unidade.'},
+    a: 'No Pro, o Multi-Unidade envia um resumo de cada loja (faturamento do dia e do mês, caixa, PCs em uso, clientes ativos, produtos sem estoque) para gamezoney.com › Minha conta › Unidades. Cada loja tem o próprio servidor e precisa de internet. Ligue em Configuração › Multi-Unidade. Cada conta registra até 5 unidades; para mais, abra um chamado em Minha conta › Suporte ou escreva para suporte@gamezoney.com.'},
+  {id: 'nome-arena', q: 'Posso colocar o nome da minha arena no cupom?', alt: ['nome da loja no cupom', 'trocar gamezoney do cupom', 'nome da organizacao nos relatorios', 'personalizar cupom'], kw: ['cupom', 'nome', 'arena', 'organizacao', 'loja', 'relatorio'],
+    a: 'Pode, em todos os planos: em Configuração › Nome da arena/organização. O nome sai no cupom de venda, no fechamento de caixa, nas faturas, no relatório financeiro e no nome das planilhas exportadas. Em branco, sai GameZoney.'},
   {id: 'requisitos-pro', q: 'O que preciso ter antes de assinar o Pro?', alt: ['requisitos do pro', 'dominio', 'vps', 'ip fixo'], kw: ['dominio', 'vps', 'fixo', 'requisitos'],
     a: 'Para usar tudo do Pro: domínio próprio (app), VPS ou internet com IP fixo (app fora da arena), internet em cada unidade (Multi-Unidade), conta na Focus NFe com certificado A1 (notas de venda) e o XML da NF-e do fornecedor (entrada de estoque). Esses itens são contratados à parte.'},
 

@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: System.Reflection.AssemblyDescription("GameZoney Servidor - gestão de arenas gamer e lan houses")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 GameZoney. Todos os direitos reservados.")]
 [assembly: System.Reflection.AssemblyTrademark("GameZoney")]
-[assembly: AssemblyVersion("1.3.1.0")]
+[assembly: AssemblyVersion("1.3.2.0")]
 class Launcher : ApplicationContext {
     Process child; NotifyIcon tray; System.Windows.Forms.Timer monitor;
     string token=Guid.NewGuid().ToString("N"), address, data; bool stopping=false;
@@ -31,6 +31,10 @@ class Launcher : ApplicationContext {
     // 1.0.7: confere o SHA-256 de cada arquivo que o Node carrega (lista gerada e compilada junto na hora de montar o
     // instalador, em GzIntegrity.cs). Arquivo alterado, trocado ou faltando = o GameZoney não abre. Na versão de
     // desenvolvimento a lista vem vazia (GzIntegrity.dev.cs) e nada é conferido.
+    static bool PortBusy(int port){
+        try{foreach(var ep in System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners())if(ep.Port==port)return true;return false;}
+        catch{using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);return result.AsyncWaitHandle.WaitOne(400)&&probe.Connected;}}
+    }
     static void CheckIntegrity(){
         var list=GzIntegrity.Files;if(list==null||list.Length==0)return;
         // 1.0.7: em paralelo (na 1ª abertura o antivírus examina cada arquivo e a conferência em fila demorava)
@@ -82,9 +86,13 @@ class Launcher : ApplicationContext {
         Directory.CreateDirectory(data);string log=Path.Combine(data,"server.log");
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.Copy(log,log+".previous",true);
         if(File.Exists(log)&&new FileInfo(log).Length>2000000)File.WriteAllText(log,"");
-        using(var probe=new TcpClient()){var result=probe.BeginConnect("127.0.0.1",port,null,null);if(result.AsyncWaitHandle.WaitOne(400)&&probe.Connected)throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");}
+        // 1.3.2: porta ocupada? Consulta a lista de portas em escuta (instantâneo). Antes tentava conectar e, no Windows,
+        // uma conexão recusada em 127.0.0.1 demora: a espera de 400 ms acontecia em TODA abertura.
+        if(PortBusy(port))throw new Exception("A porta "+port+" está ocupada. Encerre a versão anterior do GameZoney e abra novamente.");
         if(!silent&&!selftest)Splash.Open();
-        CheckIntegrity();
+        // 1.3.2: a conferência dos arquivos roda junto com a partida do Node (antes era um passo inteiro antes dele).
+        // O painel só abre depois que ela termina; arquivo alterado = o Node é fechado e o GameZoney não abre, como antes.
+        var integrity=System.Threading.Tasks.Task.Run(()=>CheckIntegrity());
         var info=new ProcessStartInfo(Path.Combine(root,"runtime","node.exe"),"--disable-warning=ExperimentalWarning --disable-sigusr1 server.js");
         info.WorkingDirectory=root;info.UseShellExecute=false;info.CreateNoWindow=true;info.WindowStyle=ProcessWindowStyle.Hidden;info.RedirectStandardOutput=true;info.RedirectStandardError=true;
         // 1.0.7: nada de fora entra no Node (NODE_OPTIONS=--require..., NODE_PATH etc. permitiriam trocar a conferência da licença)
@@ -95,7 +103,8 @@ class Launcher : ApplicationContext {
         if(selftest){Environment.SetEnvironmentVariable("GZ_NO_PC_TLS","1");Environment.SetEnvironmentVariable("GZ_NO_BACKUP","1");}
         child=new Process();child.StartInfo=info;child.OutputDataReceived+=(s,e)=>Log(e.Data);child.ErrorDataReceived+=(s,e)=>Log(e.Data);
         child.Start();child.BeginOutputReadLine();child.BeginErrorReadLine();
-        bool ready=false;for(int i=0;i<240;i++){if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(i<40?100:250);/* 1.3.1: primeiros 4 s conferindo a cada 0,1 s (abre o painel assim que o servidor responde) */}
+        bool ready=false;for(int i=0;i<240;i++){if(integrity.IsFaulted)break;if(child.HasExited)break;try{ready=Request("/health").Contains("gamezoney-server");if(ready)break;}catch{}Thread.Sleep(i<40?100:250);/* 1.3.1: primeiros 4 s conferindo a cada 0,1 s (abre o painel assim que o servidor responde) */}
+        try{integrity.Wait();}catch(AggregateException e){try{if(!child.HasExited){child.Kill();child.WaitForExit(3000);}}catch{}Splash.Close();throw e.InnerException??e;}
         if(!ready){Stop();throw new Exception("O servidor não iniciou. Consulte o arquivo server.log na pasta de dados: "+data);}
         if(selftest){File.WriteAllText(Path.Combine(data,"launcher-selftest.txt"),Request("/health"));Stop();return;}
         var menu=new ContextMenuStrip();menu.Items.Add("Abrir GameZoney",null,(s,e)=>ShowPanel());/* 1.0.5: "Abrir no navegador" e "Abrir pasta de dados" retirados do menu */menu.Items.Add("Abrir diagnóstico",null,(s,e)=>Open(Path.Combine(data,"server.log")));

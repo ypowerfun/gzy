@@ -26,6 +26,8 @@ test('3.0.68: instalador do servidor leva o WebView2 do painel e o iniciador usa
  assert(fs.readFileSync(path.join(root,'..','scripts','build-server.ps1'),'utf8').includes("SignerCertificate.Subject -match 'O=Microsoft Corporation'"),'gerador só aceita o instalador do WebView2 assinado pela Microsoft');
  assert(launcher.includes('shown=PanelHost.SignalRunning(port)')&&launcher.includes('if(!shown)OpenPanel('),'segunda abertura avisa o servidor aberto (1.0.7: espera a primeira ficar pronta antes de abrir o navegador)');
  assert(launcher.includes('Splash.Open()')&&launcher.includes('Splash.Close()'),'1.0.7: janela Iniciando o servidor na abertura');
+ assert(launcher.includes('if(PortBusy(port))')&&launcher.includes('GetActiveTcpListeners()'),'1.3.2: porta ocupada pela lista de portas (sem esperar 400 ms a cada abertura)');
+ assert(launcher.includes('var integrity=System.Threading.Tasks.Task.Run(()=>CheckIntegrity());')&&launcher.includes('try{integrity.Wait();}catch(AggregateException e){try{if(!child.HasExited){child.Kill();'),'1.3.2: conferência dos arquivos em paralelo com o Node; alterado = fecha o Node e não abre');
  assert(/FormClosing\+=\(s,e\)=>\{if\(e\.CloseReason==CloseReason\.UserClosing\)\{e\.Cancel=true;Hide\(\)/.test(launcher),'fechar a janela só esconde o painel (servidor continua)');
  assert(launcher.includes('settings.AreDevToolsEnabled=false'),'ferramentas de desenvolvedor desligadas');
  assert(!/GZ_DATA_DIR[^;]*painel|Path\.Combine\(data,"painel/.test(launcher),'a janela do painel não usa a pasta de dados do servidor');

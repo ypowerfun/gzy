@@ -112,7 +112,7 @@ async function confirmSale() {
 function receiptPreview(sale) {
   if (!sale.items) return '';
   const W = 42, pad = (l, r) => l + ' '.repeat(Math.max(1, W - l.length - r.length)) + r, line = '-'.repeat(W), brl = c => 'R$ ' + (c / 100).toFixed(2).replace('.', ',');
-  const rows = ['GameZoney', 'CUPOM DE VENDA - NAO FISCAL', line, pad('Cupom No ' + String(sale.number).padStart(6, '0'), new Date(sale.at).toLocaleString('pt-BR', {timeZone: state?.settings.timeZone || 'America/Manaus'}).replace(',', '')), 'Operador: ' + sale.actor, line];
+  const rows = [gzOrgName(), 'CUPOM DE VENDA - NAO FISCAL', line, pad('Cupom No ' + String(sale.number).padStart(6, '0'), new Date(sale.at).toLocaleString('pt-BR', {timeZone: state?.settings.timeZone || 'America/Manaus'}).replace(',', '')), 'Operador: ' + sale.actor, line];
   for (const i of sale.items) { rows.push(i.name.slice(0, W)); rows.push(pad('  ' + i.qty + ' x ' + brl(i.unitCents), brl(i.totalCents))); }
   rows.push(line, pad('TOTAL', brl(sale.totalCents)), ...(sale.paymentMethod === 'mixed' && sale.payments ? ['Pagamento combinado:', ...sale.payments.map(p => pad('  ' + (PAY_SHOP[p.method] || p.method), brl(p.cents)))] : [pad('Pagamento', ({cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'})[sale.paymentMethod] || '')]));
   if (sale.status === 'canceled') rows.push(line, '*** VENDA CANCELADA ***');

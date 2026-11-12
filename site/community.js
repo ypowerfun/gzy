@@ -122,10 +122,25 @@ module.exports = function community(app, ctx) {
     if (r.handoff) { const {online, T} = handoff(c); return say(c, (r.text ? r.text + '\n\n' : (first ? bot.texts(c.lang).hello(name) + '\n' : '')) + (online ? T.online : T.offline(c.email))); }
     say(c, r.text);
   }
+  // 2.14: cliente que não responde o assistente em 5 min (sem ter chamado especialista): a conversa é encerrada; só abrindo outra
+  const IDLE = Number(ctx.chatIdleMs) || 5 * 60000;
+  const IDLE_TEXT = {pt: 'Encerramos esta conversa porque não recebemos resposta em 5 minutos. Se precisar, é só abrir uma nova conversa.',
+    en: 'We closed this conversation because we got no reply within 5 minutes. If you need anything, just start a new conversation.',
+    es: 'Cerramos esta conversación porque no recibimos respuesta en 5 minutos. Si lo necesitas, abre una nueva conversación.'};
+  function expire(c, now = Date.now()) {
+    if (!c || c.status !== 'open' || !c.bot || c.handoff) return c;
+    const last = db.get('SELECT sender, at FROM chat_messages WHERE chat_id=? ORDER BY id DESC LIMIT 1', c.id);
+    if (!last || last.sender !== 'bot' || now - last.at < IDLE) return c;
+    say(c, IDLE_TEXT[bot.langOf(c.lang)]);
+    db.run("UPDATE chats SET status='closed', closed_by='timeout', last_at=? WHERE id=?", now, c.id);
+    return db.get('SELECT * FROM chats WHERE id=?', c.id);
+  }
+  const idleSweep = setInterval(() => { try { for (const c of db.all("SELECT * FROM chats WHERE status='open' AND bot=1 AND handoff=0 AND last_at<?", Date.now() - IDLE)) expire(c); } catch { } }, Math.min(60000, IDLE));
+  idleSweep.unref?.();
   const chatInfo = c => ({id: c.id, name: c.name, status: c.status, closedBy: c.closed_by || '', rated: c.rating > 0 || !!c.rated_at, rating: c.rating || 0, handoff: !!c.handoff, bot: !!c.bot});
 
   app.get('/api/chat', api(req => {
-    const c = chatOf(req), base = {online: adminOnline(), user: req.user ? {name: req.user.name, email: req.user.email, phone: req.user.phone} : null};
+    const c = expire(chatOf(req)), base = {online: adminOnline(), user: req.user ? {name: req.user.name, email: req.user.email, phone: req.user.phone} : null};
     if (!c) return {...base, chat: null};
     if (c.unread_user) db.run('UPDATE chats SET unread_user=0 WHERE id=?', c.id);
     return {...base, chat: chatInfo(c), messages: messages(c.id, req.query.after)};
@@ -145,8 +160,8 @@ module.exports = function community(app, ctx) {
     return {chat: chatInfo(c), messages: messages(id), online: adminOnline()};
   }));
   app.post('/api/chat/send', jsonOnly, limit('chat-send', 60, 600000), api(req => {
-    const c = chatOf(req) || fail(404, 'Conversa não encontrada. Inicie uma nova conversa.'), text = str(req.body.text, 2000);
-    if (c.status === 'closed') fail(409, c.closed_by === 'user' ? 'Esta conversa foi encerrada. Abra uma nova conversa.' : 'Esta conversa foi encerrada pela equipe GameZoney. Inicie uma nova conversa.');
+    const c = expire(chatOf(req)) || fail(404, 'Conversa não encontrada. Inicie uma nova conversa.'), text = str(req.body.text, 2000);
+    if (c.status === 'closed') fail(409, c.closed_by === 'timeout' ? 'Esta conversa foi encerrada por falta de resposta. Abra uma nova conversa.' : c.closed_by === 'user' ? 'Esta conversa foi encerrada. Abra uma nova conversa.' : 'Esta conversa foi encerrada pela equipe GameZoney. Inicie uma nova conversa.');
     if (!text) fail(400, 'Escreva sua mensagem.');
     const now = Date.now();
     if (req.body.lang && LANGS.includes(req.body.lang) && req.body.lang !== c.lang) { db.run('UPDATE chats SET lang=? WHERE id=?', req.body.lang, c.id); c.lang = req.body.lang; }
@@ -235,5 +250,5 @@ module.exports = function community(app, ctx) {
     return {text: r.unknown ? '(sem resposta na base: o cliente seria encaminhado a um especialista)' : r.handoff && !r.text ? '(pedido de especialista)' : r.text, id: r.id || '', handoff: !!r.handoff, unknown: !!r.unknown};
   }));
 
-  return {adminReviews, adminOnline, unreadChats: () => db.get('SELECT COUNT(*) n FROM chats WHERE unread_admin>0').n, bot};
+  return {adminReviews, adminOnline, unreadChats: () => db.get('SELECT COUNT(*) n FROM chats WHERE unread_admin>0').n, bot, stop: () => clearInterval(idleSweep)};
 };

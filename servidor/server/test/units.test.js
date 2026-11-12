@@ -73,6 +73,22 @@ test('1.0.8: Multi-Unidade (Pro) — resumo da loja na Minha conta, código de v
   await gestor('/api/units/remove', {id: v.units[0].id}); assert.equal((await gestor('/api/units')).units.length, 0);
   assert.match((await loja.call('/api/units/send', {}, 400)).error, /removida pelo gestor/);
 
+  // site 2.14: limite de unidades por conta (padrão 5); o /admin aumenta
+  assert.equal((await gestor('/api/units')).maxUnits, 5);
+  await s.dono('/api/admin/units/limit', {email: 'gestor@rede.com', max: 1});
+  const sede = await s.gz(); await sede.call('/api/license/login', {email: 'gestor@rede.com', password: 'senha-forte-3'});
+  await sede.call('/api/units', {enabled: true, name: 'Sede'}); await sede.call('/api/units/send', {});
+  const carla = s.web(); await carla('/api/auth/register', {name: 'Carla', email: 'carla@lan.com', password: 'senha-forte-4'});
+  await s.dono('/api/admin/subscriptions/grant', {email: 'carla@lan.com', plan: 'pro', months: 1});
+  const filial = await s.gz(); await filial.call('/api/license/login', {email: 'carla@lan.com', password: 'senha-forte-4'});
+  await filial.call('/api/units', {enabled: true, name: 'Filial', linkCode: code});
+  assert.match((await filial.call('/api/units/send', {}, 400)).error, /Limite de 1 unidades.*suporte@gamezoney\.com/);
+  let adm = await s.dono('/api/admin/units'); assert.deepEqual(adm.accounts.find(a => a.email === 'gestor@rede.com'), {id: adm.accounts.find(a => a.email === 'gestor@rede.com').id, email: 'gestor@rede.com', name: 'Gestor', pro: true, used: 1, max: 1});
+  await s.dono('/api/admin/units/limit', {email: 'gestor@rede.com', max: 0}, 400);
+  await s.dono('/api/admin/units/limit', {email: 'gestor@rede.com', max: 2});
+  await filial.call('/api/units/send', {}); v = await gestor('/api/units'); assert.equal(v.units.length, 2); assert.equal(v.maxUnits, 2);
+  await ana('/api/admin/units', undefined, 403);
+
   // envio direto sem certificado válido é recusado
   const r = await fetch(s.siteBase + '/api/units/report', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token: 'x.y', installId: loja.state.runtime.installId, summary: {}})});
   assert.equal(r.status, 401);

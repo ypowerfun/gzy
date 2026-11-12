@@ -164,10 +164,10 @@ function reportPdf(store, regId) {
   const {linesPdf, wrap, pad, center, brl, WIDTH} = require('./shop');
   const reg = store.state.cashRegisters.find(c => c.id === regId) || fail('Caixa não encontrado.');
   const s = reg.closing || summary(store, reg), tz = store.state.settings.timeZone || 'America/Manaus';
-  if (reg.historical) { const fmt = d => d.split('-').reverse().join('/'), line = '-'.repeat(WIDTH); const L = [center('GameZoney'), center('CAIXA ANTERIOR (REGISTRO MANUAL)'), line, 'Caixa No ' + String(reg.number).padStart(4, '0'), 'Periodo: ' + fmt(reg.periodFrom) + ' a ' + fmt(reg.periodTo), 'Registrado por: ' + reg.openedBy, line, pad('VALOR TOTAL DO CAIXA', brl(reg.countedCents))]; if (reg.closeNote) { L.push(line); for (const w of wrap('Obs.: ' + reg.closeNote)) L.push(w); } L.push(line, center('Documento interno sem valor fiscal')); return {pdf: linesPdf(L, 'Caixa ' + reg.number), number: reg.number}; }
+  if (reg.historical) { const fmt = d => d.split('-').reverse().join('/'), line = '-'.repeat(WIDTH); const L = [...wrap(require('./organization').name(store)).map(center), center('CAIXA ANTERIOR (REGISTRO MANUAL)'), line, 'Caixa No ' + String(reg.number).padStart(4, '0'), 'Periodo: ' + fmt(reg.periodFrom) + ' a ' + fmt(reg.periodTo), 'Registrado por: ' + reg.openedBy, line, pad('VALOR TOTAL DO CAIXA', brl(reg.countedCents))]; if (reg.closeNote) { L.push(line); for (const w of wrap('Obs.: ' + reg.closeNote)) L.push(w); } L.push(line, center('Documento interno sem valor fiscal')); return {pdf: linesPdf(L, 'Caixa ' + reg.number), number: reg.number}; }
   const dt = t => t ? new Intl.DateTimeFormat('pt-BR', {timeZone: tz, dateStyle: 'short', timeStyle: 'short'}).format(t).replace(',', '') : '-';
   const line = '-'.repeat(WIDTH);
-  const L = [center('GameZoney'), center(reg.status === 'open' ? 'CAIXA ABERTO - PARCIAL' : 'FECHAMENTO DE CAIXA'), line,
+  const L = [...wrap(require('./organization').name(store)).map(center), center(reg.status === 'open' ? 'CAIXA ABERTO - PARCIAL' : 'FECHAMENTO DE CAIXA'), line,
     pad('Caixa No ' + String(reg.number).padStart(4, '0'), reg.status === 'open' ? 'ABERTO' : 'FECHADO'),
     'Abertura: ' + dt(reg.openedAt) + ' ' + reg.openedBy, 'Fechamento: ' + (reg.closedAt ? dt(reg.closedAt) + ' ' + reg.closedBy : '-'), line,
     pad('Troco inicial', brl(reg.openingCents)), pad('Recargas (' + s.recharges + ')', brl(s.timeCents)), pad('Produtos/servicos (' + s.shopCount + ')', brl(s.shopCents)), pad('TOTAL VENDIDO', brl(s.totalCents)), line,

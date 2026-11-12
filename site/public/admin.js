@@ -207,6 +207,14 @@
     try { const r = await api('/api/admin/bot/test', {text: f.text.value}); $('#bot-test-out').textContent = r.text + (r.handoff && !r.unknown ? '\n\n(depois chama um especialista)' : ''); $('#bot-test-out').classList.remove('hidden'); }
     catch (err) { $('#bot-test-out').textContent = err.message; $('#bot-test-out').classList.remove('hidden'); } }); };
   loadBot(); setInterval(loadBot, 60000);
+  // ---------- 2.14: limite de unidades da Multi-Unidade por conta ----------
+  async function loadUnits() {
+    let d; try { d = await api('/api/admin/units'); } catch { return; }
+    $('#units-limits').innerHTML = d.accounts.length ? '<table><thead><tr><th>Conta</th><th>Plano</th><th>Unidades</th><th>Limite</th><th></th></tr></thead><tbody>' + d.accounts.map(a => `<tr><td>${esc(a.name)}<br><small class="note">${esc(a.email)}</small></td><td>${a.pro ? '<span class="pill ok">Pro</span>' : '<span class="pill">sem Pro</span>'}</td><td>${a.used}</td><td><input type="number" min="1" max="500" value="${a.max}" style="width:90px" data-units-max="${esc(a.id)}" aria-label="Limite de unidades de ${esc(a.email)}"></td><td><button type="button" class="btn small" data-units-save="${esc(a.id)}">Salvar</button></td></tr>`).join('') + '</tbody></table>' : '<p class="note">Nenhuma conta Pro ainda.</p>';
+    $$('[data-units-save]').forEach(b => b.onclick = () => busy(b, async () => { const input = $(`[data-units-max="${b.dataset.unitsSave}"]`);
+      try { const r = await api('/api/admin/units/limit', {userId: b.dataset.unitsSave, max: Number(input.value)}); showMsg($('#units-msg'), `Limite salvo: ${r.max} unidades.`, true); loadUnits(); } catch (err) { showMsg($('#units-msg'), err.message); } }));
+  }
+  loadUnits();
   pollChat(); setInterval(pollChat, 4000);
   $('#offer-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
     try { const r = await api('/api/admin/offer', {banner: f.banner.value});

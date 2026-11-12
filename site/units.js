@@ -10,11 +10,17 @@
 const crypto = require('node:crypto');
 
 module.exports = function units(app, ctx) {
-  const {db, needUser, jsonOnly, api, fail, str, limit, plans, planActivation, log} = ctx;
+  const {db, needUser, needAdmin, jsonOnly, api, fail, str, limit, plans, planActivation, log} = ctx;
   db.raw.exec(`CREATE TABLE IF NOT EXISTS units(id TEXT PRIMARY KEY, owner_uid TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, plan_uid TEXT NOT NULL, install_id TEXT NOT NULL,
     name TEXT NOT NULL DEFAULT '', summary TEXT NOT NULL DEFAULT '{}', version TEXT NOT NULL DEFAULT '', first_at INTEGER NOT NULL, last_at INTEGER NOT NULL, removed_at INTEGER NOT NULL DEFAULT 0, ip TEXT NOT NULL DEFAULT '');
     CREATE UNIQUE INDEX IF NOT EXISTS units_owner_install ON units(owner_uid, install_id);
     CREATE TABLE IF NOT EXISTS unit_codes(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, code TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL);`);
+  // 2.14: até 5 unidades por conta (gestor); mais só pelo suporte — o /admin aumenta o limite da conta (unit_limits)
+  db.raw.exec('CREATE TABLE IF NOT EXISTS unit_limits(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, max_units INTEGER NOT NULL, updated_at INTEGER NOT NULL)');
+  const DEFAULT_MAX = 5;
+  const maxOf = uid => db.get('SELECT max_units FROM unit_limits WHERE user_id=?', uid)?.max_units || DEFAULT_MAX;
+  const usedOf = uid => db.get('SELECT COUNT(*) n FROM units WHERE owner_uid=? AND removed_at=0', uid).n;
+  const LIMIT_MSG = m => `Limite de ${m} unidades desta conta atingido. Para registrar mais unidades, abra um chamado em gamezoney.com › Minha conta › Suporte ou escreva para suporte@gamezoney.com.`;
   const ID_RE = /^[0-9a-f-]{20,80}$/i, CODE_RE = /^GZU-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
   const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const newCode = () => 'GZU-' + [0, 1].map(() => Array.from(crypto.randomBytes(4), b => ALPHA[b % ALPHA.length]).join('')).join('-');
@@ -52,6 +58,7 @@ module.exports = function units(app, ctx) {
     const summary = JSON.stringify(clean(b.summary)), name = str(b.name, 60) || 'Unidade', now = Date.now();
     const old = db.get('SELECT * FROM units WHERE owner_uid=? AND install_id=?', owner, installId);
     if (old?.removed_at) fail(410, 'Esta unidade foi removida pelo gestor. Peça um novo código de vínculo.');
+    if (!old) { const max = maxOf(owner); if (usedOf(owner) >= max) fail(403, LIMIT_MSG(max)); }
     // a mesma loja numa só conta: se mudou de vínculo, sai da conta antiga
     db.run('DELETE FROM units WHERE install_id=? AND owner_uid<>? AND removed_at=0', installId, owner);
     if (old) db.run('UPDATE units SET name=?, summary=?, version=?, last_at=?, plan_uid=?, ip=? WHERE id=?', name, summary, str(b.summary?.version, 20), now, cert.uid, req.ip || '', old.id);
@@ -68,7 +75,7 @@ module.exports = function units(app, ctx) {
     });
     const sum = f => list.reduce((a, x) => a + (f(x.summary) || 0), 0);
     const code = db.get('SELECT code FROM unit_codes WHERE user_id=?', u.id)?.code || '';
-    return {pro: isPro(u.id), code, units: list, totals: {dayCents: sum(s => s.day?.totalCents), monthCents: sum(s => s.month?.totalCents), inUse: sum(s => s.stations?.inUse), stations: sum(s => s.stations?.total), openCash: list.filter(x => x.summary.cash?.open).length}};
+    return {pro: isPro(u.id), code, units: list, maxUnits: maxOf(u.id), totals: {dayCents: sum(s => s.day?.totalCents), monthCents: sum(s => s.month?.totalCents), inUse: sum(s => s.stations?.inUse), stations: sum(s => s.stations?.total), openCash: list.filter(x => x.summary.cash?.open).length}};
   }));
   app.post('/api/units/code', jsonOnly, api(req => {
     const u = needUser(req);
@@ -81,6 +88,23 @@ module.exports = function units(app, ctx) {
     const u = needUser(req), id = str(req.body?.id, 60);
     const row = db.get('SELECT * FROM units WHERE id=? AND owner_uid=? AND removed_at=0', id, u.id) || fail(404, 'Unidade não encontrada.');
     db.run('UPDATE units SET removed_at=? WHERE id=?', Date.now(), row.id); db.audit(u.email, 'unidades', 'removeu ' + row.name); return {ok: true};
+  }));
+  // /admin: contas Pro (ou com unidades) com o uso e o limite; aumentar/diminuir o limite de uma conta
+  app.get('/api/admin/units', api(req => {
+    needAdmin(req);
+    const ids = db.all("SELECT DISTINCT user_id id FROM subscriptions WHERE plan='pro' UNION SELECT DISTINCT owner_uid id FROM units WHERE removed_at=0 UNION SELECT user_id id FROM unit_limits").map(r => r.id);
+    return {defaultMax: DEFAULT_MAX, accounts: ids.map(id => db.get('SELECT id, email, name FROM users WHERE id=?', id)).filter(Boolean)
+      .map(u => ({id: u.id, email: u.email, name: u.name, pro: isPro(u.id), used: usedOf(u.id), max: maxOf(u.id)})).sort((a, b) => b.used - a.used || a.email.localeCompare(b.email))};
+  }));
+  app.post('/api/admin/units/limit', jsonOnly, api(req => {
+    needAdmin(req);
+    const u = db.get('SELECT id, email FROM users WHERE id=? OR email=?', str(req.body?.userId, 80), str(req.body?.email, 200).toLowerCase()) || fail(404, 'Conta não encontrada.');
+    const max = Math.round(Number(req.body?.max));
+    if (!Number.isFinite(max) || max < 1 || max > 500) fail(400, 'Informe um limite de 1 a 500 unidades.');
+    if (max === DEFAULT_MAX) db.run('DELETE FROM unit_limits WHERE user_id=?', u.id);
+    else db.run('INSERT INTO unit_limits(user_id,max_units,updated_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET max_units=excluded.max_units, updated_at=excluded.updated_at', u.id, max, Date.now());
+    db.audit(req.user.email, 'unidades', `limite de ${u.email}: ${max} unidades`);
+    return {ok: true, max};
   }));
   return {clean};
 };

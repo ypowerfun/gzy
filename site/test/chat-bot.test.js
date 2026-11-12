@@ -93,3 +93,21 @@ test('assistente: banco base sem ids repetidos e guia igual ao GUIA-GAMEZONEY.md
  const {wantsHuman}=require('../bot');for(const x of ['falar com agente','falar com especialista','especialista','atendente','quero falar com um humano','talk to an agent','hablar con un asesor'])assert.ok(wantsHuman(x),x);
  for(const x of ['quanto custa','o agente de rede','tem teste'])assert.ok(!wantsHuman(x),x);
 });
+
+test('assistente: sem resposta do cliente em 5 min (sem especialista) a conversa é encerrada; com especialista não',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-idle-'));const {privateKey}=crypto.generateKeyPairSync('ed25519');
+ const app=createApp({chatIdleMs:300,env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:true,send:async()=>true},log:{log(){},error(){}}});
+ const server=await new Promise(r=>{const s=app.listen(0,'127.0.0.1',()=>r(s))});const base='http://127.0.0.1:'+server.address().port;
+ t.after(()=>{server.close();app.locals.close();fs.rmSync(dir,{recursive:true,force:true,maxRetries:5})});
+ const client=()=>{const jar={};return async(url,body,status=200)=>{const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Origin:'http://site.test',Cookie:Object.entries(jar).map(([k,v])=>k+'='+v).join('; ')},body:body===undefined?undefined:JSON.stringify(body)});
+  for(const c of r.headers.getSetCookie?.()||[]){const [kv]=c.split(';');const i=kv.indexOf('=');if(kv.slice(i+1))jar[kv.slice(0,i)]=kv.slice(i+1);else delete jar[kv.slice(0,i)]}const x=await r.json();assert.equal(r.status,status,url+' '+JSON.stringify(x));return x}};
+ const a=client(),b=client();
+ await a('/api/chat/start',{name:'Ana',email:'ana@x.com',message:'Tem teste grátis?'});
+ await b('/api/chat/start',{name:'Bia',email:'bia@x.com',message:'especialista'});
+ await a('/api/chat/send',{text:'Quanto custa?'});
+ await new Promise(r=>setTimeout(r,450));
+ let r=await a('/api/chat');assert.equal(r.chat.status,'closed');assert.equal(r.chat.closedBy,'timeout');assert.match(r.messages.at(-1).text,/não recebemos resposta em 5 minutos/);
+ assert.match((await a('/api/chat/send',{text:'oi'},409)).error,/falta de resposta/);
+ r=await b('/api/chat');assert.equal(r.chat.status,'open','pediu especialista: não encerra sozinho');
+ await a('/api/chat/end',{});r=await a('/api/chat/start',{name:'Ana',email:'ana@x.com',message:'oi'});assert.equal(r.chat.status,'open');
+});

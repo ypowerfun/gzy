@@ -155,7 +155,7 @@ const brl = c => 'R$ ' + (c / 100).toFixed(2).replace('.', ',');
 function receiptLines(store, sale) {
   const tz = store.state.settings.timeZone || 'America/Manaus';
   const when = new Intl.DateTimeFormat('pt-BR', {timeZone: tz, dateStyle: 'short', timeStyle: 'medium'}).format(sale.at);
-  const L = [center('GameZoney'), center('CUPOM DE VENDA - NAO FISCAL'), '-'.repeat(WIDTH), pad('Cupom No ' + String(sale.number).padStart(6, '0'), when.replace(',', '')), 'Operador: ' + sale.actor, '-'.repeat(WIDTH), pad('ITEM', 'TOTAL')];
+  const L = [...wrap(require('./organization').name(store)).map(center), center('CUPOM DE VENDA - NAO FISCAL'), '-'.repeat(WIDTH), pad('Cupom No ' + String(sale.number).padStart(6, '0'), when.replace(',', '')), 'Operador: ' + sale.actor, '-'.repeat(WIDTH), pad('ITEM', 'TOTAL')];
   for (const i of sale.items) { for (const w of wrap(i.name)) L.push(w); L.push(pad(`  ${i.qty} x ${brl(i.unitCents)}`, brl(i.totalCents))); }
   L.push('-'.repeat(WIDTH), pad('TOTAL', brl(sale.totalCents)), ...(sale.paymentMethod === 'mixed' ? ['Pagamento combinado:', ...require('./payments').parts(sale, sale.totalCents).map(p => pad('  ' + require('./payments').LABEL[p.method], brl(p.cents)))] : [pad('Pagamento', PAYMENTS[sale.paymentMethod] || '')]));
   if (sale.status === 'canceled') L.push('-'.repeat(WIDTH), center('*** VENDA CANCELADA ***'), ...wrap('Motivo: ' + (sale.cancelReason || '')));

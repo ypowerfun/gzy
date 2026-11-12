@@ -113,11 +113,11 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   // 2.14: encerrar e avaliar (o cliente encerra; conversa encerrada pela equipe também pode ser avaliada)
   const rate = room.querySelector('.chat-rate'); let stars = 0, rating = false;
   const ended = (closed, chat = {}) => {
-    const showRate = rating || (closed && !chat.rated);
+    const showRate = rating || (closed && !chat.rated && chat.closedBy !== 'timeout');
     room.querySelector('.chat-ended').classList.toggle('hidden', !closed || showRate); room.querySelector('.chat-send').classList.toggle('hidden', closed || rating);
     room.querySelector('.chat-new').classList.toggle('hidden', closed || rating); room.querySelector('.chat-actions').classList.toggle('hidden', closed || rating);
     rate.classList.toggle('hidden', !showRate);
-    room.querySelector('.chat-ended-text').textContent = chat.closedBy === 'user' ? 'Conversa encerrada.' : 'Esta conversa foi encerrada pela equipe GameZoney.';
+    room.querySelector('.chat-ended-text').textContent = chat.closedBy === 'user' ? 'Conversa encerrada.' : chat.closedBy === 'timeout' ? 'Conversa encerrada por falta de resposta.' : 'Esta conversa foi encerrada pela equipe GameZoney.';
     room.querySelector('.chat-thanks').classList.toggle('hidden', !(chat.rating > 0));
     room.querySelector('.chat-human').classList.toggle('hidden', !!chat.handoff && !chat.bot);
     if (closed) log.querySelector('.chat-wait')?.remove(); };
