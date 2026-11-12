@@ -94,6 +94,12 @@ test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com ni
   const ach = (await app('achievements', {}, login.token)).achievements; assert.equal(ach.length, 2); assert.ok(ach.every(x => x.done));
   const h = await app('history', {}, login.token); assert.equal(h.sessions.length, 2); assert.equal(h.recharges[0].minutes, 240); assert.ok(h.medals.some(x => x.reason === 'Conquista: Maratonista'));
   assert.doesNotMatch(JSON.stringify(h) + JSON.stringify(me), /passwordHash|cpf/);
+  // 1.3.9: Ranking no app — os mesmos Top 10 do painel, só com nicks (sem nome completo nem valores em R$)
+  const rk = await app('ranking', {}, login.token), panelRk = await call('/api/ranking');
+  assert.deepEqual(rk.medals.map(x => [x.nick, x.value]), panelRk.medals.map(x => [x.username, x.medalsMilli / 1000]));
+  assert.equal(rk.medals[0].nick, 'joana'); assert.equal(rk.medals[0].me, true); assert.equal(rk.recharges[0].value, 1); assert.equal(rk.me, 'joana');
+  assert.ok(rk.medals.length <= 10 && rk.participations.length <= 10 && rk.recharges.length <= 10);
+  assert.doesNotMatch(JSON.stringify(rk), /Joana Silva|cents|memberId/);
   await app('me', {}, 'v1.x.1.y', 401); await app('me', {}, '', 401);
   // senha trocada derruba o token
   inst.store.memberSave({id: m.id, name: 'Joana Silva', username: 'joana', password: 'nova-senha'}, 'admin');

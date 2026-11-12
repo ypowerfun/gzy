@@ -11,7 +11,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
-const ACTIONS = new Set(['login', 'me', 'stations', 'achievements', 'history']);
+const ACTIONS = new Set(['login', 'me', 'stations', 'achievements', 'history', 'ranking']); // 1.3.9: + ranking
 const HOLD_MS = 25000, ONLINE_MS = 60000;
 
 module.exports = function memberApp(app, ctx) {

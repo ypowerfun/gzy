@@ -124,6 +124,15 @@ module.exports = function memberApp(store, deps = {}) {
       case 'stations': memberOf(r.auth); return {stations: stations()};
       case 'achievements': { const m = memberOf(r.auth); return {achievements: achievements ? achievements.progressOf(m.id) : []}; }
       case 'history': return history(memberOf(r.auth));
+      // 1.3.9: Ranking (os mesmos Top 10 do painel): só o nick de cada cliente; nas recargas, a quantidade (sem valores em R$)
+      case 'ranking': {
+        const m = memberOf(r.auth), rk = require('./events').ranking(store, {}), me = String(m.username || '');
+        const row = (x, value) => ({nick: x.username, value, me: !!me && x.username === me});
+        return {month: rk.month, me,
+          medals: rk.medals.filter(x => x.username).map(x => row(x, Math.round(x.medalsMilli) / 1000)),
+          participations: rk.participations.filter(x => x.username).map(x => row(x, x.count)),
+          recharges: rk.recharges.filter(x => x.username).map(x => row(x, x.count))};
+      }
       case 'logo': { const file = brand?.tvLogoFile?.(); if (!file) return {rev: '', png: ''}; return {rev: brand.version(), png: require('node:fs').readFileSync(file).toString('base64')}; }
       default: fail('Ação inválida.', 404);
     }

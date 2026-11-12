@@ -9,7 +9,7 @@
   const base = parts[0] === 'app' ? '/app/' : '/';
   const KEY = 'gzapp:' + slug;
   let token = ''; try { token = localStorage.getItem(KEY) || ''; } catch { }
-  let tab = 'home', me = null, timers = [], filter = 'all', histTab = 'sessions';
+  let tab = 'home', me = null, timers = [], filter = 'all', histTab = 'sessions', rankTab = 'medals';
   // 1.3.8: VR funciona junto com o console (um tipo só: Console/VR)
   const CAT = {pc: 'PC', console: 'Console/VR', sim: 'Simulador'};
   const FILTERS = [['all', 'Todas'], ['pc', 'PCs'], ['console', 'Consoles/VR'], ['sim', 'Simuladores']];
@@ -80,7 +80,7 @@
   function start() { $('#tabs').classList.remove('hidden'); show(tab); }
   function show(t) {
     tab = t; stopTimers(); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t)); window.scrollTo(0, 0);
-    ({home, stations, achievements, history})[t]().catch(err => { screen.innerHTML = `<div class="card"><p class="error">${esc(err.message)}</p><button class="btn ghost" id="again">Tentar de novo</button></div>`; const a = $('#again'); if (a) a.onclick = () => show(tab); });
+    ({home, stations, achievements, ranking, history})[t]().catch(err => { screen.innerHTML = `<div class="card"><p class="error">${esc(err.message)}</p><button class="btn ghost" id="again">Tentar de novo</button></div>`; const a = $('#again'); if (a) a.onclick = () => show(tab); });
   }
   document.addEventListener('click', e => { const b = e.target.closest('#tabs button'); if (b) show(b.dataset.tab); });
 
@@ -125,6 +125,24 @@
       ${list.length ? `<div class="achs">${list.map(a => `<div class="ach ${a.done ? '' : 'todo'}"><div class="ic">${esc(a.icon)}</div><strong>${esc(a.name)}</strong>${a.description ? `<small>${esc(a.description)}</small>` : ''}
         ${a.done ? `<span class="done">✔ Completada ${esc(when(a.doneAt))}</span>` : `<div class="bar"><i style="width:${Math.min(100, a.value / a.target * 100).toFixed(1)}%"></i></div><small>${esc(val(a))}</small>`}
         <span class="plus">+${num(a.medals)}</span></div>`).join('')}</div>` : '<div class="empty">A arena ainda não criou conquistas.</div>'}`;
+  }
+  // 1.3.9: Ranking da arena (os mesmos Top 10 do painel; só nicks)
+  async function ranking() {
+    screen.innerHTML = '<div class="loading">Carregando…</div>';
+    const r = await call('ranking');
+    const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const monthName = (() => { const [y, m] = String(r.month || '').split('-').map(Number); return m ? `${MONTHS[m - 1]} de ${y}` : ''; })();
+    const TABS = [['medals', 'Medalhas', 'Top 10 em medalhas conquistadas', v => `${num(v)}`], ['participations', 'Corujão/Viradão', 'Top 10 em participações no Corujão/Viradão', v => `${num(v)}×`],
+      ['recharges', 'Recargas do mês', `Top 10 em recargas de ${monthName}`, v => `${num(v)} recarga${v === 1 ? '' : 's'}`]];
+    const paint = () => {
+      const [key, , title, fmt] = TABS.find(t => t[0] === rankTab), list = r[key] || [], mine = list.find(x => x.me);
+      screen.innerHTML = `<h1>Ranking</h1><p class="sub">${esc(title)}</p>
+        <div class="seg">${TABS.map(([k, t]) => `<button data-r="${k}" class="${rankTab === k ? 'active' : ''}">${t}</button>`).join('')}</div>
+        ${list.length ? `<div class="card rank">${list.map((x, i) => `<div class="rk ${i < 3 ? 'p' + (i + 1) : ''} ${x.me ? 'mine' : ''}"><span class="pos">${i + 1}º</span><span class="nk">${esc(x.nick)}${x.me ? ' <small>(você)</small>' : ''}</span><span class="val">${esc(fmt(x.value))}${key === 'medals' ? MEDAL.replace('class="medal-ic"', 'class="medal-ic sm"') : ''}</span></div>`).join('')}</div>
+        <p class="sub" style="text-align:center;margin-top:12px">${mine ? 'Você está no Top 10! 🎉' : 'Jogue, participe e recarregue para entrar no Top 10.'}</p>` : '<div class="empty">Ninguém no ranking ainda.</div>'}`;
+      screen.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { rankTab = b.dataset.r; paint(); });
+    };
+    paint();
   }
   async function history() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
