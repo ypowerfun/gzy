@@ -13,10 +13,11 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;
 #app{max-width:560px;margin:0 auto;min-height:100vh;padding:0 16px calc(86px + env(safe-area-inset-bottom))}
 .hidden{display:none!important}
 /* topo */
-.top{display:flex;align-items:center;gap:12px;padding:16px 0 12px;position:sticky;top:0;z-index:5;background:linear-gradient(rgba(5,5,6,.55) 60%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
-.top img{height:40px;width:auto;max-width:130px;object-fit:contain}
-.top strong{display:block;font:italic 900 19px/1.1 Montserrat,system-ui,sans-serif;letter-spacing:.3px;text-transform:uppercase}
-.top small{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+/* 1.3.9b: topo = ícone GZ (ou a logo da arena) + nome da arena; "Online" embaixo, no canto esquerdo */
+.top{display:grid;grid-template-columns:auto 1fr;grid-template-areas:'logo name' 'status status';align-items:center;column-gap:12px;row-gap:6px;padding:14px 0 12px;position:sticky;top:0;z-index:5;background:linear-gradient(rgba(5,5,6,.55) 60%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.top img{grid-area:logo;height:46px;width:auto;max-width:120px;object-fit:contain}
+.top strong{grid-area:name;display:block;font:italic 900 21px/1.1 Montserrat,system-ui,sans-serif;letter-spacing:.3px;text-transform:uppercase;overflow-wrap:anywhere}
+.top small{grid-area:status;justify-self:start;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
 .top small::before{content:"";width:8px;height:8px;border-radius:50%;background:#666}
 .top small.on{color:var(--text)}
 .top small.on::before{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
@@ -67,15 +68,16 @@ button{font:inherit;cursor:pointer}
 /* conquistas: cartões de metal escovado */
 .achs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .ach{position:relative;border-radius:16px;padding:14px;min-height:190px;display:flex;flex-direction:column;gap:6px;color:#fff;overflow:hidden;
-  background:var(--speckle),var(--brushed),linear-gradient(150deg,color-mix(in srgb,var(--accent) 78%,#000) 0%,color-mix(in srgb,var(--accent) 55%,#1a1206) 45%,color-mix(in srgb,var(--accent) 70%,#000) 100%);
-  background-size:7px 7px,auto,auto;border:1px solid color-mix(in srgb,var(--accent2) 55%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.5)}
-.ach.todo{filter:saturate(.75) brightness(.85)}
-.ach .ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;border:2px solid color-mix(in srgb,var(--accent2) 80%,#fff);background:rgba(0,0,0,.35);box-shadow:0 0 10px rgba(0,0,0,.4)}
+  /* 1.3.9b: transparente (o fundo aparece por trás) com borda e brilho na cor da arena — o metal escuro deixava o texto difícil de ler */
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 16%,rgba(8,8,10,.45)),rgba(6,6,8,.5));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  border:1px solid color-mix(in srgb,var(--accent2) 55%,transparent);box-shadow:inset 0 0 18px color-mix(in srgb,var(--accent) 14%,transparent),0 6px 18px rgba(0,0,0,.35)}
+.ach:not(.todo){border:2px solid var(--accent2);box-shadow:inset 0 0 22px color-mix(in srgb,var(--accent) 24%,transparent),0 0 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.ach .ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;border:2px solid var(--accent2);background:rgba(0,0,0,.45);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 35%,transparent)}
 .ach strong{font:800 15px/1.2 Montserrat,system-ui,sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.ach small{color:rgba(255,255,255,.85);font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.ach .bar{background:rgba(0,0,0,.45);margin-top:auto}
-.ach .plus{font:800 22px Montserrat,system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-.ach .done{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;align-self:flex-start}
+.ach small{color:#e9e5dc;font-size:12.5px;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.ach .bar{background:rgba(255,255,255,.12);margin-top:auto}
+.ach .plus{font:800 22px Montserrat,system-ui,sans-serif;color:var(--accent2);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.ach .done{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--brushed),var(--metal);color:#141008;align-self:flex-start}
 .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 0 4px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;box-shadow:0 0 8px color-mix(in srgb,var(--accent2) 60%,transparent)}
 /* histórico */
