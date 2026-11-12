@@ -15,7 +15,7 @@ const DEFAULT_PLANS = {
   free: {name: 'Free', monthly: 0, monthlyList: 0, annual: 0, annualList: 0, badge: '', popular: false, free: true,
     features: ['Funções essenciais por 30 dias', 'Autoatendimento no PC (PIX)', 'PCs e consoles ilimitados', 'Sem cartão de crédito', 'Seus dados ficam guardados ao assinar', 'Sem anúncios']},
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
-    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Suporte completo (24 horas)', 'Sem anúncios']},
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
     features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', '1 app (Servidor/Cliente)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
@@ -51,6 +51,12 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved?.pro?.features && !saved.pro.features.some(f => /NFC-e/i.test(f))) { const i = saved.pro.features.findIndex(f => /NF-e/i.test(f)); saved.pro.features.splice(i >= 0 ? i + 1 : saved.pro.features.length, 0, 'Emissão de NFC-e e NFS-e'); saved.pro.features = saved.pro.features.slice(0, 12); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item "Emissão de NFC-e e NFS-e" acrescentado'); }
     saveSetting('plans_features_v4', {at: Date.now()});
+  }
+  // 2.14: Standard sem "1 layout personalizado" (pedido do dono): só RETIRA esse item do Standard salvo no /admin, uma vez
+  if (!setting('plans_features_v5')) {
+    const saved = setting('plans');
+    if (saved?.standard?.features?.some(f => /layout personalizado/i.test(f))) { saved.standard.features = saved.standard.features.filter(f => !/layout personalizado/i.test(f)); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Standard: item "1 layout personalizado" retirado'); }
+    saveSetting('plans_features_v5', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};

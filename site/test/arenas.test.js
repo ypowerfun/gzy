@@ -13,9 +13,9 @@ test('contador de arenas: 5000 + 100 a cada 100 cadastros, no /api/config e na i
 });
 test('carrinho: observação com os requisitos do Pro (domínio etc.) aparece só no plano Pro',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../public/carrinho.html'),'utf8'),js=fs.readFileSync(path.join(__dirname,'../public/carrinho.js'),'utf8');
- assert.match(html,/id="cart-pro-obs"[^>]*>|class="cart-obs hidden" id="cart-pro-obs"/);for(const t of ['Domínio próprio:','Servidor em nuvem (VPS)','Internet em cada unidade:','XML da NF-e do fornecedor:'])assert.ok(html.includes(t),t);
+ assert.match(html,/id="cart-pro-obs"[^>]*>|class="cart-obs hidden" id="cart-pro-obs"/);for(const t of ['Domínio próprio','VPS ou IP fixo','Internet nas unidades','Focus NFe + certificado A1','XML do fornecedor'])assert.ok(html.includes(t),t);
  assert.match(js,/\$\('#cart-pro-obs'\)\.classList\.toggle\('hidden', plan !== 'pro'\)/);
- const w={};require('node:vm').runInNewContext(fs.readFileSync(path.join(__dirname,'../public/i18n-site-dict.js'),'utf8'),{window:w});for(const t of ['Domínio próprio:','Observação: requisitos antes de assinar o Pro'])assert.equal(w.GZ_SITE_DICT.exact[t].length,2,t);
+ const w={};require('node:vm').runInNewContext(fs.readFileSync(path.join(__dirname,'../public/i18n-site-dict.js'),'utf8'),{window:w});for(const t of ['Domínio próprio','Requisitos do Pro'])assert.equal(w.GZ_SITE_DICT.exact[t].length,2,t);
 });
 test('2.13: Pro ganha o item "Emissão de NFC-e e NFS-e" uma vez, sem trocar a lista editada no /admin', async t => {
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-pl4-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true,maxRetries:5}));

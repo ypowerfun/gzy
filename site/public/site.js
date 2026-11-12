@@ -87,7 +87,10 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
       <details><summary>Adicionar telefone (opcional)</summary><label for="chat-phone">WhatsApp / telefone</label><input id="chat-phone" name="phone" type="tel" maxlength="30" autocomplete="tel"></details>
       <button type="submit" class="btn">Enviar mensagem</button><p class="chat-note">Usamos seus dados para responder ao atendimento. <a href="/privacidade.html">Privacidade</a></p><p class="msg chat-msg" role="status" aria-live="polite"></p></form>
     <div class="chat-room hidden"><div class="chat-log" role="log" aria-live="polite" aria-label="Mensagens"></div><form class="chat-send"><textarea name="text" required maxlength="2000" aria-label="Sua mensagem" placeholder="Escreva sua mensagem…"></textarea><button class="btn small">Enviar</button></form>
-      <div class="chat-ended hidden" role="status"><p>Esta conversa foi encerrada pela equipe GameZoney.</p><button type="button" class="btn small chat-new-ended">Abrir nova conversa</button></div>
+      <div class="chat-actions"><button type="button" class="chat-human">Falar com especialista</button><button type="button" class="chat-finish">Encerrar e avaliar</button></div>
+      <form class="chat-rate hidden"><p class="chat-rate-title">Como foi o atendimento?</p><div class="chat-stars" role="radiogroup" aria-label="Nota de 1 a 5">${[1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="false" data-star="${n}" aria-label="${n} de 5">★</button>`).join('')}</div>
+        <textarea name="comment" maxlength="500" aria-label="Comentário (opcional)" placeholder="Comentário (opcional)"></textarea><div class="chat-rate-buttons"><button type="submit" class="btn small">Enviar avaliação</button><button type="button" class="chat-rate-skip">Encerrar sem avaliar</button></div></form>
+      <div class="chat-ended hidden" role="status"><p class="chat-ended-text">Esta conversa foi encerrada pela equipe GameZoney.</p><p class="chat-thanks hidden">Obrigado pela avaliação!</p><button type="button" class="btn small chat-new-ended">Abrir nova conversa</button></div>
       <button type="button" class="chat-new">Iniciar nova conversa</button></div>
   </section>`;
   document.body.appendChild(box);
@@ -98,21 +101,38 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   const time = t => new Date(t).toLocaleTimeString(({en: 'en-US', es: 'es'})[window.gzSite && gzSite.lang] || 'pt-BR', {hour: '2-digit', minute: '2-digit'});
   function addMessages(list) {
     for (const m of list || []) { if (m.id <= last) continue; last = m.id;
-      const d = document.createElement('div'); d.className = 'chat-bubble ' + (m.sender === 'admin' ? 'from-admin' : 'from-user');
-      d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'GameZoney' : ''} ${time(m.at)}</small>`; d.querySelector('p').textContent = m.text; log.appendChild(d); lastSender = m.sender; }
+      const d = document.createElement('div'); d.className = 'chat-bubble ' + (m.sender === 'user' ? 'from-user' : 'from-admin');
+      d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'Especialista GameZoney' : m.sender === 'bot' ? 'Assistente virtual' : ''} ${time(m.at)}</small>`; if (m.sender === 'bot') d.classList.add('from-bot'); d.querySelector('p').textContent = m.text; log.appendChild(d); lastSender = m.sender; }
     // 1.3: abaixo da mensagem do cliente, até o atendente responder
     log.querySelector('.chat-wait')?.remove();
     if (lastSender === 'user') { const w = document.createElement('div'); w.className = 'chat-wait'; w.textContent = 'Mensagem recebida, aguarde um momento...'; log.appendChild(w); }
     log.scrollTop = log.scrollHeight;
   }
-  const status = online => { box.querySelector('.chat-status').textContent = online ? '● Online agora' : 'Deixe sua mensagem: respondemos por e-mail'; box.querySelector('.chat-status').classList.toggle('on', online); };
+  const status = online => { box.querySelector('.chat-status').textContent = online ? '● Especialista online' : 'Assistente virtual 24 horas'; box.querySelector('.chat-status').classList.toggle('on', online); };
   // 2.4: conversa encerrada pelo administrador: some o campo de resposta e aparece o botão para abrir outra
-  const ended = closed => { room.querySelector('.chat-ended').classList.toggle('hidden', !closed); room.querySelector('.chat-send').classList.toggle('hidden', closed); room.querySelector('.chat-new').classList.toggle('hidden', closed);
+  // 2.14: encerrar e avaliar (o cliente encerra; conversa encerrada pela equipe também pode ser avaliada)
+  const rate = room.querySelector('.chat-rate'); let stars = 0, rating = false;
+  const ended = (closed, chat = {}) => {
+    const showRate = rating || (closed && !chat.rated);
+    room.querySelector('.chat-ended').classList.toggle('hidden', !closed || showRate); room.querySelector('.chat-send').classList.toggle('hidden', closed || rating);
+    room.querySelector('.chat-new').classList.toggle('hidden', closed || rating); room.querySelector('.chat-actions').classList.toggle('hidden', closed || rating);
+    rate.classList.toggle('hidden', !showRate);
+    room.querySelector('.chat-ended-text').textContent = chat.closedBy === 'user' ? 'Conversa encerrada.' : 'Esta conversa foi encerrada pela equipe GameZoney.';
+    room.querySelector('.chat-thanks').classList.toggle('hidden', !(chat.rating > 0));
+    room.querySelector('.chat-human').classList.toggle('hidden', !!chat.handoff && !chat.bot);
     if (closed) log.querySelector('.chat-wait')?.remove(); };
+  const setStars = n => { stars = n; rate.querySelectorAll('[data-star]').forEach(b => { const on = Number(b.dataset.star) <= n; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(Number(b.dataset.star) === n)); }); };
+  rate.querySelectorAll('[data-star]').forEach(b => b.onclick = () => setStars(Number(b.dataset.star)));
+  const sendRate = async n => { try { const r = await api('/api/chat/rate', {stars: n, comment: n ? rate.comment.value : ''}); rating = false; rate.comment.value = ''; setStars(0); data.chat = r.chat; ended(true, r.chat); }
+    catch (err) { showMsg(box.querySelector('.chat-msg'), err.message); let e = rate.querySelector('.msg'); if (!e) { e = document.createElement('p'); e.className = 'msg err'; e.setAttribute('role', 'alert'); rate.appendChild(e); } e.textContent = err.message; } };
+  rate.onsubmit = e => { e.preventDefault(); if (!stars) { let m = rate.querySelector('.msg'); if (!m) { m = document.createElement('p'); m.className = 'msg err'; m.setAttribute('role', 'alert'); rate.appendChild(m); } m.textContent = 'Escolha de 1 a 5 estrelas.'; return; } busy(rate.querySelector('[type=submit]'), () => sendRate(stars)); };
+  rate.querySelector('.chat-rate-skip').onclick = () => sendRate(0);
+  room.querySelector('.chat-finish').onclick = () => { rating = true; ended(false, data?.chat || {}); rate.querySelector('[data-star="5"]').focus(); };
+  const lang = () => (window.gzSite && gzSite.lang) || 'pt';
   async function refresh() {
     try { data = await api('/api/chat' + (last ? '?after=' + last : '')); } catch { return; }
     status(data.online);
-    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); ended(data.chat.status === 'closed'); }
+    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); if (!rating) ended(data.chat.status === 'closed', data.chat); }
     else { start.classList.remove('hidden'); room.classList.add('hidden');
       if (data.user) { start.elements.namedItem('name').value ||= data.user.name || ''; start.email.value ||= data.user.email || ''; start.phone.value ||= data.user.phone || ''; } }
   }
@@ -129,13 +149,15 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.classList.contains('hidden')) closeChat(); });
   document.addEventListener('click', e => { const trigger = e.target.closest('[data-open-chat]'); if (trigger) openChat(trigger.dataset.openChat); });
   start.onsubmit = e => { e.preventDefault(); busy(start.querySelector('[type=submit]'), async () => {
-    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); ended(false); }
+    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value, lang: lang()}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); data = {...(data || {}), chat: r.chat}; rating = false; ended(false, r.chat); }
     catch (err) { showMsg(box.querySelector('.chat-msg'), err.message); } }); };
   const send = room.querySelector('.chat-send');
-  send.onsubmit = e => { e.preventDefault(); const text = send.text.value.trim(); if (!text) return; busy(send.querySelector('button'), async () => {
-    try { const r = await api('/api/chat/send', {text, after: last}); send.text.value = ''; addMessages(r.messages); } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; refresh(); } }); };
+  const sendText = text => busy(send.querySelector('button'), async () => {
+    try { const r = await api('/api/chat/send', {text, after: last, lang: lang()}); send.text.value = ''; addMessages(r.messages); if (r.chat) { data = {...(data || {}), chat: r.chat}; ended(false, r.chat); } } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; refresh(); } });
+  send.onsubmit = e => { e.preventDefault(); const text = send.text.value.trim(); if (text) sendText(text); };
+  room.querySelector('.chat-human').onclick = () => sendText(lang() === 'en' ? 'Talk to a specialist' : lang() === 'es' ? 'Hablar con un especialista' : 'Falar com especialista');
   send.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send.requestSubmit(); } });
-  const newChat = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; room.querySelector('.chat-send-error')?.remove(); ended(false); await refresh(); start.message?.focus(); };
+  const newChat = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; room.querySelector('.chat-send-error')?.remove(); rating = false; ended(false); await refresh(); start.message?.focus(); };
   room.querySelector('.chat-new').onclick = newChat; room.querySelector('.chat-new-ended').onclick = newChat;
 })();
 

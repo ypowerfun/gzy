@@ -256,7 +256,7 @@ Busque os clientes por Usuário/Nick, escolha **transferir** ou **remover**, inf
 
 ---
 
-- **Gerenciar App (plano Pro):** item próprio no menu, abaixo do **Ranking** (só aparece com o plano Pro ou no teste grátis, para administradores). Todas as configurações do app ficam ali: deixa tudo pronto para o servidor funcionar também na nuvem e o gestor acompanhar a arena de fora da loja.
+- **Gerenciar App (plano Pro):** item próprio no menu, abaixo do **Ranking** (só aparece com o plano Pro, para administradores). Todas as configurações do app ficam ali: deixa tudo pronto para o servidor funcionar também na nuvem e o gestor acompanhar a arena de fora da loja.
   - Preencha o **domínio** (ex.: arena.minhaloja.com.br), o **certificado HTTPS**, a **hospedagem/VPS** (provedor, IP, sistema e usuário — **nunca a senha**), o **acesso remoto do gestor** e o contato (**ID do AnyDesk** e WhatsApp).
   - **Salvar e conferir** mostra o que falta (inclusive se o domínio já aponta para a VPS).
   - **Pedir configuração ao suporte** envia esses dados (sem senhas) para a GameZoney, que finaliza pelo AnyDesk.

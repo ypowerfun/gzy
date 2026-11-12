@@ -315,4 +315,14 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .cookie-prefs{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:4px 0}
 
 /* carrinho: observação com os requisitos do plano Pro */
-.cart-obs{background:#14110a;border:1px solid #6b5626;border-left:3px solid #FDD034;border-radius:12px;padding:16px 18px;margin:14px 0;font-size:14px;line-height:1.6;color:#d9dde5}.cart-obs-title{display:block;color:#ffdb73;margin-bottom:4px}.cart-obs p{margin:0 0 8px}.cart-obs ul{margin:0 0 8px;padding-left:18px}.cart-obs li{margin:4px 0}.cart-obs li b{color:#fff;margin-right:.35em}.cart-obs .cart-obs-foot{font-size:12px;color:#aeb5c2;margin:0}.cart-obs a{color:#ffdb73}
+.cart-obs{background:#14110a;border:1px solid #6b5626;border-left:3px solid #FDD034;border-radius:12px;padding:16px 18px;margin:14px 0;font-size:14px;line-height:1.6;color:#d9dde5}.cart-obs-title{display:block;color:#ffdb73;margin-bottom:4px}.cart-obs p{margin:0 0 8px}.cart-obs ul{margin:0 0 8px;padding-left:18px}.cart-obs li{margin:4px 0}.cart-obs li b{color:#fff;margin-right:.35em}.cart-obs li span{color:#aeb5c2;font-size:13px}.cart-obs li span::before{content:"· ";color:#6b5626}.cart-obs .cart-obs-foot{font-size:12px;color:#aeb5c2;margin:0}.cart-obs a{color:#ffdb73}
+/* 2.14: assistente do chat, falar com especialista, encerrar e avaliar */
+.chat-bubble.from-bot{border-color:#3a4252;background:#151a23}.chat-bubble.from-bot small{color:#ffdb73}
+.chat-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px}.chat-actions button,.chat-rate-skip{background:none;border:1px solid #3a4252;border-radius:999px;color:#d9dde5;font:inherit;font-size:12px;padding:5px 11px;cursor:pointer}
+.chat-actions button:hover,.chat-rate-skip:hover{border-color:#FDD034;color:#ffdb73}.chat-actions button:focus-visible,.chat-rate-skip:focus-visible,.chat-stars button:focus-visible{outline:2px solid #FDD034;outline-offset:2px}
+.chat-rate{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}.chat-rate-title{margin:0;font-weight:700;color:#fff}
+.chat-stars{display:flex;gap:4px}.chat-stars button{background:none;border:0;font-size:28px;line-height:1;color:#3a4252;cursor:pointer;padding:2px}.chat-stars button.on{color:#FDD034}
+.chat-rate textarea{min-height:56px}.chat-rate-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.chat-thanks{color:#ffdb73;margin:4px 0 8px}
+.bot-form{display:grid;gap:10px;max-width:760px}.bot-form textarea{min-height:70px}.bot-form .check{display:flex;gap:8px;align-items:center}
+.bot-test-out{white-space:pre-wrap;background:#0b0c10;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:14px;max-width:760px}
+.bot-answer-cell{font-size:13px;color:var(--muted);max-width:420px}#assistente h4{margin:22px 0 8px}#bot-search{max-width:360px;margin-bottom:8px}

@@ -156,18 +156,21 @@
     let r; try { r = await api('/api/admin/chats' + (chatId ? `?id=${encodeURIComponent(chatId)}&after=${chatLast}` : '')); } catch { return; }
     chats = r.chats; const unread = chats.reduce((a, c) => a + (c.id === chatId ? 0 : c.unread), 0);
     $('#chat-badge').textContent = unread; $('#chat-badge').classList.toggle('hidden', !unread); document.title = (unread ? `(${unread}) ` : '') + 'Administração | GameZoney';
-    $('#chat-list').innerHTML = chats.length ? chats.map(c => `<button type="button" class="chat-item ${c.id === chatId ? 'on' : ''}" data-chat="${c.id}"><b>${esc(c.name)}</b>${c.unread && c.id !== chatId ? ` <span class="pill wait">${c.unread}</span>` : ''}${c.status === 'closed' ? ' <span class="pill">encerrada</span>' : ''}<small>${esc(c.lastText).slice(0, 60)}</small><small>${time(c.lastAt)}${c.customer ? ' • cliente' : ''}</small></button>`).join('') : '<p class="note" style="padding:12px">Nenhuma conversa ainda.</p>';
+    $('#chat-list').innerHTML = chats.length ? chats.map(c => `<button type="button" class="chat-item ${c.id === chatId ? 'on' : ''}" data-chat="${c.id}"><b>${esc(c.name)}</b>${c.unread && c.id !== chatId ? ` <span class="pill wait">${c.unread}</span>` : ''}${c.handoff && c.status !== 'closed' ? ' <span class="pill wait">pediu especialista</span>' : ''}${c.bot && c.status !== 'closed' ? ' <span class="pill">assistente</span>' : ''}${c.status === 'closed' ? ' <span class="pill">encerrada</span>' : ''}${c.rating ? ` <span class="pill ok">${'★'.repeat(c.rating)}</span>` : ''}<small>${esc(c.lastText).slice(0, 60)}</small><small>${time(c.lastAt)}${c.customer ? ' • cliente' : ''}</small></button>`).join('') : '<p class="note" style="padding:12px">Nenhuma conversa ainda.</p>';
     $$('[data-chat]').forEach(b => b.onclick = () => openChat(b.dataset.chat));
+    if (r.ratings) $('#chat-ratings').textContent = r.ratings.count ? `Avaliação média: ${String(r.ratings.average).replace('.', ',')} ★ (${r.ratings.count})` : '';
+    const cur = chats.find(x => x.id === chatId); $('#chat-bot').classList.toggle('hidden', !cur || cur.bot || cur.status === 'closed');
+    if (cur && cur.rating) $('#chat-rating').textContent = `Avaliação do cliente: ${'★'.repeat(cur.rating)}${cur.ratingComment ? ' — ' + cur.ratingComment : ''}`;
     addChat(r.messages);
   }
   function addChat(list) {
     const log = $('#admin-log');
-    for (const m of list || []) { if (m.id <= chatLast) continue; chatLast = m.id; const d = document.createElement('div'); d.className = 'chat-bubble ' + (m.sender === 'admin' ? 'from-user' : 'from-admin'); d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'Você' : ''} ${time(m.at)}</small>`; d.querySelector('p').textContent = m.text; log.appendChild(d); }
+    for (const m of list || []) { if (m.id <= chatLast) continue; chatLast = m.id; const d = document.createElement('div'); d.className = 'chat-bubble ' + (m.sender === 'user' ? 'from-admin' : 'from-user') + (m.sender === 'bot' ? ' from-bot' : ''); d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'Você' : m.sender === 'bot' ? 'Assistente' : ''} ${time(m.at)}</small>`; d.querySelector('p').textContent = m.text; log.appendChild(d); }
     log.scrollTop = log.scrollHeight;
   }
   function openChat(id) {
     chatId = id; chatLast = 0; $('#admin-log').innerHTML = ''; const c = chats.find(x => x.id === id);
-    $('#chat-head').innerHTML = c ? `<b>${esc(c.name)}</b> <span class="note">${esc(c.email)} ${esc(c.phone)}</span>${c.phone ? ` <a class="btn small ghost" target="_blank" href="https://wa.me/${esc(c.phone.replace(/\D/g, ''))}">WhatsApp</a>` : ''}` : '';
+    $('#chat-head').innerHTML = c ? `<b>${esc(c.name)}</b> <span class="note">${esc(c.email)} ${esc(c.phone)}</span>${c.phone ? ` <a class="btn small ghost" target="_blank" href="https://wa.me/${esc(c.phone.replace(/\D/g, ''))}">WhatsApp</a>` : ''}<small class="note" id="chat-rating"></small>` : '';
     $('#admin-send').classList.remove('hidden'); pollChat();
   }
   const sendForm = $('#admin-send');
@@ -175,6 +178,35 @@
     try { const r = await api('/api/admin/chats/' + chatId, {text, email: sendForm.email.checked, after: chatLast}); sendForm.text.value = ''; addChat(r.messages); } catch (err) { alert(err.message); } }); };
   sendForm.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendForm.requestSubmit(); } });
   $('#chat-close').onclick = () => chatId && api('/api/admin/chats/' + chatId, {status: 'closed'}).then(pollChat);
+  $('#chat-bot').onclick = () => chatId && api('/api/admin/chats/' + chatId, {bot: true}).then(pollChat);
+  // ---------- 2.14: assistente do chat (banco de respostas próprio) ----------
+  let botData = {answers: [], misses: []};
+  const botForm = $('#bot-form');
+  const fillBot = (a = {}, missId = '') => { botForm.id.value = a.id || ''; botForm.missId.value = missId; botForm.question.value = a.question || ''; botForm.alt.value = (a.alt || []).join('\n');
+    botForm.keywords.value = (a.keywords || []).join(', '); botForm.answer.value = a.answer || ''; botForm.human.checked = !!a.human; $('#bot-form-title').textContent = a.id ? 'Editar resposta' : 'Nova resposta'; };
+  function drawBot() {
+    const q = ($('#bot-search').value || '').toLowerCase();
+    const list = botData.answers.filter(a => !q || (a.question + ' ' + a.answer + ' ' + a.alt.join(' ')).toLowerCase().includes(q));
+    $('#bot-count').textContent = `(${botData.answers.length})`;
+    $('#bot-badge').textContent = botData.misses.length; $('#bot-badge').classList.toggle('hidden', !botData.misses.length);
+    $('#bot-misses').innerHTML = botData.misses.length ? '<table><thead><tr><th>Pergunta do cliente</th><th>Quando</th><th></th></tr></thead><tbody>' + botData.misses.map(m => `<tr><td>${esc(m.text)}</td><td>${fmtDate(m.at)}</td><td style="white-space:nowrap"><button type="button" class="btn small" data-miss-answer="${m.id}">Responder</button> <button type="button" class="btn small ghost" data-miss-done="${m.id}">Descartar</button></td></tr>`).join('') + '</tbody></table>' : '<p class="note">Nenhuma pergunta pendente.</p>';
+    $('#bot-answers').innerHTML = '<table><thead><tr><th>Pergunta</th><th>Resposta</th><th>Usos</th><th></th></tr></thead><tbody>' + list.map(a => `<tr><td><b>${esc(a.question)}</b>${a.human ? ' <span class="pill wait">especialista</span>' : ''}${a.source === 'admin' ? ' <span class="pill">editada</span>' : ''}</td><td class="bot-answer-cell">${esc(a.answer).slice(0, 220)}${a.answer.length > 220 ? '…' : ''}</td><td>${a.uses}</td><td style="white-space:nowrap"><button type="button" class="btn small" data-bot-edit="${esc(a.id)}">Editar</button> ${a.isBase && a.source === 'admin' ? `<button type="button" class="btn small ghost" data-bot-restore="${esc(a.id)}">Restaurar</button> ` : ''}<button type="button" class="btn small ghost" data-bot-remove="${esc(a.id)}">Remover</button></td></tr>`).join('') + '</tbody></table>';
+    $$('[data-bot-edit]').forEach(b => b.onclick = () => { fillBot(botData.answers.find(a => a.id === b.dataset.botEdit)); botForm.scrollIntoView({behavior: 'smooth', block: 'start'}); botForm.question.focus(); });
+    $$('[data-bot-remove]').forEach(b => b.onclick = async () => { if (!window.confirm('Remover esta resposta do assistente?')) return; try { await api('/api/admin/bot/answer/' + encodeURIComponent(b.dataset.botRemove) + '/remove', {}); loadBot(); } catch (err) { alert(err.message); } });
+    $$('[data-bot-restore]').forEach(b => b.onclick = async () => { try { await api('/api/admin/bot/restore', {id: b.dataset.botRestore}); loadBot(); } catch (err) { alert(err.message); } });
+    $$('[data-miss-answer]').forEach(b => b.onclick = () => { const m = botData.misses.find(x => String(x.id) === b.dataset.missAnswer); fillBot({question: m.text}, m.id); botForm.answer.focus(); });
+    $$('[data-miss-done]').forEach(b => b.onclick = async () => { try { await api('/api/admin/bot/miss/' + b.dataset.missDone + '/done', {}); loadBot(); } catch (err) { alert(err.message); } });
+  }
+  async function loadBot() { try { botData = await api('/api/admin/bot'); drawBot(); } catch { } }
+  $('#bot-search').oninput = drawBot;
+  $('#bot-form-cancel').onclick = () => fillBot();
+  botForm.onsubmit = e => { e.preventDefault(); busy(botForm.querySelector('button.btn'), async () => {
+    try { await api('/api/admin/bot/answer', {id: botForm.id.value, missId: botForm.missId.value, question: botForm.question.value, alt: botForm.alt.value, keywords: botForm.keywords.value, answer: botForm.answer.value, human: botForm.human.checked});
+      showMsg($('#bot-msg'), 'Resposta salva. O assistente já usa a nova resposta.', true); fillBot(); loadBot(); } catch (err) { showMsg($('#bot-msg'), err.message); } }); };
+  $('#bot-test').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
+    try { const r = await api('/api/admin/bot/test', {text: f.text.value}); $('#bot-test-out').textContent = r.text + (r.handoff && !r.unknown ? '\n\n(depois chama um especialista)' : ''); $('#bot-test-out').classList.remove('hidden'); }
+    catch (err) { $('#bot-test-out').textContent = err.message; $('#bot-test-out').classList.remove('hidden'); } }); };
+  loadBot(); setInterval(loadBot, 60000);
   pollChat(); setInterval(pollChat, 4000);
   $('#offer-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
     try { const r = await api('/api/admin/offer', {banner: f.banner.value});

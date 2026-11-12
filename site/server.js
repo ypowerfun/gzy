@@ -546,7 +546,7 @@ function createApp(options = {}) {
   }));
 
   // ---------- avaliações e chat ao vivo (community.js) ----------
-  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie});
+  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie, plansInfo: () => plans.publicPlans()});
   // 1.7: design do site (editor visual) e parceiros do rodapé
   require('./design')(app, {db, needAdmin, jsonOnly, api, fail, str, dataDir});
   // 1.8: comunicados e promoções por e-mail (fila) e cancelar inscrição

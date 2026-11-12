@@ -82,6 +82,21 @@ CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages(chat_id, id);
     db.exec("ALTER TABLE sessions ADD COLUMN mfa_expires INTEGER NOT NULL DEFAULT 0");
     db.exec("ALTER TABLE sessions ADD COLUMN mfa_tries INTEGER NOT NULL DEFAULT 0");
   }
+  // 2.14: assistente do chat (sem IA): estado da conversa, pedido de especialista e avaliação; banco de respostas e perguntas sem resposta
+  if (!db.prepare('PRAGMA table_info(chats)').all().some(c => c.name === 'bot')) {
+    db.exec("ALTER TABLE chats ADD COLUMN bot INTEGER NOT NULL DEFAULT 1");
+    db.exec("UPDATE chats SET bot=0"); // conversas que já existiam continuam só com o atendente
+    db.exec("ALTER TABLE chats ADD COLUMN lang TEXT NOT NULL DEFAULT 'pt'");
+    db.exec("ALTER TABLE chats ADD COLUMN handoff INTEGER NOT NULL DEFAULT 0");
+    db.exec("ALTER TABLE chats ADD COLUMN notified_at INTEGER NOT NULL DEFAULT 0");
+    db.exec("ALTER TABLE chats ADD COLUMN closed_by TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE chats ADD COLUMN rating INTEGER NOT NULL DEFAULT 0");
+    db.exec("ALTER TABLE chats ADD COLUMN rating_comment TEXT NOT NULL DEFAULT ''");
+    db.exec("ALTER TABLE chats ADD COLUMN rated_at INTEGER NOT NULL DEFAULT 0");
+  }
+  db.exec(`CREATE TABLE IF NOT EXISTS bot_answers(id TEXT PRIMARY KEY, question TEXT NOT NULL, alt TEXT NOT NULL DEFAULT '[]', keywords TEXT NOT NULL DEFAULT '[]', answer TEXT NOT NULL,
+  human INTEGER NOT NULL DEFAULT 0, source TEXT NOT NULL DEFAULT 'base', hidden INTEGER NOT NULL DEFAULT 0, uses INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS bot_misses(id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT NOT NULL DEFAULT '', text TEXT NOT NULL, at INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 0);`);
   const cache = new Map();
   const stmt = sql => { let s = cache.get(sql); if (!s) { s = db.prepare(sql); cache.set(sql, s); } return s; };
   return {

@@ -64,14 +64,18 @@ test('site: chat ao vivo — visitante conversa com o administrador; online enqu
  await vis('/api/chat/start',{name:'',email:'x@y.com',message:'oi'},400);await vis('/api/chat/start',{name:'Rui',email:'invalido',message:'oi'},400);
  await vis('/api/chat/send',{text:'oi'},404);
  const r=await vis('/api/chat/start',{name:'Rui Lima',email:'rui@lan.com',phone:'92 99999-0000',message:'Quero saber do preço'});
- assert.equal(r.messages.length,1);assert.ok(s.mails.some(m=>m.to==='dono@gamezoney.com'&&/chat/.test(m.subject)),'admin offline recebe e-mail');
- await vis('/api/chat/send',{text:'Funciona com PS5?'});
+ // 2.14: o assistente responde na hora; o dono só recebe e-mail quando o cliente pede um especialista (ou o assistente não resolve)
+ assert.equal(r.messages.length,2);assert.equal(r.messages[1].sender,'bot');assert.match(r.messages[1].text,/Olá, Rui! Sou o assistente virtual/);assert.match(r.messages[1].text,/Standard/);
+ assert.ok(!s.mails.some(m=>m.to==='dono@gamezoney.com'&&/chat/.test(m.subject)),'sem e-mail enquanto o assistente resolve');
+ const ps=await vis('/api/chat/send',{text:'Funciona com PS5?'});assert.match(ps.messages.at(-1).text,/consoles são controlados pela TV/i);
+ const esp=await vis('/api/chat/send',{text:'quero falar com um especialista'});assert.match(esp.messages.at(-1).text,/não temos um especialista online.*rui@lan\.com/);assert.equal(esp.chat.handoff,true);
+ assert.ok(s.mails.some(m=>m.to==='dono@gamezoney.com'&&/especialista/.test(m.subject)&&/Funciona com PS5\?/.test(m.text)),'admin offline recebe e-mail com a conversa');
  // outra pessoa não vê a conversa
  assert.equal((await outro('/api/chat')).chat,null);
  await vis('/api/admin/chats',undefined,401);await outro('/api/auth/register',{name:'Outro',email:'outro@x.com',password:'senha-forte-1'});await outro('/api/admin/chats',undefined,403);
- let a=await dono('/api/admin/chats');assert.equal(a.chats.length,1);assert.equal(a.chats[0].unread,2);assert.equal(a.chats[0].name,'Rui Lima');
+ let a=await dono('/api/admin/chats');assert.equal(a.chats.length,1);assert.equal(a.chats[0].unread,1);assert.equal(a.chats[0].handoff,true);assert.equal(a.chats[0].name,'Rui Lima');
  assert.equal((await vis('/api/chat')).online,true,'admin com o /admin aberto aparece online');
- a=await dono('/api/admin/chats?id='+a.chats[0].id);assert.deepEqual(a.messages.map(m=>m.text),['Quero saber do preço','Funciona com PS5?']);
+ a=await dono('/api/admin/chats?id='+a.chats[0].id);assert.deepEqual(a.messages.filter(m=>m.sender==='user').map(m=>m.text),['Quero saber do preço','Funciona com PS5?','quero falar com um especialista']);
  assert.equal((await dono('/api/admin/chats')).chats[0].unread,0);
  const n=s.mails.length;await dono('/api/admin/chats/'+a.chats[0].id,{text:'Sim! Funciona com PS5 na TV.',email:true});
  assert.equal(s.mails.length,n+1);assert.equal(s.mails.at(-1).to,'rui@lan.com');
