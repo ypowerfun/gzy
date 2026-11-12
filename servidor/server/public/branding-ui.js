@@ -47,6 +47,11 @@ async function renderBranding(box) {
       <label>Logo do Servidor (painel) — PNG até 1 MB<input type="file" name="server" accept="image/png"></label>
       <label class="check" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="same" style="width:auto" ${st.clientLogo ? '' : 'checked'}> Usar a mesma logo nos PCs</label>
       <label id="brand-client-box" class="${st.clientLogo ? '' : 'hidden'}">Logo dos PCs (GameZoney Cliente) — PNG até 1 MB<input type="file" name="client" accept="image/png"></label>
+      <div class="brand-obs"><strong>OBS: tamanho ideal da logo</strong><ul>
+        <li>Logo do Servidor (painel, canto superior esquerdo): horizontal, 960 × 250 px (proporção 4:1).</li>
+        <li>Logo dos PCs (também na tela da TV e no app do cliente): quadrada, 512 × 512 px.</li>
+        <li>PNG com fundo transparente, desenho centralizado e com pouca margem; até 1 MB (de 16 a 2048 px).</li>
+        <li>Se usar a mesma logo nos dois, prefira a quadrada (512 × 512 px). Logo muito larga e baixa aparece pequena nos PCs e no app.</li></ul></div>
       <label>Cor de destaque<span style="display:flex;gap:10px;align-items:center"><input type="color" name="color" value="${esc(color)}" style="width:64px;height:40px;padding:2px"><input name="hex" value="${esc(color)}" maxlength="7" style="width:120px" aria-label="Cor em hexadecimal"><small class="subtext" id="brand-suggest"></small></span></label>
       <div class="brand-preview" id="brand-preview" aria-label="Prévia"><img id="brand-preview-logo" alt="" src="/logo-gamezoney.png?v=${esc(String(st.rev || 0))}"><div><strong class="brand-preview-title">Painel de controle</strong><span class="brand-preview-line"></span><button type="button" class="brand-preview-btn" tabindex="-1">Liberar tempo</button></div></div>
       <div class="dialog-actions" style="justify-content:flex-start;flex-wrap:wrap"><button class="primary" style="flex:0 0 auto">Aplicar visual</button><button type="button" id="brand-reset" style="flex:0 0 auto">Voltar ao padrão GameZoney</button></div>

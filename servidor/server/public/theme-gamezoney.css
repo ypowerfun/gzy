@@ -384,3 +384,7 @@ details.fiscal-fields{margin:10px 0;border:1px solid #2b303a;padding:8px 12px}de
 .profile-box .org-field .hint{grid-column:1/-1;margin:0}
 .profile-box .org-field .org-label{grid-column:1/-1;color:var(--muted);font-size:13px}
 .profile-box .org-field .org-name{grid-column:1/-1;font-size:18px}
+/* 1.4.0: OBS do tamanho ideal da logo (Personalizar visual) */
+.brand-obs{border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin:0 0 14px;background:rgba(212,160,23,.06)}
+.brand-obs strong{display:block;margin-bottom:4px;color:#ffce3a;font-size:13px}
+.brand-obs ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.5}

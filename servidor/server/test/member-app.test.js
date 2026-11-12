@@ -1,7 +1,17 @@
 'use strict';
 // 1.3.7 (plano Pro): app do cliente (app.gamezoney.com) e Conquistas — ponta a ponta com o site de verdade:
 // o Servidor liga-se ao site (relay), o celular entra com nick e senha, vê saldo, estações, conquistas e histórico.
-const {test} = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path'), crypto = require('node:crypto'), http = require('node:http');
+const {test} = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path'), crypto = require('node:crypto'), http = require('node:http'), zlib = require('node:zlib');
+// PNG de teste (cor sólida) para a logo da arena
+function png(w, h, rgb) {
+  const crcT = Array.from({length: 256}, (_, n) => { for (let i = 0; i < 8; i++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+  const crc = b => { let c = 0xffffffff; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
+  const raw = Buffer.alloc((w * 4 + 1) * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = y * (w * 4 + 1) + 1 + x * 4; raw[o] = rgb[0]; raw[o + 1] = rgb[1]; raw[o + 2] = rgb[2]; raw[o + 3] = 255; }
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+const dataUrl = b => 'data:image/png;base64,' + b.toString('base64');
 const {createServer} = require('../server');
 let createApp; try { ({createApp} = require('../../../site/server')); } catch { }
 
@@ -113,6 +123,22 @@ test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com ni
   let [code, html] = await page('/app/arena-x'); assert.equal(code, 200); assert.match(html, /\/app\/app\.js/);
   [code, html] = await page('/arena-x', 'app.gamezoney.com'); assert.equal(code, 200); assert.match(html, /\/app\/app\.js/);
   [code] = await page('/app/app.js', 'app.gamezoney.com'); assert.equal(code, 200);
+
+  // Personalizar visual: a logo e a cor que a arena envia aparecem no app do link dela; trocar a logo troca no app; voltar ao padrão tira
+  const info2 = async () => (await fetch(s.siteBase + '/api/app/a/arena-x/info')).json();
+  const until = async (ok, what) => { for (let i = 0; i < 80; i++) { const v = await info2(); if (ok(v)) return v; await new Promise(r => setTimeout(r, 50)); } assert.fail('o app não atualizou: ' + what); };
+  const logoOf = async rev => { const r = await fetch(s.siteBase + '/api/app/a/arena-x/logo?v=' + encodeURIComponent(rev)); return [r.status, r.headers.get('content-type'), Buffer.from(await r.arrayBuffer())]; };
+  assert.equal((await info2()).logo, false, 'sem Personalizar visual: ícone GZ');
+  const logoA = png(64, 64, [200, 30, 30]), logoB = png(96, 96, [30, 200, 90]);
+  await call('/api/branding', {color: '#2f7bff', serverLogo: dataUrl(logoA), sameLogo: true});
+  const a1 = await until(v => v.logo && v.color === '#2f7bff', 'logo A e cor azul');
+  let [st1, ct1, img1] = await logoOf(a1.logoRev); assert.equal(st1, 200); assert.equal(ct1, 'image/png'); assert.ok(img1.equals(logoA), 'app mostra a logo enviada');
+  await call('/api/branding', {color: '#2f7bff', clientLogo: dataUrl(logoB)}); // troca só a logo dos PCs (a do app)
+  const a2 = await until(v => v.logo && v.logoRev !== a1.logoRev, 'logo nova');
+  [st1, , img1] = await logoOf(a2.logoRev); assert.equal(st1, 200); assert.ok(img1.equals(logoB), 'app mostra a logo NOVA depois da troca');
+  await call('/api/branding/reset', {});
+  const a3 = await until(v => !v.logo && v.color === '', 'voltar ao padrão');
+  assert.equal(a3.logoRev, ''); assert.equal((await logoOf('x'))[0], 404, 'padrão GameZoney: sem logo da arena (o app volta ao ícone GZ)');
 
   // desligar: o app avisa que a arena está sem conexão
   await call('/api/member-app', {enabled: false, slug: 'arena-x'});
