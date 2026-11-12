@@ -119,5 +119,5 @@ test('assistente acompanha as atualizações: cards novos respondidos, guia em d
  for(const n of news){const r=bot.reply(n.q,{lang:'pt'});assert.ok(!r.unknown,'card sem resposta no assistente: '+n.q);}
  const nov=bot.reply('quais as novidades?',{lang:'pt'});assert.equal(nov.id,'novidades');assert.ok(nov.text.includes(news[0].q),'novidades começam pelo card mais novo');
  // recursos que saíram do produto não podem aparecer nas respostas
- for(const b of base)assert.doesNotMatch(b.a,/Atualização do sistema|Verificar atualização|licença vitalícia|R\$ ?89,90|Pacote (Padrão|Premium)|layout personalizado/i,b.id);
+ for(const b of base)assert.doesNotMatch(b.a,/Atualização do sistema|Verificar atualização|licença vitalícia|R\$ ?89,90|Pacote (Padrão|Premium)|layout personalizado|Servidor em nuvem|servidor também na nuvem/i,b.id);
 });

@@ -39,7 +39,6 @@ test('1.0.8: Multi-Unidade (Pro) — resumo da loja na Minha conta, código de v
   await loja.call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1'});
   // Standard: sem Pro, as rotas não abrem
   assert.match((await loja.call('/api/units', undefined, 400)).error, /plano Pro/);
-  assert.match((await loja.call('/api/app-manager', undefined, 400)).error, /plano Pro/);
   await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'pro', months: 1});
   await loja.call('/api/license/refresh', {}); assert.equal((await loja.call('/api/state')).pro, true);
 
@@ -93,11 +92,6 @@ test('1.0.8: Multi-Unidade (Pro) — resumo da loja na Minha conta, código de v
   const r = await fetch(s.siteBase + '/api/units/report', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token: 'x.y', installId: loja.state.runtime.installId, summary: {}})});
   assert.equal(r.status, 401);
 
-  // Gerenciamento do App: dados salvos, sem senhas, e lista do que falta
-  let am = await loja.call('/api/app-manager'); assert.equal(am.ready, false); assert.ok(am.missing.includes('Domínio do servidor'));
-  assert.match((await loja.call('/api/app-manager', {domain: 'não é domínio'}, 400)).error, /Domínio inválido/);
-  assert.match((await loja.call('/api/app-manager', {domain: 'arena.loja.com.br', notes: 'a senha é 123'}, 400)).error, /Não escreva senhas/);
-  am = await loja.call('/api/app-manager', {domain: 'https://Arena.Loja.com.br/painel', https: 'auto', port: 443, hostProvider: 'Oracle', hostAddress: '203.0.113.10', hostOs: 'linux', hostUser: 'ubuntu', remoteAccess: true, anydesk: '123 456 789', contact: '(92) 99999-9999'});
-  assert.equal(am.config.domain, 'arena.loja.com.br'); assert.equal(am.config.remoteAccess, true);
-  assert.ok(am.checks.find(c => c.id === 'https').ok); assert.ok(am.checks.find(c => c.id === 'host').ok);
+  // 1.3.8: a tela "Servidor em nuvem" (Gerenciamento do App antigo) saiu
+  assert.ok((await fetch('http://127.0.0.1:' + loja.inst.server.address().port + '/api/app-manager')).status >= 400);
 });

@@ -1,4 +1,4 @@
-# GameZoney — Gestão Gamer (Servidor 1.3.7 · Cliente 1.0.20)
+# GameZoney — Gestão Gamer (Servidor 1.3.8 · Cliente 1.0.20)
 
 Gerenciador de arena gamer: **Servidor** (PC da recepção, painel em janela própria, uso na rede local) e **Cliente** (PCs gamers).
 Todos os direitos reservados à GameZoney. Software proprietário e confidencial.

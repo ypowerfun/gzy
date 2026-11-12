@@ -10,8 +10,23 @@
   const KEY = 'gzapp:' + slug;
   let token = ''; try { token = localStorage.getItem(KEY) || ''; } catch { }
   let tab = 'home', me = null, timers = [], filter = 'all', histTab = 'sessions';
-  const CAT = {pc: 'PC', console: 'Console', vr: 'VR', sim: 'Simulador'};
-  const FILTERS = [['all', 'Todas'], ['pc', 'PCs'], ['console', 'Consoles'], ['vr', 'VR'], ['sim', 'Simuladores']];
+  // 1.3.8: VR funciona junto com o console (um tipo só: Console/VR)
+  const CAT = {pc: 'PC', console: 'Console/VR', sim: 'Simulador'};
+  const FILTERS = [['all', 'Todas'], ['pc', 'PCs'], ['console', 'Consoles/VR'], ['sim', 'Simuladores']];
+  const catOf = x => (x.category === 'vr' ? 'console' : CAT[x.category] ? x.category : 'pc');
+  // foto do card: PC, simulador, ou console pelo nome (Xbox / PlayStation); sem marca no nome = PlayStation
+  const XBOX = /x\s*-?\s*box|\bseries\s*[xs]\b|\bxsx\b|\bxss\b|\bone\s*[xs]\b/i, PLAY = /play\s*-?\s*station|\bps\s*-?\s*(?:[1-5]|vr2?|vita|portal)\b|\bpsvr/i;
+  const photoOf = x => { const c = catOf(x); if (c === 'pc') return 'pc'; if (c === 'sim') return 'sim'; return XBOX.test(x.name) && !PLAY.test(x.name) ? 'xbox' : 'ps'; };
+  const MEDAL = '<svg class="medal-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 2h5l2 7-4 2zM23 2h-5l-2 7 4 2z" fill="var(--accent)"/><circle cx="16" cy="20" r="9" fill="var(--accent2)" stroke="var(--accent)" stroke-width="2"/><path d="m16 15 1.6 3.2 3.5.5-2.5 2.5.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.5-2.5 3.5-.5z" fill="var(--accent)"/></svg>';
+  // cor da arena (Personalizar visual): troca o dourado e gira o fundo/foto do PC para o mesmo tom
+  function hsl(hex) { const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return [0, 0, l]; const s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); const h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, s, l]; }
+  function applyColor(c) {
+    if (!/^#[0-9a-f]{6}$/i.test(c || '')) return;
+    const [h, sat] = hsl(c), root = document.documentElement.style, BASE_H = 44, BASE_S = .8;
+    root.setProperty('--accent', c); root.setProperty('--accent2', `color-mix(in srgb, ${c} 62%, #fff)`);
+    root.setProperty('--hue', Math.round(h - BASE_H) + 'deg'); root.setProperty('--sat', Math.max(.15, Math.min(1.4, sat / BASE_S)).toFixed(2));
+  }
 
   const clock = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}`; };
   const hm = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}h ${String(m).padStart(2, '0')}min` : `${m} min`; };
@@ -43,8 +58,8 @@
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Arena não encontrada.');
     $('#arena-name').textContent = d.name || 'Arena'; document.title = (d.name || 'Arena') + ' • App';
-    const st = $('#arena-status'); st.textContent = d.online ? '● Online' : '● Sem conexão no momento'; st.className = d.online ? 'on' : '';
-    if (d.color) { document.documentElement.style.setProperty('--accent', d.color); document.documentElement.style.setProperty('--accent2', `color-mix(in srgb, ${d.color} 70%, #fff)`); document.querySelector('meta[name=theme-color]').content = '#0b0b12'; }
+    const st = $('#arena-status'); st.textContent = d.online ? 'Online' : 'Sem conexão no momento'; st.className = d.online ? 'on' : '';
+    applyColor(d.color);
     if (d.logo) $('#logo').src = `/api/app/a/${encodeURIComponent(slug)}/logo?v=${encodeURIComponent(d.logoRev)}`;
     return d;
   }
@@ -76,23 +91,25 @@
     const s = me.session, l = me.loyalty;
     const prog = l.enabled ? Math.min(100, me.medals / l.threshold * 100) : 0;
     screen.innerHTML = `<h1>Olá, ${esc(me.name?.split(' ')[0] || me.username)}!</h1><p class="sub">@${esc(me.username)}</p>
-      ${s ? `<div class="card live"><span class="stat"><span>Jogando agora • ${esc(s.station)}</span></span><div class="big" id="cd">--:--:--</div><small style="color:var(--muted)">tempo restante da sessão</small></div>` : ''}
+      ${s ? `<div class="card live"><span class="lbl">Jogando agora • ${esc(s.station)}</span><div class="big" id="cd">--:--:--</div><small>tempo restante da sessão</small></div>` : ''}
       <div class="grid2"><div class="card stat"><span>Saldo de tempo</span><strong>${hm(me.balanceSeconds)}</strong><small>para usar nos PCs e consoles</small></div>
-      <div class="card stat"><span>Medalhas</span><strong>${num(me.medals)}</strong><small>${me.achievements} conquista${me.achievements === 1 ? '' : 's'}</small></div></div>
+      <div class="card stat"><span>Medalhas</span><strong>${MEDAL}${num(me.medals)}</strong><small>${me.achievements} conquista${me.achievements === 1 ? '' : 's'}</small></div></div>
       ${l.enabled ? `<div class="card stat"><span>Programa fidelidade</span><div class="bar"><i style="width:${prog.toFixed(1)}%"></i></div><small>${num(me.medals)} de ${num(l.threshold)} medalhas para ganhar ${hm(l.rewardMinutes * 60)} de tempo</small></div>` : ''}
-      <button class="btn ghost" id="out" style="margin-top:20px">Sair</button>`;
+      <button class="btn" id="out" style="margin-top:20px">Sair</button>`;
     if (s) countdown('#cd', Date.now() + s.remainingSeconds * 1000);
     $('#out').onclick = () => logout();
   }
   async function stations() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
     const paint = list => {
-      const cats = new Set(list.map(x => x.category));
-      const shown = list.filter(x => filter === 'all' || x.category === filter);
+      const cats = new Set(list.map(catOf));
+      const shown = list.filter(x => filter === 'all' || catOf(x) === filter);
       const free = list.filter(x => x.status === 'free').length;
       screen.innerHTML = `<h1>Estações</h1><p class="sub">${free} livre${free === 1 ? '' : 's'} de ${list.length}</p>
         <div class="chips">${FILTERS.filter(([k]) => k === 'all' || cats.has(k)).map(([k, t]) => `<button data-f="${k}" class="${filter === k ? 'active' : ''}">${t}</button>`).join('')}</div>
-        ${shown.length ? `<div class="stations">${shown.map((x, i) => `<div class="station ${x.status}"><span class="type">${CAT[x.category] || ''}</span><span class="name">${esc(x.name)}</span><span class="st" ${x.status === 'busy' ? `data-end="${Date.now() + x.remainingSeconds * 1000}"` : ''}>${x.status === 'free' ? 'Livre' : x.status === 'busy' ? clock(x.remainingSeconds) : x.status === 'maintenance' ? 'Manutenção' : 'Desligado'}</span></div>`).join('')}</div>` : '<div class="empty">Nenhuma estação neste filtro.</div>'}`;
+        ${shown.length ? `<div class="stations">${shown.map(x => { const ph = photoOf(x), c = catOf(x);
+          return `<div class="station ${x.status}"><img src="/app/img/${ph}.jpg" alt="" loading="lazy" class="${ph === 'pc' ? 'tint' : ''}"><div class="meta">${c === 'pc' ? '' : `<span class="pill gold">${CAT[c]}</span>`}<span class="pill gold name">${esc(x.name)}</span>
+            <div class="row2">${x.status === 'busy' ? `<span class="pill gold time" data-end="${Date.now() + x.remainingSeconds * 1000}">${clock(x.remainingSeconds)}</span>` : `<span class="pill dark state">${x.status === 'free' ? 'Livre' : x.status === 'maintenance' ? 'Manutenção' : 'Desligado'}</span>`}</div></div></div>`; }).join('')}</div>` : '<div class="empty">Nenhuma estação neste filtro.</div>'}`;
       screen.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; paint(list); });
     };
     let list = (await call('stations')).stations; paint(list);
@@ -105,9 +122,9 @@
     const done = list.filter(a => a.done).length;
     const val = a => a.unit === 'R$' ? brl(a.value * 100) + ' de ' + brl(a.target * 100) : a.unit === 'h' ? `${num(a.value)} de ${num(a.target)} h` : `${num(a.value)} de ${num(a.target)}`;
     screen.innerHTML = `<h1>Conquistas</h1><p class="sub">${done} de ${list.length} completadas</p>
-      ${list.length ? list.map(a => `<div class="card ach ${a.done ? 'done' : ''}"><div class="ic">${esc(a.icon)}</div><div class="body"><strong>${esc(a.name)}</strong>${a.description ? `<small>${esc(a.description)}</small>` : ''}
-        ${a.done ? `<span class="badge">✔ Completada ${esc(when(a.doneAt))}</span>` : `<div class="bar"><i style="width:${Math.min(100, a.value / a.target * 100).toFixed(1)}%"></i></div><small>${esc(a.metricLabel)}: ${esc(val(a))}</small>`}</div>
-        <span class="medal">+${num(a.medals)} 🏅</span></div>`).join('') : '<div class="empty">A arena ainda não criou conquistas.</div>'}`;
+      ${list.length ? `<div class="achs">${list.map(a => `<div class="ach ${a.done ? '' : 'todo'}"><div class="ic">${esc(a.icon)}</div><strong>${esc(a.name)}</strong>${a.description ? `<small>${esc(a.description)}</small>` : ''}
+        ${a.done ? `<span class="done">✔ Completada ${esc(when(a.doneAt))}</span>` : `<div class="bar"><i style="width:${Math.min(100, a.value / a.target * 100).toFixed(1)}%"></i></div><small>${esc(val(a))}</small>`}
+        <span class="plus">+${num(a.medals)}</span></div>`).join('')}</div>` : '<div class="empty">A arena ainda não criou conquistas.</div>'}`;
   }
   async function history() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
@@ -118,7 +135,7 @@
         : h.medals.map(m => `<div class="row"><div>${esc(m.reason || 'Medalhas')}<small>${esc(when(m.at))}</small></div><div class="v ${m.medals >= 0 ? 'plus' : 'minus'}">${m.medals >= 0 ? '+' : ''}${num(m.medals)}</div></div>`);
       screen.innerHTML = `<h1>Histórico</h1><p class="sub">Últimos registros na arena</p>
         <div class="seg">${[['sessions', 'Sessões'], ['recharges', 'Recargas'], ['medals', 'Medalhas']].map(([k, t]) => `<button data-h="${k}" class="${histTab === k ? 'active' : ''}">${t}</button>`).join('')}</div>
-        <div class="card">${rows.length ? rows.join('') : '<div class="empty">Nada por aqui ainda.</div>'}</div>`;
+        <div class="card rows" style="padding:4px 0">${rows.length ? rows.join('') : '<div class="empty">Nada por aqui ainda.</div>'}</div>`;
       screen.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { histTab = b.dataset.h; paint(); });
     };
     paint();

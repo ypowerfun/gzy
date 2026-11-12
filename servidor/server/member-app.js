@@ -16,8 +16,9 @@ const fail = (message, status = 400) => { const e = new Error(message); e.status
 const SITE = () => (process.env.GZ_SITE_URL || 'https://gamezoney.com').replace(/\/+$/, '');
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 const RESERVED = new Set(['api', 'app', 'admin', 'servidor', 'www', 'static', 'assets', 'login', 'conta', 'gamezoney', 'suporte', 'ajuda', 'img', 'media', 'health']);
-const CATEGORY = {pc: 'PC', console: 'Console', vr: 'VR', sim: 'Simulador'};
-const categoryOf = s => (CATEGORY[s.category] ? s.category : s.kind === 'tv' ? 'console' : 'pc');
+// 1.3.8: VR funciona junto com o console (pedido do dono): um tipo só, Console/VR. O 'vr' gravado na 1.3.7 vale como console.
+const CATEGORY = {pc: 'PC', console: 'Console/VR', sim: 'Simulador'};
+const categoryOf = s => (s.category === 'vr' ? 'console' : CATEGORY[s.category] ? s.category : s.kind === 'tv' ? 'console' : 'pc');
 const TOKEN_DAYS = 30;
 
 module.exports = function memberApp(store, deps = {}) {

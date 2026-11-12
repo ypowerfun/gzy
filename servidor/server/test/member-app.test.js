@@ -42,9 +42,10 @@ test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com ni
   await call('/api/license/refresh', {});
 
   // tipo da estação para o filtro do app
-  await call('/api/stations', {id: '2', name: 'PC VR 01', kind: 'computer', category: 'vr'});
-  assert.equal(loja.state.stations.find(x => x.id === '2').category, 'vr');
-  assert.match((await call('/api/stations', {id: '2', name: 'PC VR 01', kind: 'computer', category: 'console'}, 400)).error, /Tipo da estação/);
+  await call('/api/stations', {id: '2', name: 'PC VR 01', kind: 'computer', category: 'vr'}); // 1.3.8: VR antigo vira Console/VR
+  assert.equal(loja.state.stations.find(x => x.id === '2').category, 'console');
+  assert.match((await call('/api/stations', {id: '2', name: 'PC VR 01', kind: 'computer', category: 'xyz'}, 400)).error, /Tipo da estação/);
+  assert.match((await call('/api/stations', {id: '1', name: 'PS5 Sala 1', kind: 'tv', ip: '192.168.1.111', category: 'pc'}, 400)).error, /Tipo da estação/);
   await call('/api/stations', {id: '1', name: 'PS5 Sala 1', kind: 'tv', ip: '192.168.1.111'}); // sem tipo: Console
   assert.equal(loja.state.stations.find(x => x.id === '1').category, undefined);
 
@@ -89,7 +90,7 @@ test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com ni
   assert.ok(login.token); assert.equal(login.me.username, 'joana'); assert.equal(login.me.balanceSeconds, 60 * 60);
   const me = (await app('me', {}, login.token)).me; assert.equal(me.achievements, 2); assert.equal(me.medals, inst.store.member(m.id).pointsMilli / 1000);
   const stations = (await app('stations', {}, login.token)).stations;
-  assert.deepEqual(stations.map(x => [x.name, x.category, x.status]).sort(), [['PC VR 01', 'vr', 'offline'], ['PS5 Sala 1', 'console', 'free']]);
+  assert.deepEqual(stations.map(x => [x.name, x.category, x.status]).sort(), [['PC VR 01', 'console', 'offline'], ['PS5 Sala 1', 'console', 'free']]);
   const ach = (await app('achievements', {}, login.token)).achievements; assert.equal(ach.length, 2); assert.ok(ach.every(x => x.done));
   const h = await app('history', {}, login.token); assert.equal(h.sessions.length, 2); assert.equal(h.recharges[0].minutes, 240); assert.ok(h.medals.some(x => x.reason === 'Conquista: Maratonista'));
   assert.doesNotMatch(JSON.stringify(h) + JSON.stringify(me), /passwordHash|cpf/);
