@@ -85,18 +85,49 @@
   document.addEventListener('click', e => { const b = e.target.closest('#tabs button'); if (b) show(b.dataset.tab); });
 
   function countdown(sel, endAt) { const tick = () => { const el = document.querySelector(sel); if (!el) return; el.textContent = clock((endAt - Date.now()) / 1000); }; tick(); timers.push(setInterval(tick, 1000)); }
+  // 2.20 (pedido do dono): Início com cartão grande do tempo (ampulheta), "Pronto para jogar?", estações livres,
+  // posição no ranking, fidelidade e o Sair embaixo — no visual dourado do GameZoney (ou na cor da arena)
+  const ARROW = '<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICON_PC = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 20.5h6M12 16.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const ICON_CUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v6a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 14h3v3h-3zM8 18h8v3H8z" fill="currentColor"/></svg>';
+  const ICON_SPARK = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M13 4c1 6 3 8 9 9-6 1-8 3-9 9-1-6-3-8-9-9 6-1 8-3 9-9z" fill="currentColor"/><path d="M25 3c.5 2.6 1.4 3.5 4 4-2.6.5-3.5 1.4-4 4-.5-2.6-1.4-3.5-4-4 2.6-.5 3.5-1.4 4-4zM25 20c.4 2 1 2.6 3 3-2 .4-2.6 1-3 3-.4-2-1-2.6-3-3 2-.4 2.6-1 3-3z" fill="currentColor"/></svg>';
+  const HOURGLASS = `<svg class="hourglass" viewBox="0 0 120 150" aria-hidden="true"><defs>
+      <linearGradient id="hg-cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent2)"/><stop offset=".55" stop-color="var(--accent)"/><stop offset="1" stop-color="#3a2a06"/></linearGradient>
+      <linearGradient id="hg-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="1" stop-color="var(--accent2)"/></linearGradient>
+      <linearGradient id="hg-glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(255,255,255,.22)"/><stop offset=".5" stop-color="rgba(255,255,255,.04)"/><stop offset="1" stop-color="rgba(255,255,255,.16)"/></linearGradient></defs>
+    <path d="M30 22h60c0 26-22 36-26 53 4 17 26 27 26 53H30c0-26 22-36 26-53-4-17-26-27-26-53z" fill="url(#hg-glass)" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+    <path d="M40 40h40c-5 12-16 20-20 33-4-13-15-21-20-33z" fill="url(#hg-sand)" opacity=".95"/>
+    <path d="M60 76v38" stroke="var(--accent2)" stroke-width="2" stroke-dasharray="3 3"/>
+    <path d="M36 128c4-12 14-18 24-18s20 6 24 18z" fill="url(#hg-sand)"/>
+    <path d="M28 22v106M92 22v106" stroke="url(#hg-cap)" stroke-width="5" stroke-linecap="round"/>
+    <rect x="18" y="10" width="84" height="13" rx="6.5" fill="url(#hg-cap)"/><rect x="18" y="127" width="84" height="13" rx="6.5" fill="url(#hg-cap)"/></svg>`;
   async function home() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
-    me = (await call('me')).me;
-    const s = me.session, l = me.loyalty;
-    const prog = l.enabled ? Math.min(100, me.medals / l.threshold * 100) : 0;
-    screen.innerHTML = `<h1>Olá, ${esc(me.name?.split(' ')[0] || me.username)}!</h1><p class="sub">@${esc(me.username)}</p>
-      ${s ? `<div class="card live"><span class="lbl">Jogando agora • ${esc(s.station)}</span><div class="big" id="cd">--:--:--</div><small>tempo restante da sessão</small></div>` : ''}
-      <div class="grid2"><div class="card stat"><span>Saldo de tempo</span><strong>${hm(me.balanceSeconds)}</strong><small>para usar nos PCs e consoles</small></div>
-      <div class="card stat"><span>Medalhas</span><strong>${MEDAL}${num(me.medals)}</strong><small>${me.achievements} conquista${me.achievements === 1 ? '' : 's'}</small></div></div>
-      ${l.enabled ? `<div class="card stat"><span>Programa fidelidade</span><div class="bar"><i style="width:${prog.toFixed(1)}%"></i></div><small>${num(me.medals)} de ${num(l.threshold)} medalhas para ganhar ${hm(l.rewardMinutes * 60)} de tempo</small></div>` : ''}
-      <button class="btn" id="out" style="margin-top:20px">Sair</button>`;
+    // estações e ranking são extras: se falharem, o Início abre do mesmo jeito (com —)
+    const [meR, stR, rkR] = await Promise.all([call('me'), call('stations').catch(() => null), call('ranking').catch(() => null)]);
+    me = meR.me;
+    const s = me.session, l = me.loyalty || {};
+    const list = Array.isArray(stR?.stations) ? stR.stations : null, free = list ? list.filter(x => x.status === 'free').length : null;
+    const medalsTop = Array.isArray(rkR?.medals) ? rkR.medals : null, pos = medalsTop ? medalsTop.findIndex(x => x.me) + 1 : 0;
+    const prog = l.enabled && l.threshold ? Math.min(100, me.medals / l.threshold * 100) : 0, missing = l.enabled ? Math.max(0, l.threshold - me.medals) : 0;
+    const first = esc(me.name?.split(' ')[0] || me.username);
+    screen.innerHTML = `<p class="hello">Olá, <b>${first}</b> <span>@${esc(me.username)}</span></p>
+      <div class="card hero${s ? ' playing' : ''}">${HOURGLASS}
+        <span class="lbl">${s ? `Jogando agora • ${esc(s.station)}` : 'Seu tempo disponível'}</span>
+        <div class="big" id="cd">${clock(s ? s.remainingSeconds : me.balanceSeconds)}</div>
+        <p class="hint">${s ? `Tempo restante da sessão${me.balanceSeconds > 0 ? ` • saldo guardado: ${hm(me.balanceSeconds)}` : ''}` : me.balanceSeconds > 0 ? 'Saldo guardado para sua próxima sessão' : 'Faça uma recarga na recepção para jogar'}</p>
+        <button class="btn play" data-go="stations"><span>${s ? 'Ver estações' : 'Pronto para jogar?'}</span>${ARROW}</button></div>
+      <div class="grid2">
+        <button class="card tile" data-go="stations"><span class="ic">${ICON_PC}</span>${ARROW}<strong>${free == null ? '—' : num(free)}</strong><small>${free == null ? 'estações' : `estaç${free === 1 ? 'ão disponível' : 'ões disponíveis'}`}</small></button>
+        <button class="card tile gold" data-go="ranking"><span class="ic">${ICON_CUP}</span>${ARROW}<strong>${pos ? `${pos}º` : '—'}</strong><small>${pos ? 'no ranking de medalhas' : 'fora do ranking'}</small></button></div>
+      <div class="card loyal"><div class="head"><h2>${l.enabled ? 'Programa fidelidade' : 'Medalhas'}</h2><span class="ic">${ICON_SPARK}</span></div>
+        <div class="medals"><strong>${num(me.medals)}</strong><span>medalha${me.medals === 1 ? '' : 's'}</span></div>
+        ${l.enabled ? `<p>${missing > 0 ? `Faltam ${num(missing)} medalha${missing === 1 ? '' : 's'} para ganhar ${hm(l.rewardMinutes * 60)} de tempo.` : `Você já tem medalhas para ganhar ${hm(l.rewardMinutes * 60)} de tempo.`}</p><div class="bar"><i style="width:${prog.toFixed(1)}%"></i></div>` : ''}
+        <p class="small">${me.achievements} conquista${me.achievements === 1 ? '' : 's'} completada${me.achievements === 1 ? '' : 's'}</p>
+        <button class="link" data-go="achievements">Ver conquistas ${ARROW}</button></div>
+      <button class="btn ghost out" id="out">Sair</button>`;
     if (s) countdown('#cd', Date.now() + s.remainingSeconds * 1000);
+    screen.querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
     $('#out').onclick = () => logout();
   }
   async function stations() {

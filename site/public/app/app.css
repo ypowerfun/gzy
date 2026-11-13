@@ -115,3 +115,29 @@ button{font:inherit;cursor:pointer}
 .rk.mine{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .foot{color:var(--muted);text-align:center;font-size:12px;margin:24px 0 8px}
 .foot a{color:var(--muted)}
+/* 2.20 (pedido do dono): Início em cartões — tempo com ampulheta, "Pronto para jogar?", estações, ranking, fidelidade e Sair embaixo */
+.hello{margin:4px 0 12px;color:var(--muted);font-size:14px}.hello b{color:var(--text)}.hello span{opacity:.75;margin-left:4px}
+.hero{border:2px solid color-mix(in srgb,var(--accent2) 80%,transparent);border-radius:22px;padding:22px 20px 20px;overflow:hidden;background:radial-gradient(130% 120% at 100% 0%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 55%),linear-gradient(160deg,rgba(30,24,10,.78),rgba(6,6,8,.78));box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px color-mix(in srgb,var(--accent) 40%,transparent),inset 0 0 30px color-mix(in srgb,var(--accent) 16%,transparent)}
+.hero .hourglass{position:absolute;right:12px;top:10px;width:78px;height:auto;filter:drop-shadow(0 6px 14px color-mix(in srgb,var(--accent) 55%,transparent));transform:rotate(12deg);pointer-events:none}
+.hero .lbl{display:block;color:var(--accent2);font:800 12px Montserrat,system-ui,sans-serif;text-transform:uppercase;letter-spacing:3px;padding-right:84px}
+.hero .big{font:800 48px/1.05 Montserrat,system-ui,sans-serif;color:#fff;font-variant-numeric:tabular-nums;margin:14px 0 6px;text-shadow:0 0 18px color-mix(in srgb,var(--accent) 55%,transparent);position:relative}
+.hero .hint{color:var(--text);opacity:.88;margin:0 0 18px;position:relative}
+.btn.play{display:flex;align-items:center;justify-content:space-between;text-transform:none;font-size:17px;letter-spacing:.2px;padding:16px 20px;position:relative}
+.btn.play .go{width:24px;height:24px}
+.tile{display:block;width:100%;text-align:left;color:var(--text);font:inherit;cursor:pointer;min-height:150px;padding:18px}
+.tile .ic{display:block;width:36px;height:36px;color:var(--accent2)}.tile .ic svg{width:100%;height:100%}
+.tile .go{position:absolute;right:16px;top:20px;width:22px;height:22px;color:var(--muted)}
+.tile strong{display:block;font:800 36px/1.1 Montserrat,system-ui,sans-serif;margin:16px 0 4px}
+.tile small{color:var(--muted);font-size:14px}
+.tile.gold{border-color:color-mix(in srgb,var(--accent2) 70%,transparent)}.tile.gold strong{color:var(--accent2)}
+.loyal{padding:20px;margin-top:2px}
+.loyal .head{display:flex;align-items:center;justify-content:space-between}
+.loyal h2{margin:0;font:800 21px Montserrat,system-ui,sans-serif;color:var(--text)}
+.loyal .ic{width:34px;height:34px;color:var(--accent2)}.loyal .ic svg{width:100%;height:100%}
+.loyal .medals{display:flex;align-items:baseline;gap:10px;margin:14px 0 6px}
+.loyal .medals strong{font:800 46px/1 Montserrat,system-ui,sans-serif;color:var(--accent2)}.loyal .medals span{color:var(--muted);font-size:16px}
+.loyal p{margin:6px 0;color:var(--text);opacity:.9}.loyal p.small{color:var(--muted);font-size:13px;opacity:1}
+.link{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:6px 0;border:0;background:none;color:var(--accent2);font:800 16px Montserrat,system-ui,sans-serif;cursor:pointer}
+.link .go{width:20px;height:20px}
+.btn.out{margin-top:16px}
+@media (max-width:360px){.hero .big{font-size:40px}.hero .hourglass{width:64px}.tile strong{font-size:30px}}
