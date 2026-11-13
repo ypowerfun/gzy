@@ -67,6 +67,8 @@ Name: desktopicon; Description: "{cm:GzDesktopIcon}"; Flags: checkedonce
 ; 1.4.3: ClearAll (apagava todos os registros) substituído pelo ClearAd (redefinir a senha do administrador principal)
 Type: files; Name: "{app}\ClearAll.exe"
 Type: files; Name: "{app}\clear-all.js"
+; 1.4.4 (pedido do dono): o ClearAd não tem atalho no menu Iniciar (só o arquivo na pasta do servidor); apaga o atalho criado pela 1.4.3
+Type: files; Name: "{group}\Redefinir senha do administrador (ClearAd).lnk"
 ; 1.0.5: guias unificados em GUIA-GAMEZONEY.md e app web antigo de celular retirado (arquivos sem uso)
 Type: files; Name: "{app}\GUIA-*.md"
 Type: filesandordirs; Name: "{app}\public\mobile"
@@ -153,7 +155,6 @@ Source: "node_modules\*"; DestDir: "{app}\node_modules"; Flags: ignoreversion re
 Name: "{group}\Restaurar backup GameZoney"; Filename: "{app}\GameZoney.exe"; Parameters: "/restore"; WorkingDir: "{app}"
 Name: "{group}\Reparar conexao de rede"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\firewall.ps1"" -Role server -Action Install -Interactive"; WorkingDir: "{app}"; IconFilename: "{app}\GameZoney.exe"; Flags: runminimized
 Name: "{group}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; WorkingDir: "{app}"
-Name: "{group}\Redefinir senha do administrador (ClearAd)"; Filename: "{app}\ClearAd.exe"; WorkingDir: "{app}"
 Name: "{autodesktop}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 Name: "{userstartup}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Parameters: "/silent"; WorkingDir: "{app}"
 
