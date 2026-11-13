@@ -201,5 +201,7 @@ module.exports = [
   {id: 'contato', q: 'Quais são os contatos da GameZoney?', alt: ['email de contato', 'whatsapp', 'telefone', 'instagram'], kw: ['contato', 'email', 'whatsapp', 'telefone', 'instagram'],
     a: 'E-mail: suporte@gamezoney.com. Instagram: @gamezoney_. Clientes: Minha conta › Suporte. E aqui no chat, a qualquer hora.'},
   {id: 'avaliar-app', q: 'Como avalio o GameZoney?', alt: ['deixar avaliacao', 'depoimento'], kw: ['avaliar', 'avaliacao', 'depoimento'],
-    a: 'Em Minha conta › Avaliar: de 1 a 5 estrelas, texto e até 2 imagens. Obrigado por ajudar!'}
+    a: 'Em Minha conta › Avaliar: de 1 a 5 estrelas, texto e até 2 imagens. Depois de enviada, você pode editar a avaliação uma vez. Ela não é excluída pelo site; se precisar retirar, fale com o suporte. Obrigado por ajudar!'},
+  {id: 'atalho-app', q: 'Onde fica o botão do app na minha conta?', alt: ['atalho para o app na sua conta', 'abrir o app pela minha conta', 'link do app.gamezoney.com', 'botao do app', 'onde abro o app'], kw: ['atalho', 'botao', 'app', 'conta', 'abrir'],
+    a: 'Em Minha conta › Visão geral há o botão "Ir para o app.gamezoney.com" (e o atalho "Abrir o app.gamezoney.com"). Lá ficam o app do cliente (app.gamezoney.com/endereço-da-arena) e o app da recepção (app.gamezoney.com/servidor/endereço-da-arena), do plano Pro. O endereço da arena é escolhido no GameZoney Servidor, em Gerenciar App › App do cliente.'},
 ];

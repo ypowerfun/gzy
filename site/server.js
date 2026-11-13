@@ -343,7 +343,7 @@ function createApp(options = {}) {
     const user = db.get('SELECT * FROM users WHERE id=?', result.o.user_id);
     db.audit(user.email, 'compra', `${money(result.o.amount_cents)} • ${result.lic.key}`);
     notify(user.email, 'GameZoney: sua licença vitalícia', {preheader: 'Pagamento confirmado. Aqui está a sua chave de licença.', lines: [`Olá, ${user.name}!`, 'Pagamento confirmado. Obrigado por escolher o GameZoney!'],
-      title: 'Sua chave de licença', code: result.lic.key, codeNote: 'Licença vitalícia: nunca expira.', button: {label: 'Minhas licenças e downloads', url: `${SITE}/conta#licencas`},
+      title: 'Sua chave de licença', code: result.lic.key, codeNote: 'Licença vitalícia: nunca expira.', button: {label: 'Downloads', url: `${SITE}/conta#downloads`},
       after: ['Como ativar: no GameZoney Servidor, abra Configuração › Licença › Ativar licença e digite a chave.', `Precisa de ajuda? ${SITE}/conta#suporte`]});
   }
   const approved = (o, p) => p.status === 'approved' && p.orderId === o.id && p.amountCents >= o.amount_cents;
@@ -525,7 +525,7 @@ function createApp(options = {}) {
     const lic = issueLicense(user.id, null, note || 'Emitida pelo administrador');
     db.audit(req.user.email, 'licenca', `${lic.key} emitida para ${email}`);
     notify(email, 'GameZoney: sua licença', {preheader: 'Sua chave de licença do GameZoney.', lines: [`Olá, ${user.name}!`], title: 'Sua chave de licença', code: lic.key, codeNote: 'Licença vitalícia: nunca expira.',
-      button: {label: 'Minhas licenças', url: `${SITE}/conta#licencas`}, after: ['Ative em Configuração › Licença no GameZoney Servidor.']});
+      button: {label: 'Downloads', url: `${SITE}/conta#downloads`}, after: ['Ative em Configuração › Licença no GameZoney Servidor.']});
     return {ok: true, key: lic.key};
   }));
   app.post('/api/admin/licenses/:id', jsonOnly, api(req => {

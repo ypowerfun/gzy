@@ -38,11 +38,10 @@ test('2.4: avaliação — enviar, editar 1 vez e depois fechada (excluir não l
   assert.equal((await ana('/api/reviews', {stars: 5, text: 'Sistema excelente para a arena!'})).canWrite, true, 'ainda pode editar 1 vez');
   const ed = await ana('/api/reviews', {stars: 4, text: 'Sistema excelente, recomendo muito!'}); assert.equal(ed.canWrite, false); assert.equal(ed.review.stars, 4);
   assert.match((await ana('/api/reviews', {stars: 5, text: 'Tentando editar de novo'}, 403)).error, /não pode mais ser alterada/);
-  await ana('/api/reviews/remove', {}); assert.equal((await ana('/api/reviews/mine')).review, null);
-  assert.match((await ana('/api/reviews', {stars: 5, text: 'Avaliar outra vez depois de excluir'}, 403)).error, /já avaliou/);
-  // excluir antes de editar: pode avaliar de novo, mas isso conta como a edição
+  // o cliente não exclui mais a avaliação pelo site (pedido do dono): só o administrador
+  assert.match((await ana('/api/reviews/remove', {}, 403)).error, /não pode ser excluída/); assert.equal((await ana('/api/reviews/mine')).review.stars, 4);
   await bia('/api/auth/register', {name: 'Bia', email: 'bia@x.com', password: 'senha-forte-1'});
-  await bia('/api/reviews', {stars: 3, text: 'Bom, mas pode melhorar.'}); await bia('/api/reviews/remove', {});
+  await bia('/api/reviews', {stars: 3, text: 'Bom, mas pode melhorar.'}); await bia('/api/reviews/remove', {}, 403);
   assert.equal((await bia('/api/reviews', {stars: 5, text: 'Melhorou bastante, ótimo!'})).canWrite, false);
 });
 

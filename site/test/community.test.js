@@ -51,8 +51,9 @@ test('site: avaliações — 1 a 5 estrelas, até 2 imagens .jpg/.png, organiza�
  // trocar a posição 1 tira a anterior; ocultar some da página inicial
  await dono('/api/admin/reviews/'+id(3),{featured:1});f=(await anon('/api/reviews/featured')).reviews;assert.deepEqual(f.map(r=>r.name),['Cliente 3','Ana Souza','Cliente 2']);
  await dono('/api/admin/reviews/'+id(2),{hidden:true});assert.equal((await anon('/api/reviews/featured')).reviews.length,2);
- // excluir (pelo cliente) apaga as imagens
- await a('/api/reviews/remove',{});assert.equal((await a('/api/reviews/mine')).review,null);
+ // o cliente não exclui mais (pedido do dono); o administrador exclui e as imagens são apagadas
+ await a('/api/reviews/remove',{},403);assert.ok((await a('/api/reviews/mine')).review);
+ await dono('/api/admin/reviews/'+id(1),{remove:true});assert.equal((await a('/api/reviews/mine')).review,null);
  assert.equal(fs.readdirSync(path.join(s.dir,'media','reviews')).length,0);
  await dono('/api/admin/reviews/'+id(4),{remove:true});assert.equal((await dono('/api/admin/overview')).reviews.length,2);
 });

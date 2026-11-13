@@ -54,11 +54,8 @@ module.exports = function community(app, ctx) {
     if (!old) for (const a of ADMINS) mail.send(a, `GameZoney: nova avaliação (${stars} estrelas)`, `${u.name} <${u.email}>\n\n${text}\n\nEscolha as avaliações da página inicial em ${SITE}/admin`);
     return {review: publicReview(db.get('SELECT r.*, u.name, u.organization FROM reviews r JOIN users u ON u.id=r.user_id WHERE r.id=?', id)), canWrite: writesOf(u.id) < MAX_WRITES};
   }));
-  app.post('/api/reviews/remove', jsonOnly, api(req => {
-    const u = needUser(req), r = db.get('SELECT * FROM reviews WHERE user_id=?', u.id); if (!r) return {ok: true};
-    for (const f of JSON.parse(r.images || '[]')) fs.rmSync(path.join(mediaDir, f), {force: true});
-    db.run('DELETE FROM reviews WHERE id=?', r.id); return {ok: true};
-  }));
+  // pedido do dono: o cliente não exclui mais a avaliação (pode editar uma vez); só o administrador exclui em /admin › Avaliações
+  app.post('/api/reviews/remove', jsonOnly, api(req => { needUser(req); fail(403, 'A avaliação não pode ser excluída pelo site. Você pode editá-la uma vez; para retirar, fale com o suporte.'); }));
   // administrador: posição na página inicial (1, 2, 3 ou 0 = fora), ocultar/mostrar e excluir
   app.post('/api/admin/reviews/:id', jsonOnly, api(req => {
     needAdmin(req); const r = db.get('SELECT * FROM reviews WHERE id=?', req.params.id) || fail(404, 'Avaliação não encontrada.');
