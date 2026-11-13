@@ -26,6 +26,9 @@ module.exports = function memberApp(store, deps = {}) {
   const fetchImpl = deps.fetch || ((...a) => fetch(...a));
   const allowed = () => (deps.allowed ? !!deps.allowed() : true);
   const cfg = () => (store.state.settings.memberApp ??= {enabled: false, slug: ''});
+  const c0 = cfg;
+  // 1.4.1: a mesma ligação leva o app da recepção (painel de fora, remote-panel.js)
+  const panelOn = () => !!cfg().panel?.enabled;
   const secret = () => { const s = (store.state.secrets ??= {}); if (!s.appSecret) { s.appSecret = crypto.randomBytes(32).toString('hex'); store.persist(); } return s.appSecret; };
   let running = false, ctrl = null, loop = null, restarting = false, hello = true;
   const live = {connected: false, lastAt: 0, lastError: '', url: '', requests: 0};
@@ -41,7 +44,7 @@ module.exports = function memberApp(store, deps = {}) {
     const enabled = input.enabled === true, slug = String(input.slug ?? '').trim().toLowerCase();
     if (enabled && !allowed()) fail('App do cliente: recurso do plano Pro. Entre com a conta gamezoney.com do plano Pro em Configuração › Licença.');
     if (slug && (!SLUG_RE.test(slug) || slug.includes('--') || RESERVED.has(slug))) fail('Endereço do app: de 3 a 40 letras minúsculas, números ou hífen (ex.: arena-centro).');
-    if (enabled && !slug) fail('Escolha o endereço do app (ex.: arena-centro).');
+    if ((enabled || c0().panel?.enabled) && !slug) fail(enabled ? 'Escolha o endereço do app (ex.: arena-centro).' : 'O app da recepção usa este endereço: desligue o app da recepção antes de apagar o endereço.');
     if (enabled && !lic?.planToken?.()) fail('Entre com a conta gamezoney.com em Configuração › Licença antes de ligar o app.');
     const c = cfg(), changed = c.slug !== slug;
     store.change(actor, 'config', enabled ? `App do cliente ligado: app.gamezoney.com/${slug}` : 'App do cliente desligado', () => { c.enabled = enabled; c.slug = slug; });
@@ -107,6 +110,7 @@ module.exports = function memberApp(store, deps = {}) {
   }
   function handle(r) {
     const body = r.body && typeof r.body === 'object' ? r.body : {};
+    if (r.action !== 'logo' && !cfg().enabled) fail('O app do cliente está desligado nesta arena.', 404); // 1.4.1: a ligação pode estar aberta só pelo app da recepção
     switch (r.action) {
       case 'login': {
         const ipKey = 'ip:' + String(r.ip || ''), nick = normalizeNick(body.username).toLowerCase(), nickKey = 'nick:' + nick;
@@ -165,9 +169,10 @@ module.exports = function memberApp(store, deps = {}) {
     let replies = [], wait = 2000;
     while (running) {
       const c = cfg();
-      if (!c.enabled || !c.slug || !allowed() || !lic?.planToken?.()) { live.connected = false; await sleep(5000); continue; }
+      if (!(c.enabled || panelOn()) || !c.slug || !allowed() || !lic?.planToken?.()) { live.connected = false; await sleep(5000); continue; }
       try {
-        const requests = await cycle(replies); replies = requests.map(answer); live.requests += requests.length; wait = 2000;
+        kick(); const requests = await cycle(replies); live.requests += requests.length; wait = 2000;
+        replies = serve(requests);
       } catch (e) {
         if (!running) break;
         replies = []; hello = true;
@@ -177,10 +182,35 @@ module.exports = function memberApp(store, deps = {}) {
       }
     }
   }
+  // 1.4.1: pedido do app da recepção (painel): repete no próprio servidor e devolve assim que fica pronto, num POST à parte
+  //        (replyOnly) — um pedido demorado não segura os outros nem a espera de novos pedidos
+  const outbox = []; let flushing = false;
+  function http(r) {
+    const remote = deps.remote, port = deps.port?.();
+    const p = remote && port && panelOn() ? remote.forward(r, port) : Promise.resolve({id: r.id, status: 404, data: {error: 'O app da recepção está desligado nesta arena.'}});
+    p.then(rep => { outbox.push({rep, at: Date.now()}); kick(); });
+  }
+  // pedidos de uma volta: os do app do cliente respondem na próxima ligação; os do app da recepção, assim que ficam prontos
+  function serve(requests) { const out = []; for (const r of requests) { if (r.action === 'http') http(r); else out.push(answer(r)); } return out; }
+  function kick() { if (!flushing && outbox.length) { flushing = true; setImmediate(flush); } }
+  async function flush() {
+    while (outbox.length && Date.now() - outbox[0].at > 30000) outbox.shift(); // o site já desistiu desse pedido
+    let n = 0, size = 0; while (n < outbox.length && n < 40 && (n === 0 || size + String(outbox[n].rep.data?.body || '').length < 8e6)) size += String(outbox[n++].rep.data?.body || '').length;
+    const list = outbox.splice(0, n);
+    if (!list.length) { flushing = false; return; }
+    let ok = false;
+    try {
+      const c = cfg(), res = await fetchImpl(SITE() + '/api/app/relay', {method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({token: lic?.planToken?.(), installId: store.state.runtime.installId, slug: c.slug, replies: list.map(x => x.rep), replyOnly: true})});
+      await res.arrayBuffer().catch(() => null); ok = res.ok;
+    } catch { }
+    if (!ok) outbox.unshift(...list); // tenta de novo na próxima volta da ligação
+    flushing = false; if (ok) kick();
+  }
   function start() { if (running || deps.noTimer) return; running = true; loop = run(); }
   function stop() { running = false; try { ctrl?.abort(); } catch { } if (wake) wake(); }
   function restart() { if (!running) return; restarting = true; hello = true; try { ctrl?.abort(); } catch { } if (wake) { restarting = false; wake(); } }
-  return {status, save, handle, answer, info, start, stop, cycle, stations, issue, memberOf, CATEGORY};
+  return {status, save, handle, answer, serve, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
 };
 module.exports.CATEGORY = CATEGORY;
 module.exports.categoryOf = categoryOf;

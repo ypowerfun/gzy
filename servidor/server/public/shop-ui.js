@@ -120,7 +120,7 @@ function receiptPreview(sale) {
   return `<pre style="background:#fff;color:#111;padding:14px 16px;border-radius:10px;font:12px/1.45 Consolas,'Courier New',monospace;max-height:380px;overflow:auto;width:max-content;max-width:100%;margin:0 auto">${esc(rows.join('\n'))}</pre>`;
 }
 function showReceipt(sale) {
-  const url = '/api/shop/receipt?id=' + encodeURIComponent(sale.id), num = String(sale.number).padStart(6, '0');
+  const url = 'api/shop/receipt?id=' + encodeURIComponent(sale.id), num = String(sale.number).padStart(6, '0');
   modal('Cupom nº ' + num, `<p class="hint">Comprovante interno, <strong>sem valor fiscal</strong>. Para imprimir, abra o PDF e use Imprimir (ou Salvar como PDF).</p>${receiptPreview(sale)}<div class="toolbar-actions" style="margin-top:14px"><a class="button" style="background:#e63946;border-color:#e63946;color:#fff" href="${url}" target="_blank" rel="noopener">Abrir PDF para imprimir</a><a class="button" href="${url}" download="cupom-${num}.pdf">Baixar PDF</a></div>`);
 }
 // 1.0.5: Gerenciamento de Categoria

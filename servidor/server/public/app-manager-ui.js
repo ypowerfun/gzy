@@ -27,7 +27,7 @@ async function renderAppManager() {
   if (!isAdmin() || !state?.pro) { node.innerHTML = '<div class="panel"><h2>Gerenciar App</h2><p class="hint">Recurso do plano Pro.</p></div>'; return; }
   // 1.3.7: abas App do cliente / Conquistas / Servidor em nuvem (member-app-ui.js)
   const tab = typeof gzAppTab === 'string' ? gzAppTab : 'cloud';
-  const r = tab === 'achievements' ? achievementsSection(await api('/achievements')) : memberAppSection(await api('/member-app'));
+  const r = tab === 'achievements' ? achievementsSection(await api('/achievements')) : tab === 'reception' ? receptionSection(await api('/remote-panel')) : memberAppSection(await api('/member-app'));
   if (view !== 'app') return;
   node.innerHTML = typeof gzAppTabs === 'function' ? gzAppTabs() : ''; node.append(r);
 }

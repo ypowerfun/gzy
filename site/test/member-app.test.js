@@ -53,3 +53,46 @@ test('1.3.7: app do cliente — só Pro, endereço de uma conta só, arena sem c
   assert.equal((await page('/logo-gamezoney.png', 'app.gamezoney.com'))[0], 200);
   db.close?.();
 });
+
+test('1.4.1: app da recepção — repasse do painel só no app.gamezoney.com, origem própria, cookie preso ao endereço e gzip', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-site-panel-')), {privateKey} = crypto.generateKeyPairSync('ed25519');
+  const app = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, appHoldMs: 200, appReplyMs: 1500, panelReplyMs: 1500, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: dir, DOWNLOADS_DIR: path.join(dir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
+    LICENSE_PRIVATE_KEY: privateKey.export({type: 'pkcs8', format: 'pem'}), MP_ACCESS_TOKEN: '', GOOGLE_CLIENT_ID: '', SMTP_HOST: '', APP_URL: 'https://app.gamezoney.com'}, mail: {enabled: false, send: async () => true}, log: {log() {}, error() {}}});
+  const server = await new Promise(r => { const s = app.listen(0, '127.0.0.1', () => r(s)); }); const port = server.address().port, base = 'http://127.0.0.1:' + port;
+  t.after(() => { app.locals.close(); server.closeAllConnections?.(); server.close(); fs.rmSync(dir, {recursive: true, force: true, maxRetries: 5}); });
+  const post = async (url, body, status = 200) => { const r = await fetch(base + url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}); const j = await r.json(); assert.equal(r.status, status, url + ' ' + JSON.stringify(j)); return j; };
+  const db = require('../db').open(dir);
+  await post('/api/auth/register', {name: 'pro', email: 'pro@a.com', password: 'senha-forte-1'});
+  db.run("INSERT INTO subscriptions(id,user_id,plan,period,amount_cents,status,source,paid_until,created_at,updated_at) SELECT ?, id, 'pro', 'mensal', 0, 'granted', 'admin', ?, ?, ? FROM users WHERE email=?", crypto.randomUUID(), Date.now() + 864e5 * 30, Date.now(), Date.now(), 'pro@a.com');
+  const installId = crypto.randomUUID(), {token} = await post('/api/plan/login', {email: 'pro@a.com', password: 'senha-forte-1', installId});
+  const relay = extra => post('/api/app/relay', {token, installId, slug: 'arena-p', info: {name: 'P'}, ...extra});
+  await relay({hello: true});
+  // pedido HTTP cru (para escolher o Host como o Caddy entrega)
+  const req = (p, {method = 'GET', host = 'app.gamezoney.com', headers = {}, body} = {}) => new Promise((res, rej) => {
+    const r = http.request({host: '127.0.0.1', port, path: p, method, headers: {Host: host, ...headers}}, x => { const c = []; x.on('data', d => c.push(d)); x.on('end', () => res({status: x.statusCode, headers: x.headers, body: Buffer.concat(c)})); });
+    r.on('error', rej); r.end(body);
+  });
+  assert.equal((await req('/servidor/arena-p/', {host: 'gamezoney.com'})).status, 404, 'só no app.gamezoney.com');
+  let x = await req('/servidor/arena-p'); assert.equal(x.status, 302); assert.equal(x.headers.location, '/servidor/arena-p/');
+  assert.equal((await req('/servidor/nao-existe/')).status, 404);
+  // POST sem a origem do próprio app: recusado antes de chegar à arena
+  assert.equal((await req('/servidor/arena-p/api/login', {method: 'POST', headers: {'Content-Type': 'application/json', Origin: 'https://gamezoney.com'}, body: '{}'})).status, 403);
+  // a arena recebe método, caminho, corpo e SÓ o cookie do painel; devolve gzip + cookie
+  const pending = req('/servidor/arena-p/api/login?x=1', {method: 'POST', headers: {'Content-Type': 'application/json', Origin: 'https://app.gamezoney.com', 'Accept-Encoding': 'gzip', Cookie: 'gzs=conta-do-site; gz_session=' + 'a'.repeat(64)}, body: '{"username":"admin"}'});
+  const got = await relay(); assert.equal(got.requests.length, 1); const q = got.requests[0];
+  assert.equal(q.action, 'http'); assert.equal(q.body.method, 'POST'); assert.equal(q.body.path, '/api/login?x=1'); assert.equal(q.body.session, 'a'.repeat(64));
+  assert.equal(Buffer.from(q.body.body, 'base64').toString(), '{"username":"admin"}'); assert.doesNotMatch(JSON.stringify(q), /conta-do-site/);
+  const zipped = require('node:zlib').gzipSync('{"ok":true}');
+  await relay({replyOnly: true, replies: [{id: q.id, status: 200, data: {status: 200, gzip: true, body: zipped.toString('base64'), headers: {'content-type': 'application/json', 'set-cookie': ['gz_session=' + 'b'.repeat(64) + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=315360000', 'outro=1; Path=/']}}}]});
+  x = await pending; assert.equal(x.status, 200); assert.equal(x.headers['content-encoding'], 'gzip'); assert.equal(require('node:zlib').gunzipSync(x.body).toString(), '{"ok":true}');
+  assert.deepEqual(x.headers['set-cookie'], ['gz_session=' + 'b'.repeat(64) + '; Path=/servidor/arena-p/; HttpOnly; SameSite=Strict; Max-Age=2592000; Secure']);
+  assert.match(x.headers['content-security-policy'], /script-src 'self';/);
+  // navegador sem gzip: o site descompacta
+  const p2 = req('/servidor/arena-p/style.css');
+  const q2 = (await relay()).requests[0]; assert.equal(q2.body.method, 'GET');
+  await relay({replyOnly: true, replies: [{id: q2.id, status: 200, data: {status: 200, gzip: true, body: require('node:zlib').gzipSync('body{}').toString('base64'), headers: {'content-type': 'text/css'}}}]});
+  x = await p2; assert.equal(x.headers['content-encoding'], undefined); assert.equal(x.body.toString(), 'body{}');
+  // arena que não responde: página de aviso
+  x = await req('/servidor/arena-p/'); assert.equal(x.status, 504); assert.match(x.body.toString(), /Servidor da arena está aberto/);
+  db.close?.();
+});

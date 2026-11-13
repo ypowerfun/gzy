@@ -6,19 +6,19 @@
 // gravada no banco (somente o resumo SHA-256 do token, nunca o token), sobrevivendo a reinícios do servidor.
 // Continua: "Sair" encerra a sessão; conta desativada ou senha alterada encerra as outras sessões da conta.
 const crypto=require('crypto');
-const DAY=86400000,TTL=365*DAY;
+const DAY=86400000,TTL=365*DAY,REMOTE_TTL=12*3600000;/* 1.4.1: sessão do app da recepção (de fora) cai após 12 h sem uso */
 const hash=token=>crypto.createHash('sha256').update(String(token)).digest('hex');
 module.exports=function panelSessions(store,{now=()=>Date.now()}={}){
  const map=new Map();let lastSave=0;
- for(const s of Array.isArray(store.state.panelSessions)?store.state.panelSessions:[])if(s&&typeof s.hash==='string'&&s.until>now())map.set(s.hash,{id:s.id,until:s.until,createdAt:s.createdAt||now()});
- const save=()=>{store.state.panelSessions=[...map].map(([h,s])=>({hash:h,id:s.id,until:s.until,createdAt:s.createdAt}));lastSave=now();try{store.persist()}catch{}};
+ for(const s of Array.isArray(store.state.panelSessions)?store.state.panelSessions:[])if(s&&typeof s.hash==='string'&&s.until>now())map.set(s.hash,{id:s.id,until:s.until,createdAt:s.createdAt||now(),...(s.remote?{remote:true}:{})});
+ const save=()=>{store.state.panelSessions=[...map].map(([h,s])=>({hash:h,id:s.id,until:s.until,createdAt:s.createdAt,...(s.remote?{remote:true}:{})}));lastSave=now();try{store.persist()}catch{}};
  const keyOf=token=>map.has(token)?token:hash(token);
  const api={
-  TTL,keyOf,
+  TTL,REMOTE_TTL,keyOf,
   get(token){if(!token)return undefined;const s=map.get(hash(token));if(!s)return undefined;if(s.until<=now()){map.delete(hash(token));save();return undefined}return s},
-  set(token,value){map.set(hash(token),{id:value.id,until:value.until??now()+TTL,createdAt:now()});save();return api},
+  set(token,value){map.set(hash(token),{id:value.id,until:value.until??now()+(value.remote?REMOTE_TTL:TTL),createdAt:now(),...(value.remote?{remote:true}:{})});save();return api},
   // renova a validade a cada uso; grava no banco no máximo a cada 10 minutos (ou se faltar menos de 364 dias)
-  touch(token){const s=api.get(token);if(!s)return undefined;const before=s.until;s.until=now()+TTL;if(now()-lastSave>600000||before-now()<TTL-DAY)save();return s},
+  touch(token){const s=api.get(token);if(!s)return undefined;const before=s.until;if(s.remote){s.until=now()+REMOTE_TTL;if(now()-lastSave>600000)save();return s}s.until=now()+TTL;if(now()-lastSave>600000||before-now()<TTL-DAY)save();return s},
   delete(key){const ok=map.delete(keyOf(key));if(ok)save();return ok},
   get size(){return map.size},
   [Symbol.iterator](){return [...map][Symbol.iterator]()}

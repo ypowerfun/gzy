@@ -2,7 +2,7 @@
 // 3.0.31: Controle de Caixas — abertura, sangria/suprimento, fechamento e estoque integrado.
 let cashData = null, cashTab = 'current', cashStockFilter = '';
 const cashCents = v => Math.round(Number(String(v ?? '').replace(',', '.')) * 100);
-const cashPdf = id => '/api/cash/report?id=' + encodeURIComponent(id);
+const cashPdf = id => 'api/cash/report?id=' + encodeURIComponent(id);
 
 function cashSummaryHtml(reg) {
   const s = reg.summary, L = cashData.labels;

@@ -75,7 +75,7 @@ function createApp(options = {}) {
     next();
   });
   const smallJson = express.json({limit: '64kb'});
-  app.use((req, res, next) => (req.path === '/api/reviews' || req.path === '/api/support' || req.path === '/api/admin/design/image' || req.path === '/api/app/relay') ? next() : smallJson(req, res, next)); // 1.3.7: a ligação do app (relay) traz a logo da arena // avaliações, chamados com imagens e imagens do design têm limite próprio
+  app.use((req, res, next) => (req.path === '/api/reviews' || req.path === '/api/support' || req.path === '/api/admin/design/image' || req.path === '/api/app/relay' || req.path.startsWith('/servidor/')) ? next() : smallJson(req, res, next)); // 1.4.1: app da recepção (/servidor/<endereço>) repassa o corpo como veio // 1.3.7: a ligação do app (relay) traz a logo da arena // avaliações, chamados com imagens e imagens do design têm limite próprio
 
   // ---------- limite de tentativas (por IP) ----------
   const buckets = new Map();
@@ -91,7 +91,7 @@ function createApp(options = {}) {
   const MACHINE = new Set(['/api/mp/webhook', '/api/license/activate', '/api/feedback', '/api/unsubscribe', '/api/plan/login', '/api/plan/refresh', '/api/plan/logout', '/api/plan/from-license', '/api/update/check', '/api/trial/anchor', '/api/units/report']);
   const siteOrigin = new URL(SITE).origin;
   app.use((req, res, next) => {
-    if (req.method !== 'POST' || MACHINE.has(req.path) || req.path.startsWith('/api/app/')) return next(); // 1.3.7: app do cliente usa token no cabeçalho (sem cookie de sessão) e vem de app.gamezoney.com
+    if (req.method !== 'POST' || MACHINE.has(req.path) || req.path.startsWith('/api/app/') || req.path.startsWith('/servidor/')) return next(); // 1.4.1: o app da recepção confere a própria origem (app.gamezoney.com) // 1.3.7: app do cliente usa token no cabeçalho (sem cookie de sessão) e vem de app.gamezoney.com
     const from = req.headers.origin || (req.headers.referer ? (() => { try { return new URL(req.headers.referer).origin; } catch { return 'x'; } })() : '');
     if (from && from !== siteOrigin && !(options.allowOrigin && options.allowOrigin(from))) return res.status(403).json({error: 'Origem não permitida.'});
     next();
@@ -562,7 +562,7 @@ function createApp(options = {}) {
   // 2.9: Multi-Unidade (plano Pro): resumo de cada loja em Minha conta › Unidades
   require('./units')(app, {db, needUser, needAdmin, jsonOnly, api, fail, str, limit, plans, planActivation, log});
   // Servidor 1.3.7: app do cliente em app.gamezoney.com (repasse até o GameZoney Servidor da arena; nada de clientes gravado aqui)
-  const memberApp = require('./member-app')(app, {db, api, fail, str, limit, plans, planActivation, log, express, env, publicDir: path.join(__dirname, 'public'), holdMs: options.appHoldMs, replyTimeoutMs: options.appReplyMs});
+  const memberApp = require('./member-app')(app, {db, api, fail, str, limit, plans, planActivation, log, express, env, publicDir: path.join(__dirname, 'public'), holdMs: options.appHoldMs, replyTimeoutMs: options.appReplyMs, panelHosts: options.panelHosts, panelReplyMs: options.panelReplyMs});
   app.locals.memberApp = memberApp;
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado

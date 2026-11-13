@@ -30,7 +30,7 @@ module.exports = function memberApp(app, ctx) {
   // app.gamezoney.com/<endereço> = gamezoney.com/app/<endereço> (o mesmo processo; o Caddy entrega os dois domínios)
   const PASS = new Set(['/logo-gamezoney.png', '/favicon.ico', '/robots.txt']);
   app.use((req, res, next) => {
-    if (req.hostname === APP_HOST && !req.path.startsWith('/api/') && !req.path.startsWith('/app/') && req.path !== '/app' && !PASS.has(req.path)) req.url = '/app' + req.url;
+    if (req.hostname === APP_HOST && !req.path.startsWith('/api/') && !req.path.startsWith('/app/') && req.path !== '/app' && !req.path.startsWith('/servidor/') && req.path !== '/servidor' && !PASS.has(req.path)) req.url = '/app' + req.url;
     next();
   });
   const page = (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(publicDir, 'app', 'index.html'));
@@ -38,8 +38,8 @@ module.exports = function memberApp(app, ctx) {
   app.get('/app/:slug', (req, res, next) => (SLUG_RE.test(req.params.slug) ? page(req, res) : next()));
 
   // ---------- ligação do Servidor da arena ----------
-  const bigJson = express.json({limit: '3mb'});
-  app.post('/api/app/relay', limit('apprelay', 400, 60000), bigJson, api((req, res) => {
+  const bigJson = express.json({limit: '12mb'}); // 1.4.1: respostas do app da recepção (painel) vêm por aqui (o Caddy aceita até 12 MB)
+  app.post('/api/app/relay', limit('apprelay', 1500, 60000), bigJson, api((req, res) => {
     const b = req.body || {}, installId = str(b.installId, 80), slug = str(b.slug, 40);
     if (!/^[0-9a-f-]{20,80}$/i.test(installId)) fail(400, 'Instalação inválida.');
     if (!SLUG_RE.test(slug)) fail(400, 'Endereço do app inválido.');
@@ -48,6 +48,13 @@ module.exports = function memberApp(app, ctx) {
     if (plans.planOf(cert.uid)?.plan !== 'pro') fail(402, 'O app do cliente faz parte do plano Pro.');
     const bound = db.get('SELECT install_id FROM plan_installs WHERE user_id=?', cert.uid);
     if (!bound || bound.install_id !== installId) fail(409, 'Esta conta passou a ser usada em outro computador. Entre de novo com a conta em Configuração › Licença.');
+    // 1.4.1: só devolve respostas (app da recepção) sem mexer na espera da ligação principal
+    if (b.replyOnly) {
+      const r0 = db.get('SELECT plan_uid FROM app_arenas WHERE slug=?', slug); if (!r0 || r0.plan_uid !== cert.uid) fail(409, 'Endereço do app não registrado.');
+      const a0 = arena(slug); a0.lastAt = Date.now();
+      for (const r of Array.isArray(b.replies) ? b.replies.slice(0, 100) : []) deliver(a0, r);
+      return {ok: true};
+    }
     const owner = db.get('SELECT plan_uid FROM app_arenas WHERE slug=?', slug);
     if (owner && owner.plan_uid !== cert.uid) fail(409, 'Este endereço já é usado por outra arena. Escolha outro em Gerenciar App › App do cliente.');
     const info = b.info || {}, now = Date.now();
@@ -77,14 +84,14 @@ module.exports = function memberApp(app, ctx) {
   }
   function drop(slug) { const a = live.get(slug); if (!a) return; if (a.waiter) finish(a.waiter, []); for (const p of a.pending.values()) { clearTimeout(p.timer); p.done(503, {error: 'A arena mudou o endereço do app.'}); } live.delete(slug); }
   // pedido do celular → arena
-  function ask(slug, action, body, auth, ip) {
+  function ask(slug, action, body, auth, ip, wait = replyTimeout) {
     return new Promise(resolve => {
       if (!online(slug)) return resolve([503, {error: 'A arena está sem conexão com a internet agora. Tente de novo em instantes.'}]);
       const a = arena(slug);
       if (a.queue.length + a.pending.size > 200) return resolve([503, {error: 'A arena está ocupada. Tente de novo em instantes.'}]);
       const id = crypto.randomBytes(12).toString('hex');
       const p = {id, done: (status, data) => resolve([status, data]), timer: null};
-      p.timer = setTimeout(() => { a.pending.delete(id); a.queue = a.queue.filter(q => q.id !== id); resolve([504, {error: 'A arena não respondeu. Tente de novo em instantes.'}]); }, replyTimeout);
+      p.timer = setTimeout(() => { a.pending.delete(id); a.queue = a.queue.filter(q => q.id !== id); resolve([504, {error: 'A arena não respondeu. Tente de novo em instantes.'}]); }, wait);
       a.pending.set(id, p);
       const reqObj = {id, action, body, auth: str(auth, 400), ip: str(ip, 60)};
       if (a.waiter) finish(a.waiter, [reqObj]); else a.queue.push(reqObj);
@@ -116,6 +123,53 @@ module.exports = function memberApp(app, ctx) {
     const [status, data] = await ask(r.slug, action, body, req.headers.authorization || '', req.ip);
     res.status(status); return data;
   }));
+  // ---------- 1.4.1: APP DA RECEPÇÃO — app.gamezoney.com/servidor/<endereço> ----------
+  // O painel do GameZoney Servidor da arena, aberto de fora. O site só repassa (nada é gravado aqui): página, arquivos e
+  // /api do painel vão para a arena pela ligação acima e a resposta volta igual. Só no app.gamezoney.com (origem
+  // separada do gamezoney.com: o cookie da conta do site nunca chega ao painel e vice-versa).
+  const PANEL_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+  const secure = APP_URL.startsWith('https:');
+  const panelHost = req => req.hostname === APP_HOST || (ctx.panelHosts || []).includes(req.hostname);
+  const panelRaw = express.raw({type: () => true, limit: '4mb'});
+  app.get(/^\/servidor\/([a-z0-9-]{3,40})$/, (req, res, next) => (panelHost(req) && SLUG_RE.test(req.params[0]) ? res.redirect(302, '/servidor/' + req.params[0] + '/') : next()));
+  app.all(/^\/servidor\/([a-z0-9-]{3,40})(\/.*)$/, (req, res, next) => (panelHost(req) ? next() : res.status(404).type('text').send('Não encontrado.')),
+    limit('panel', 900, 60000), (req, res, next) => (req.params[1] === '/api/login' ? limit('panellogin', 30, 900000)(req, res, next) : next()), panelRaw, async (req, res) => {
+      res.set({'Content-Security-Policy': PANEL_CSP, 'Permissions-Policy': 'camera=(self), microphone=(), geolocation=(), payment=(), usb=()', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow'});
+      const slug = req.params[0], r = row(slug), sub = req.params[1];
+      if (!r) return res.status(404).type('text').send('Arena não encontrada. Confira o endereço.');
+      if (!['GET', 'HEAD', 'POST'].includes(req.method)) return res.status(405).end();
+      // POST só da própria página (o painel usa cookie de sessão)
+      if (req.method === 'POST') {
+        const from = req.headers.origin || '';
+        let ok = false; try { ok = new URL(from).host === req.headers.host; } catch { }
+        if (!ok || req.headers['sec-fetch-site'] && req.headers['sec-fetch-site'] !== 'same-origin') return res.status(403).json({error: 'Origem não permitida.'});
+      }
+      const q = req.originalUrl.indexOf('?'), query = q >= 0 ? req.originalUrl.slice(q) : '';
+      const session = String(req.headers.cookie || '').match(/(?:^|;\s*)gz_session=([a-f0-9]{64})/)?.[1] || '';
+      const body = {method: req.method, path: sub + query, session, type: req.headers['content-type'] || '', 'if-none-match': req.headers['if-none-match'] || '', 'if-modified-since': req.headers['if-modified-since'] || '',
+        body: req.method === 'POST' && Buffer.isBuffer(req.body) ? req.body.toString('base64') : ''};
+      const [status, data] = await ask(r.slug, 'http', body, '', req.ip, ctx.panelReplyMs || 25000);
+      res.set('Cache-Control', 'no-store');
+      if (status !== 200 || !data || typeof data.body !== 'string') {
+        const msg = data?.error || 'A arena não respondeu.';
+        return res.status(status === 200 ? 502 : status).type(sub.startsWith('/api/') ? 'json' : 'html').send(sub.startsWith('/api/') ? JSON.stringify({error: msg})
+          : `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GameZoney • App da recepção</title><body style="background:#101115;color:#eee;font-family:system-ui;padding:40px;text-align:center"><h2>App da recepção</h2><p>${String(msg).replace(/[<>&"]/g, '')}</p><p>Confira se o GameZoney Servidor da arena está aberto e com internet.</p>`);
+      }
+      const h = data.headers && typeof data.headers === 'object' ? data.headers : {};
+      for (const k of ['content-type', 'cache-control', 'etag', 'last-modified', 'content-disposition']) if (typeof h[k] === 'string' && !/[\r\n]/.test(h[k])) res.set(k, h[k]);
+      // cookie da sessão do painel: só neste endereço, HttpOnly, Secure, SameSite=Strict
+      const cookies = (Array.isArray(h['set-cookie']) ? h['set-cookie'] : []).map(c => String(c).match(/^gz_session=([a-f0-9]{64})\b/)).filter(Boolean)
+        .map(m => `gz_session=${m[1]}; Path=/servidor/${r.slug}/; HttpOnly; SameSite=Strict; Max-Age=2592000${secure ? '; Secure' : ''}`);
+      if (cookies.length) res.set('Set-Cookie', cookies);
+      let out = Buffer.from(data.body, 'base64');
+      if (data.gzip) {
+        if (/\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))) res.set({'Content-Encoding': 'gzip', Vary: 'Accept-Encoding'});
+        else { try { out = require('node:zlib').gunzipSync(out); } catch { return res.status(502).end(); } }
+      }
+      const code = Number.isInteger(data.status) && data.status >= 200 && data.status < 600 ? data.status : 502;
+      res.status(code); if (req.method === 'HEAD' || code === 304) return res.end(); res.end(out);
+    });
+
   // /admin: quais arenas usam o app (sem dados de clientes)
   return {list: () => db.all('SELECT slug,name,plan_uid,updated_at FROM app_arenas ORDER BY updated_at DESC').map(r => ({...r, online: online(r.slug)})), APP_URL, APP_HOST,
     stop() { for (const slug of [...live.keys()]) drop(slug); }};

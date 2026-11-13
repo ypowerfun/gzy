@@ -18,7 +18,7 @@ let createApp; try { ({createApp} = require('../../../site/server')); } catch { 
 async function boot(t) {
   const {publicKey, privateKey} = crypto.generateKeyPairSync('ed25519'), pub = publicKey.export({type: 'spki', format: 'pem'});
   const siteDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-app-site-')), mails = [];
-  const site = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, appHoldMs: 300, env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: siteDir, DOWNLOADS_DIR: path.join(siteDir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
+  const site = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, appHoldMs: 300, panelHosts: ['127.0.0.1'], env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: siteDir, DOWNLOADS_DIR: path.join(siteDir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
     LICENSE_PRIVATE_KEY: privateKey.export({type: 'pkcs8', format: 'pem'}), MP_ACCESS_TOKEN: '', GOOGLE_CLIENT_ID: '', SMTP_HOST: '', APP_URL: 'https://app.gamezoney.com'}, mail: {enabled: true, send: async (to, subject, text) => { mails.push({to, subject, text}); return true; }}, log: {log() {}, error() {}}});
   const siteServer = await new Promise(r => { const s = site.listen(0, '127.0.0.1', () => r(s)); }); const siteBase = 'http://127.0.0.1:' + siteServer.address().port;
   const old = process.env.GZ_SITE_URL; process.env.GZ_SITE_URL = siteBase;
@@ -142,5 +142,90 @@ test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com ni
 
   // desligar: o app avisa que a arena está sem conexão
   await call('/api/member-app', {enabled: false, slug: 'arena-x'});
+  running = false; inst.memberApp.stop(); await loop;
+});
+
+test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configuração/Gerenciar App, sessão própria e limites', {skip: !createApp && 'site não encontrado'}, async t => {
+  const s = await boot(t); const ana = s.web();
+  await ana('/api/auth/register', {name: 'Ana', email: 'ana@arena.com', password: 'senha-forte-1'});
+  await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'standard', months: 1});
+  const loja = await s.gz(); const {inst, call} = loja;
+  await call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1'});
+  assert.match((await call('/api/remote-panel', {enabled: true}, 400)).error, /plano Pro/);
+  await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'pro', months: 1});
+  await call('/api/license/refresh', {});
+  assert.match((await call('/api/remote-panel', {enabled: true}, 400)).error, /endereço na aba App do cliente/);
+  await call('/api/member-app', {enabled: false, slug: 'arena-r'}); // só o endereço: o app do cliente fica desligado
+  let st = await call('/api/remote-panel', {enabled: true, who: 'all'}); assert.equal(st.enabled, true);
+  assert.match((await call('/api/member-app', {enabled: false, slug: ''}, 400)).error, /app da recepção usa este endereço/);
+  let running = true, replies = [];
+  const loop = (async () => { while (running) { try { replies = inst.memberApp.serve(await inst.memberApp.cycle(replies)); } catch (e) { if (running) await new Promise(r => setTimeout(r, 50)); } } })();
+  t.after(async () => { running = false; inst.memberApp.stop(); await loop; });
+  await new Promise(r => setTimeout(r, 150));
+
+  const origin = s.siteBase; let jar = '';
+  const rp = async (p, body, status = 200, headers = {}) => {
+    const r = await fetch(s.siteBase + '/servidor/arena-r' + p, {redirect: 'manual', method: body === undefined ? 'GET' : 'POST', headers: {'Content-Type': 'application/json', Origin: origin, ...(jar ? {Cookie: jar} : {}), ...headers}, body: body === undefined ? undefined : JSON.stringify(body)});
+    const sc = r.headers.getSetCookie?.() || []; for (const c of sc) if (c.startsWith('gz_session=')) jar = c.split(';')[0];
+    const buf = Buffer.from(await r.arrayBuffer()); assert.equal(r.status, status, p + ' ' + buf.toString().slice(0, 200));
+    return {r, buf, sc, json: () => JSON.parse(buf.toString())};
+  };
+  // página e arquivos do painel, com <base> no endereço de fora e CSP rígida
+  let x = await rp('', undefined, 302); assert.equal(x.r.headers.get('location'), '/servidor/arena-r/');
+  x = await rp('/'); const html = x.buf.toString();
+  assert.match(html, /<base href="\/servidor\/arena-r\/">/); assert.match(html, /name="gz-remote"/); assert.match(html, /src="app\.js"/); assert.doesNotMatch(html.replace(/<base[^>]*>/, ''), /(src|href)="\//, 'endereços relativos');
+  assert.match(x.r.headers.get('content-security-policy'), /script-src 'self';/); assert.match(x.r.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+  x = await rp('/app.js'); assert.match(x.buf.toString(), /GZ_REMOTE/); assert.match(x.r.headers.get('content-type'), /javascript/);
+  x = await rp('/remote-ui.js'); assert.match(x.buf.toString(), /Conectado pelo app da recepção/);
+  // fora do painel: nada
+  await rp('/pc/state', undefined, 404); await rp('/cliente.html', undefined, 404); await rp('/internal/stop', {}, 404); await rp('/pc-setup/request', {}, 404);
+  // sem login
+  assert.match((await rp('/api/state', undefined, 401)).json().error, /Entre/);
+  // a sessão do painel do servidor NÃO vale de fora
+  const lr = await fetch(inst.server.address().port ? 'http://127.0.0.1:' + inst.server.address().port + '/api/login' : '', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: 'admin', password: 'senha123'})});
+  const localCookie = lr.headers.get('set-cookie').split(';')[0];
+  await rp('/api/state', undefined, 401, {Cookie: localCookie});
+  // POST de outra origem: recusado no site
+  await rp('/api/login', {username: 'admin', password: 'senha123'}, 403, {Origin: 'https://ataque.example'});
+  // senha errada: 401 e Log com o IP
+  await rp('/api/login', {username: 'admin', password: 'errada'}, 401);
+  assert.ok(inst.store.db.prepare("SELECT COUNT(*) n FROM logs WHERE detail LIKE '%app da recepção, IP%'").get().n > 0);
+  // login certo: cookie só neste endereço
+  x = await rp('/api/login', {username: 'admin', password: 'senha123'});
+  assert.match(x.sc.join('\n'), /gz_session=[a-f0-9]{64}; Path=\/servidor\/arena-r\/; HttpOnly; SameSite=Strict/);
+  const remoteCookie = jar;
+  assert.deepEqual([(await rp('/api/auth')).json().remote, (await rp('/api/auth')).json().operator.username], [true, 'admin']);
+  const state = (await rp('/api/state')).json(); assert.ok(Array.isArray(state.stations));
+  assert.equal(inst.store.db.prepare("SELECT COUNT(*) n FROM logs WHERE detail LIKE 'Operador entrou pelo app da recepção%'").get().n, 1);
+  // a sessão de fora NÃO vale no servidor
+  assert.equal((await fetch('http://127.0.0.1:' + inst.server.address().port + '/api/state', {headers: {Cookie: remoteCookie}})).status, 401);
+  // Configuração e Gerenciar App: bloqueados mesmo chamando a rota direto
+  for (const [p, b] of [['/api/operators'], ['/api/member-app', {enabled: false, slug: 'x'}], ['/api/remote-panel', {enabled: false}], ['/api/remote-panel/disconnect', {}], ['/api/backup', {}], ['/api/branding'],
+    ['/api/license/logout', {}], ['/api/achievements'], ['/api/network'], ['/api/self-service'], ['/api/machine-settings', {}], ['/api/setup', {username: 'x', password: '1234'}], ['/api/update']])
+    assert.match((await rp(p, b, 403)).json().error, /Configuração e Gerenciar App/, p);
+  assert.match((await rp('/api/settings', {serverUrl: 'http://1.2.3.4:3000'}, 400)).json().error, /endereço do servidor/);
+  // o resto do painel funciona: cadastro de cliente e planilha (binário)
+  await rp('/api/members', {name: 'Cliente Remoto', username: 'remoto'});
+  assert.ok(loja.state.members.some(m => m.username === 'remoto'));
+  x = await rp('/api/members/export.xlsx'); assert.match(x.r.headers.get('content-disposition'), /attachment/); assert.equal(x.buf.subarray(0, 2).toString(), 'PK');
+  // sem cookie de outro endereço/host: o painel só existe no app.gamezoney.com
+  const other = await new Promise((res, rej) => http.get(s.siteBase + '/servidor/arena-r/', {headers: {Host: 'gamezoney.com'}}, r => { r.resume(); res(r.statusCode); }).on('error', rej));
+  assert.equal(other, 404);
+  // cabeçalho secreto falso direto no servidor: não passa
+  assert.equal((await fetch('http://127.0.0.1:' + inst.server.address().port + '/api/state', {headers: {'x-gz-remote': 'chute', Cookie: remoteCookie}})).status, 404);
+  // só administradores: operador não entra de fora
+  await call('/api/operators', {username: 'caixa', password: 'caixa123', role: 'operator'});
+  await call('/api/remote-panel', {enabled: true, who: 'admins'});
+  jar = ''; assert.match((await rp('/api/login', {username: 'caixa', password: 'caixa123'}, 403)).json().error, /só para administradores/);
+  // 5 senhas erradas no mesmo usuário = espera (mesmo com a certa depois)
+  for (let i = 0; i < 5; i++) await rp('/api/login', {username: 'admin', password: 'x' + i}, 401);
+  assert.match((await rp('/api/login', {username: 'admin', password: 'senha123'}, 429)).json().error, /Muitas tentativas/);
+  // desconectar todos derruba a sessão de fora
+  jar = remoteCookie; await rp('/api/state');
+  st = await call('/api/remote-panel/disconnect', {}); assert.equal(st.disconnected, 1);
+  await rp('/api/state', undefined, 401);
+  // desligar: o endereço do painel deixa de responder
+  await call('/api/remote-panel', {enabled: false});
+  x = await rp('/', undefined, 404); assert.match(x.buf.toString(), /desligado/);
   running = false; inst.memberApp.stop(); await loop;
 });

@@ -388,3 +388,6 @@ details.fiscal-fields{margin:10px 0;border:1px solid #2b303a;padding:8px 12px}de
 .brand-obs{border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin:0 0 14px;background:rgba(212,160,23,.06)}
 .brand-obs strong{display:block;margin-bottom:4px;color:#ffce3a;font-size:13px}
 .brand-obs ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.5}
+
+/* 1.4.1: app da recepção (painel aberto de fora) no celular: menu no topo com a altura do conteúdo, Perfil e Sair visíveis */
+@media(max-width:700px){body.gz-remote aside{height:auto!important;overflow:visible}body.gz-remote .sidebar-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px}body.gz-remote .sidebar-bottom #operator-name{display:none}body.gz-remote .sidebar-bottom .side-actions{margin:0 0 0 auto}}

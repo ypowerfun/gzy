@@ -17,7 +17,7 @@ const BASE = {compact: true, target: 'node', selfDefending: true, simplify: true
   stringArrayWrappersCount: 2, stringArrayWrappersType: 'function', splitStrings: false, numbersToExpressions: true,
   controlFlowFlattening: false, deadCodeInjection: false, unicodeEscapeSequence: false, log: false, seed: 0};
 // licença, atualização e conferências: embaralhamento mais forte (custa um pouco de velocidade, só aqui)
-const STRONG = new Set(['license.js', 'updater.js', 'server.js', 'network-guard.js', 'panel-sessions.js']);
+const STRONG = new Set(['license.js', 'updater.js', 'server.js', 'network-guard.js', 'panel-sessions.js', 'remote-panel.js']);
 const HEAVY = {controlFlowFlattening: true, controlFlowFlatteningThreshold: 0.6, deadCodeInjection: true, deadCodeInjectionThreshold: 0.3};
 // 1.3.6: os demais arquivos percorrem os dados (sessões, vendas, medalhas…) milhares de vezes: com os textos em base64 e
 // duas funções intermediárias, cada nome de campo virava uma decodificação e a abertura com 1 ano de dados ia de ~2 s

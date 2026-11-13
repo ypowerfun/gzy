@@ -17,7 +17,7 @@ const DEFAULT_PLANS = {
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
     features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'App do cliente com conquistas (app.gamezoney.com)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Logo e cor da sua arena', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
+    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Apps do cliente e da recepção (app.gamezoney.com)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Logo e cor da sua arena', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
 
@@ -69,6 +69,12 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved?.pro?.features && !saved.pro.features.some(f => /app do cliente/i.test(f))) { const i = saved.pro.features.findIndex(f => /^1 app\b/i.test(f)); if (i >= 0) saved.pro.features[i] = 'App do cliente com conquistas (app.gamezoney.com)'; else saved.pro.features.splice(Math.min(saved.pro.features.length, 4), 0, 'App do cliente com conquistas (app.gamezoney.com)'); saved.pro.features = saved.pro.features.slice(0, 13); saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item "App do cliente com conquistas (app.gamezoney.com)"'); }
     saveSetting('plans_features_v7', {at: Date.now()});
+  }
+  // Servidor 1.4.1: o item do app do Pro passa a citar também o app da recepção (painel de fora); só o texto, preços iguais
+  if (!setting('plans_features_v8')) {
+    const saved = setting('plans');
+    if (saved?.pro?.features) { const i = saved.pro.features.indexOf('App do cliente com conquistas (app.gamezoney.com)'); if (i >= 0) { saved.pro.features[i] = 'Apps do cliente e da recepção (app.gamezoney.com)'; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item do app passa a citar o app da recepção'); } }
+    saveSetting('plans_features_v8', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};

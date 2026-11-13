@@ -4,7 +4,7 @@
 function memberPhotoSetup(m) {
   const box = $('#member-photo'); if (!box) return;
   let stream = null;
-  const current = m.photo ? `/api/members/photo/${encodeURIComponent(m.id)}?v=${m.photo.v}` : '';
+  const current = m.photo ? `api/members/photo/${encodeURIComponent(m.id)}?v=${m.photo.v}` : '';
   box.className = 'member-photo';
   box.innerHTML = `<div class="mp-frame"><img id="mp-img" alt="" ${current ? `src="${current}"` : 'hidden'}><video id="mp-video" autoplay playsinline muted hidden></video><span id="mp-empty" ${current ? 'hidden' : ''}>Sem foto</span></div>
     <div class="mp-actions"><button type="button" id="mp-cam">Tirar foto</button><button type="button" id="mp-shot" class="primary" hidden>Capturar</button><button type="button" id="mp-pick">Enviar arquivo</button><button type="button" id="mp-del" class="ghost" ${current ? '' : 'hidden'}>Remover foto</button>

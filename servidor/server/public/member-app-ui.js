@@ -1,10 +1,10 @@
 'use strict';
 // GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
 // 1.3.7 (plano Pro): Gerenciar App › App do cliente (app.gamezoney.com/<endereço>) e Conquistas.
-let gzAppTab = (() => { try { const t = localStorage.getItem('gz-app-tab'); return t === 'achievements' ? t : 'client'; } catch { return 'client'; } })(); // 1.3.8: a aba Servidor em nuvem saiu
+let gzAppTab = (() => { try { const t = localStorage.getItem('gz-app-tab'); return t === 'achievements' || t === 'reception' ? t : 'client'; } catch { return 'client'; } })(); // 1.3.8: a aba Servidor em nuvem saiu
 function gzAppTabs() {
   const t = (k, label) => `<button type="button" data-app-tab="${k}" class="${gzAppTab === k ? 'active' : ''}">${label}</button>`;
-  return `<div class="shop-tabs">${t('client', '📱 App do cliente')}${t('achievements', '🏆 Conquistas')}</div>`;
+  return `<div class="shop-tabs">${t('client', '📱 App do cliente')}${t('reception', '🖥️ App da recepção')}${t('achievements', '🏆 Conquistas')}</div>`;
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-app-tab]'); if (!b) return;
@@ -57,5 +57,33 @@ function achievementsSection(d) {
     if (!await ask(`Remover a conquista "${a.name}"? Quem já completou continua com as medalhas.`, {ok: 'Remover'})) return;
     try { sec.replaceWith(achievementsSection(await api('/achievements/remove', {id: a.id}))); toast('Conquista removida.'); } catch (err) { toast(err.message); }
   });
+  return sec;
+}
+// 1.4.1 (plano Pro): App da recepção — o painel do servidor aberto de fora (app.gamezoney.com/servidor/<endereço>), sem Configuração e Gerenciar App
+function receptionSection(st) {
+  const sec = document.createElement('section'); sec.className = 'panel'; sec.id = 'reception-section';
+  const link = st.slug ? 'app.gamezoney.com/servidor/' + st.slug : '';
+  const state_ = !st.enabled ? '<span class="subtext">Desligado</span>' : st.connected ? '<strong style="color:var(--green);font-size:15px">● Conectado ao app.gamezoney.com</strong>' : '<strong style="color:#ffb84d;font-size:15px">● Conectando…</strong>';
+  sec.innerHTML = `<h2>App da recepção <span class="badge gold">PRO</span></h2>
+    <p class="hint">Abra o painel deste servidor de qualquer lugar (celular, notebook ou outro computador) pelo navegador, com o mesmo usuário e senha do painel. Ficam disponíveis todas as telas (Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Sessão, Log, Faturas, Estatística, Caixa, Produtos/Serviços, Ranking…), menos a Configuração e o Gerenciar App, que só abrem aqui no servidor. Não é preciso abrir porta no roteador: o servidor liga para o gamezoney.com e precisa estar aberto e com internet.</p>
+    <div class="balance"><span>Situação</span><span style="text-align:right">${state_}</span></div>
+    ${link ? `<div class="balance"><span>Endereço</span><strong style="font-size:15px" data-no-i18n>${esc(link)}</strong></div>` : '<p class="hint" style="color:#ffb84d">Escolha antes o endereço na aba App do cliente (o app da recepção usa o mesmo endereço).</p>'}
+    <div class="balance"><span>Acessos conectados</span><strong style="font-size:15px">${st.sessions}</strong></div>
+    <form id="rp-form" style="margin-top:12px">
+      <label class="check"><input type="checkbox" name="enabled" ${st.enabled ? 'checked' : ''}> Ligar o app da recepção</label>
+      <label>Quem pode entrar<select name="who"><option value="all" ${st.who !== 'admins' ? 'selected' : ''}>Todos os usuários do painel</option><option value="admins" ${st.who === 'admins' ? 'selected' : ''}>Só administradores</option></select></label>
+      <p class="hint">Segurança: o acesso de fora cai depois de 12 horas sem uso; 5 senhas erradas seguidas travam o usuário por 15 minutos; cada entrada fica no Log com o IP. Use senhas fortes nos usuários do painel.</p>
+      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button><button type="button" id="rp-disconnect" style="flex:0 0 auto" ${st.sessions ? '' : 'disabled'}>Desconectar todos</button></div>
+      <p class="error" id="rp-error" role="alert"></p>
+    </form>`;
+  sec.querySelector('#rp-form').onsubmit = async e => {
+    e.preventDefault(); const b = e.submitter; b.disabled = true; sec.querySelector('#rp-error').textContent = '';
+    try { const r = await api('/remote-panel', {enabled: e.target.enabled.checked, who: e.target.who.value}); toast(r.enabled ? 'App da recepção ligado.' : 'App da recepção desligado.'); setTimeout(() => { if (view === 'app' && gzAppTab === 'reception') renderAppManager().catch(() => {}); }, 2500); renderAppManager().catch(() => {}); }
+    catch (err) { sec.querySelector('#rp-error').textContent = err.message; b.disabled = false; }
+  };
+  sec.querySelector('#rp-disconnect').onclick = async () => {
+    if (!await ask('Desconectar todos os acessos do app da recepção? Quem estiver usando precisa entrar de novo.', {ok: 'Desconectar'})) return;
+    try { const r = await api('/remote-panel/disconnect', {}); toast(r.disconnected + ' acesso(s) desconectado(s).'); renderAppManager().catch(() => {}); } catch (err) { toast(err.message); }
+  };
   return sec;
 }
