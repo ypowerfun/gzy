@@ -42,7 +42,39 @@
     if (!r.ok) throw new Error(data.error || 'Não foi possível falar com a arena agora.');
     return data;
   }
-  function logout(quiet) { token = ''; me = null; try { localStorage.removeItem(KEY); } catch { } $('#tabs').classList.add('hidden'); stopTimers(); if (!quiet) loginScreen(); else setTimeout(loginScreen, 0); }
+  function logout(quiet) { token = ''; me = null; notices = []; try { localStorage.removeItem(KEY); } catch { } $('#tabs').classList.add('hidden'); topButtons(false); stopTimers(); if (!quiet) loginScreen(); else setTimeout(loginScreen, 0); }
+
+  // ---------- 2.21: sino (notificações da recepção) e engrenagem (Suporte pelo WhatsApp e Sair da conta) ----------
+  let notices = [], noticeTimer = null;
+  const seenKey = () => KEY + ':seen:' + (String(token).split('.')[1] || ''); // por cliente (id no token), vale mesmo antes de carregar o Início
+  const seenAt = () => { try { return Number(localStorage.getItem(seenKey())) || 0; } catch { return 0; } };
+  const rich = t => esc(t).replace(/\*([^*\n]+)\*/g, '<b class="gold">$1</b>').replace(/\n/g, '<br>'); // *texto* = destaque, como no PC
+  function paintBell() { const n = notices.filter(x => x.at > seenAt()).length, d = $('#bell-n'); d.textContent = n > 9 ? '9+' : String(n); d.classList.toggle('hidden', !n); }
+  async function loadNotices() { try { notices = (await call('notices')).notices || []; paintBell(); if (!$('#sheet').classList.contains('hidden')) paintSheet(); } catch { } }
+  function topButtons(on) {
+    $('#top-btns').classList.toggle('hidden', !on); closeMenus();
+    clearInterval(noticeTimer); noticeTimer = null;
+    if (on) { loadNotices(); noticeTimer = setInterval(loadNotices, 60000); }
+  }
+  function paintSheet() {
+    $('#sheet-list').innerHTML = notices.length ? notices.map(n => `<div class="notice"><span class="lbl">Aviso da arena</span><p>${rich(n.text)}</p><small>${esc(when(n.at))}</small></div>`).join('')
+      : '<div class="empty">Nenhuma notificação por enquanto. Os avisos da recepção aparecem aqui.</div>';
+  }
+  function closeMenus() { $('#gear-menu').classList.add('hidden'); $('#sheet').classList.add('hidden'); $('#gear').setAttribute('aria-expanded', 'false'); }
+  $('#bell').onclick = () => { const open = $('#sheet').classList.contains('hidden'); closeMenus(); if (!open) return;
+    paintSheet(); $('#sheet').classList.remove('hidden'); try { localStorage.setItem(seenKey(), String(Math.max(Date.now(), ...notices.map(n => n.at)))); } catch { } paintBell(); loadNotices(); };
+  $('#sheet-x').onclick = closeMenus;
+  $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeMenus(); });
+  $('#gear').onclick = async e => { e.stopPropagation(); const m = $('#gear-menu'), open = m.classList.contains('hidden'); closeMenus(); if (!open) return;
+    if (!me) { try { me = (await call('me')).me; } catch { } }
+    const wa = /^\d{10,15}$/.test(me?.support?.whatsapp || '') ? me.support.whatsapp : '';
+    m.innerHTML = (wa ? `<a role="menuitem" href="https://wa.me/${wa}" target="_blank" rel="noopener"><span class="mi">💬</span>Suporte (WhatsApp)</a>` : '<span role="menuitem" aria-disabled="true" class="off"><span class="mi">💬</span>Suporte (WhatsApp)<small>A arena ainda não informou o número</small></span>')
+      + '<button type="button" role="menuitem" id="gear-out"><span class="mi">⎋</span>Sair da conta</button>';
+    m.classList.remove('hidden'); $('#gear').setAttribute('aria-expanded', 'true');
+    $('#gear-out').onclick = () => { closeMenus(); logout(); };
+  };
+  document.addEventListener('click', e => { if (!e.target.closest('#gear-menu') && !e.target.closest('#gear')) $('#gear-menu').classList.add('hidden'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
 
   // ---------- sem endereço: escolher a arena ----------
   function pickArena(msg) {
@@ -77,7 +109,7 @@
     };
   }
   // ---------- abas ----------
-  function start() { $('#tabs').classList.remove('hidden'); show(tab); }
+  function start() { $('#tabs').classList.remove('hidden'); topButtons(true); show(tab); }
   function show(t) {
     tab = t; stopTimers(); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t)); window.scrollTo(0, 0);
     ({home, stations, achievements, ranking, history})[t]().catch(err => { screen.innerHTML = `<div class="card"><p class="error">${esc(err.message)}</p><button class="btn ghost" id="again">Tentar de novo</button></div>`; const a = $('#again'); if (a) a.onclick = () => show(tab); });

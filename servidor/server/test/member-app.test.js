@@ -255,3 +255,50 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   x = await rp('/', undefined, 404); assert.match(x.buf.toString(), /desligado/);
   running = false; inst.memberApp.stop(); await loop;
 });
+
+test('1.4.5: notificação no app (Ações › Enviar mensagem › "Enviar também no app") e WhatsApp do suporte', {skip: !createApp && 'site não encontrado'}, async t => {
+  const s = await boot(t); const ana = s.web();
+  await ana('/api/auth/register', {name: 'Ana', email: 'ana@arena.com', password: 'senha-forte-1'});
+  await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'pro', months: 1});
+  const loja = await s.gz(); const {inst, call} = loja;
+  await call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1'});
+  const joana = inst.store.memberSave({name: 'Joana', username: 'joana', password: 'senha12'}, 'admin');
+  const bia = inst.store.memberSave({name: 'Bia', username: 'bia', password: 'senha34'}, 'admin');
+  inst.store.credit(joana.id, {minutes: 120, paymentMethod: 'pix'}, 'admin');
+  // app desligado: a opção do app é recusada (a mensagem nos PCs continua igual)
+  assert.match((await call('/api/pc/message', {scope: 'all', text: 'Oi', seconds: 10, app: true}, 400)).error, /Ligue o app do cliente/);
+  // WhatsApp do suporte: número inválido recusado; DDD + número ganha o 55
+  assert.match((await call('/api/member-app', {enabled: true, slug: 'arena-n', whatsapp: '1234'}, 400)).error, /WhatsApp do suporte/);
+  let st = await call('/api/member-app', {enabled: true, slug: 'arena-n', whatsapp: '(11) 91234-5678'}); assert.equal(st.whatsapp, '5511912345678');
+  let running = true, replies = [];
+  const loop = (async () => { while (running) { try { replies = (await inst.memberApp.cycle(replies)).map(r => inst.memberApp.answer(r)); } catch { if (running) await new Promise(r => setTimeout(r, 50)); } } })();
+  t.after(async () => { running = false; inst.memberApp.stop(); await loop; });
+  const app = async (action, body, token, status = 200) => { const r = await fetch(s.siteBase + '/api/app/a/arena-n/' + action, {method: 'POST', headers: {'Content-Type': 'application/json', ...(token ? {Authorization: 'Bearer ' + token} : {})}, body: JSON.stringify(body || {})}); const text = await r.text(); assert.equal(r.status, status, action + ' ' + text); return JSON.parse(text); };
+  await new Promise(r => setTimeout(r, 100));
+  const tj = (await app('login', {username: 'joana', password: 'senha12'})).token, tb = (await app('login', {username: 'bia', password: 'senha34'})).token;
+  assert.equal((await app('me', {}, tj)).me.support.whatsapp, '5511912345678');
+  assert.deepEqual((await app('notices', {}, tj)).notices, []);
+  // joana jogando no PC 2; bia só no app
+  inst.store.start('2', joana.id, 'admin');
+  // todos: chega no app de todos (inclusive de quem está só no app)
+  let r = await call('/api/pc/message', {scope: 'all', text: 'Promoção *2x1* hoje!', seconds: 10, app: true});
+  assert.equal(r.app.sent, true); assert.equal(r.app.to, 'all');
+  // PC específico: só o cliente que está jogando nele
+  r = await call('/api/pc/message', {scope: 'one', stationId: '2', text: 'Sua sessão vai acabar', seconds: 10, app: true});
+  assert.equal(r.app.sent, true); assert.equal(r.app.to, 'joana');
+  // sem a opção marcada: nada no app
+  await call('/api/pc/message', {scope: 'all', text: 'Só nos PCs', seconds: 10});
+  const nj = (await app('notices', {}, tj)).notices, nb = (await app('notices', {}, tb)).notices;
+  assert.deepEqual(nj.map(x => x.text), ['Sua sessão vai acabar', 'Promoção *2x1* hoje!'], 'mais nova primeiro');
+  assert.deepEqual(nb.map(x => x.text), ['Promoção *2x1* hoje!']);
+  assert.ok(nj.every(x => x.id && x.at) && !JSON.stringify(nj).includes(joana.id), 'não expõe a lista de clientes');
+  // PC sem ninguém com conta jogando: não envia no app
+  inst.store.finish('2', 'admin', 'manual');
+  r = await call('/api/pc/message', {scope: 'one', stationId: '2', text: 'Teste', seconds: 10, app: true}); assert.equal(r.app.sent, false);
+  assert.equal(inst.store.db.prepare("SELECT COUNT(*) n FROM logs WHERE type='mensagem-app'").get().n, 2, 'Log das notificações');
+  // tirar o número: a opção do suporte some do app
+  st = await call('/api/member-app', {enabled: true, slug: 'arena-n', whatsapp: ''}); assert.equal(st.whatsapp, '');
+  assert.equal((await app('me', {}, tj)).me.support.whatsapp, '');
+  // sem token: recusado
+  await app('notices', {}, '', 401);
+});

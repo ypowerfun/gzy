@@ -391,3 +391,34 @@ details.fiscal-fields{margin:10px 0;border:1px solid #2b303a;padding:8px 12px}de
 
 /* 1.4.1: app da recepção (painel aberto de fora) no celular: menu no topo com a altura do conteúdo, Perfil e Sair visíveis */
 @media(max-width:700px){body.gz-remote aside{height:auto!important;overflow:visible}body.gz-remote .sidebar-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px}body.gz-remote .sidebar-bottom #operator-name{display:none}body.gz-remote .sidebar-bottom .side-actions{margin:0 0 0 auto}}
+/* 1.4.5 (pedido do dono): Registrar recarga, Configurar programa (fidelidade) e Movimentar saldo sem barra de rolagem — campos lado a lado (só aparência) */
+#modal:has(.credit-mode),#modal:has(#balance-destination){width:min(960px,96vw);max-width:96vw}
+#modal-body:has(>form .credit-mode){display:grid;grid-template-columns:1fr 1fr;column-gap:18px;align-items:start}
+#modal-body:has(>form .credit-mode)>form{grid-column:1/-1}
+form:has(>.credit-mode){display:grid;grid-template-columns:1fr 1fr;column-gap:18px;align-items:start}
+form:has(>.credit-mode)>*{margin-top:0}
+form:has(>.credit-mode)>.eyebrow,form:has(>.credit-mode)>p.hint:first-of-type,form:has(>.credit-mode)>.promo-options,form:has(>.credit-mode)>#credit-paymix,form:has(>.credit-mode)>#guest-paymix,form:has(>.credit-mode)>#credit-free,form:has(>.credit-mode)>button.primary{grid-column:1/-1}
+form:has(>.credit-mode)>button.primary{justify-self:start}
+#modal:has(#weekly-rules){width:min(1040px,96vw);max-width:96vw}
+form:has(>#weekly-rules){display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);column-gap:22px;align-items:start}
+form:has(>#weekly-rules)>*{grid-column:1}
+form:has(>#weekly-rules)>#weekly-rules{grid-column:2;grid-row:1/span 5}
+form:has(>#weekly-rules)>button.primary{justify-self:start}
+#weekly-rules>p.hint{margin-top:0}
+#weekly-rules th,#weekly-rules td{padding-top:4px;padding-bottom:4px}
+#weekly-rules input{height:34px;min-height:34px;padding-top:4px;padding-bottom:4px}
+form:has(>#balance-destination){display:grid;grid-template-columns:1fr 1fr;column-gap:18px;align-items:start}
+form:has(>#balance-destination)>:nth-child(1){grid-column:1;grid-row:1}
+form:has(>#balance-destination)>:nth-child(2){grid-column:1;grid-row:2}
+form:has(>#balance-destination)>:nth-child(3){grid-column:1;grid-row:3}
+form:has(>#balance-destination)>:nth-child(4){grid-column:1;grid-row:4}
+form:has(>#balance-destination)>#balance-destination{grid-column:2;grid-row:1/span 2}
+form:has(>#balance-destination)>:nth-child(6){grid-column:2;grid-row:3}
+form:has(>#balance-destination)>:nth-child(7){grid-column:2;grid-row:4;align-self:center}
+form:has(>#balance-destination)>:nth-child(8){grid-column:1/-1;grid-row:5}
+form:has(>#balance-destination)>:nth-child(9){grid-column:1/-1;grid-row:6}
+form:has(>#balance-destination)>:nth-child(10){grid-column:1/-1;grid-row:7;justify-self:start}
+form:has(>#balance-destination) textarea{min-height:58px;height:58px}
+#modal:has(.credit-mode),#modal:has(#balance-destination){padding-top:16px;padding-bottom:16px}
+form:has(>.credit-mode)>label,form:has(>#balance-destination)>label,#balance-destination>label{margin-bottom:8px}
+#modal-body:has(>form .credit-mode)>.balance,form:has(>.credit-mode)>.balance,form:has(>#balance-destination)>.balance{padding-top:10px;padding-bottom:10px}

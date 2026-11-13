@@ -22,12 +22,14 @@ function memberAppSection(st) {
       <label class="check"><input type="checkbox" name="enabled" ${st.enabled ? 'checked' : ''}> Ligar o app do cliente</label>
       <label>Endereço do app<div style="display:flex;align-items:center;gap:6px"><span class="subtext" style="white-space:nowrap;margin:0">app.gamezoney.com/</span><input name="slug" maxlength="40" placeholder="arena-centro" value="${esc(st.slug)}" autocomplete="off" spellcheck="false" style="flex:1"></div></label>
       <p class="hint">Use letras minúsculas, números e hífen (ex.: arena-centro). Os clientes abrem app.gamezoney.com/ seguido do endereço (ex.: app.gamezoney.com/arena-centro): divulgue no balcão, nas redes sociais e no papel de parede dos PCs. O tipo de cada estação no filtro do app (PC, Console/VR ou Simulador) fica em Painel de controle › configurar a estação.</p>
+      <label>WhatsApp do suporte (opcional)<input name="whatsapp" maxlength="20" inputmode="tel" placeholder="11 91234-5678" value="${esc(st.whatsapp ? (st.whatsapp.startsWith('55') ? st.whatsapp.slice(2) : '+' + st.whatsapp) : '')}" autocomplete="off"></label>
+      <p class="hint">Com o número preenchido, o app mostra a opção Suporte (WhatsApp) na engrenagem, que abre uma conversa com este número. Em branco, a opção fica desligada.</p>
       <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button>${gzAppTestButton()}</div>
       <p class="error" id="ma-error" role="alert"></p>
     </form>`;
   sec.querySelector('#ma-form').onsubmit = async e => {
     e.preventDefault(); const b = e.submitter; b.disabled = true; sec.querySelector('#ma-error').textContent = '';
-    try { const r = await api('/member-app', {enabled: e.target.enabled.checked, slug: e.target.slug.value}); sec.replaceWith(memberAppSection(r)); toast(r.enabled ? 'App do cliente ligado.' : 'App do cliente desligado.'); setTimeout(() => { if (view === 'app' && gzAppTab === 'client') renderAppManager().catch(() => {}); }, 4000); }
+    try { const r = await api('/member-app', {enabled: e.target.enabled.checked, slug: e.target.slug.value, whatsapp: e.target.whatsapp.value}); sec.replaceWith(memberAppSection(r)); toast(r.enabled ? 'App do cliente ligado.' : 'App do cliente desligado.'); setTimeout(() => { if (view === 'app' && gzAppTab === 'client') renderAppManager().catch(() => {}); }, 4000); }
     catch (err) { sec.querySelector('#ma-error').textContent = err.message; b.disabled = false; }
   };
   return sec;

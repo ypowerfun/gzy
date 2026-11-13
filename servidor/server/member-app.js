@@ -38,21 +38,48 @@ module.exports = function memberApp(store, deps = {}) {
     const c = cfg();
     return {allowed: allowed(), enabled: !!c.enabled, slug: c.slug || '', url: c.slug ? (live.url || 'https://app.gamezoney.com/' + c.slug) : '',
       connected: live.connected && Date.now() - live.lastAt < 60000, lastAt: live.lastAt, lastError: live.lastError, hasAccount: !!lic?.planToken?.(),
-      categories: CATEGORY};
+      categories: CATEGORY, whatsapp: c.whatsapp || ''};
   }
   function save(input, actor) {
     const enabled = input.enabled === true, slug = String(input.slug ?? '').trim().toLowerCase();
+    // 1.4.5: WhatsApp do suporte (botão Suporte na engrenagem do app); vazio = opção desligada no app
+    const whatsapp = input.whatsapp === undefined ? (cfg().whatsapp || '') : phone(input.whatsapp);
     if (enabled && !allowed()) fail('App do cliente: recurso do plano Pro. Entre com a conta gamezoney.com do plano Pro em Configuração › Licença.');
     if (slug && (!SLUG_RE.test(slug) || slug.includes('--') || RESERVED.has(slug))) fail('Endereço do app: de 3 a 40 letras minúsculas, números ou hífen (ex.: arena-centro).');
     if ((enabled || c0().panel?.enabled) && !slug) fail(enabled ? 'Escolha o endereço do app (ex.: arena-centro).' : 'O app da recepção usa este endereço: desligue o app da recepção antes de apagar o endereço.');
     if (enabled && !lic?.planToken?.()) fail('Entre com a conta gamezoney.com em Configuração › Licença antes de ligar o app.');
     const c = cfg(), changed = c.slug !== slug;
-    store.change(actor, 'config', enabled ? `App do cliente ligado: app.gamezoney.com/${slug}` : 'App do cliente desligado', () => { c.enabled = enabled; c.slug = slug; });
+    const phoneChanged = whatsapp !== (c.whatsapp || '');
+    store.change(actor, 'config', enabled ? `App do cliente ligado: app.gamezoney.com/${slug}` : 'App do cliente desligado', () => { c.enabled = enabled; c.slug = slug; if (whatsapp) c.whatsapp = whatsapp; else delete c.whatsapp; });
+    if (phoneChanged) store.log(actor, 'config', whatsapp ? `WhatsApp do suporte do app: ${whatsapp}` : 'WhatsApp do suporte do app removido');
     if (changed) { live.url = ''; live.connected = false; }
     live.lastError = ''; restart();
     return status();
   }
 
+  // 1.4.5: número do WhatsApp: só dígitos; 10–11 dígitos (DDD + número) ganham o 55 do Brasil
+  function phone(v) {
+    const d = String(v ?? '').replace(/\D/g, ''); if (!d) return '';
+    const n = d.length <= 11 ? '55' + d : d;
+    if (n.length < 12 || n.length > 15) fail('WhatsApp do suporte: informe DDD + número (ex.: 11 91234-5678) ou deixe em branco.');
+    return n;
+  }
+  // ---------- 1.4.5: notificações no app (Ações › Enviar mensagem › "Enviar também no app") ----------
+  const NOTICE_DAYS = 30;
+  const noticeList = () => (store.state.appNotices ??= []);
+  // to = 'all' (todos os clientes do app) ou lista de ids de clientes (quem está jogando nos PCs escolhidos)
+  function addNotice(to, text, actor) {
+    const now = Date.now(), n = {id: crypto.randomUUID(), at: now, text: String(text).slice(0, 200), to: to === 'all' ? 'all' : [...new Set(to)].slice(0, 500)};
+    store.change(actor, 'mensagem-app', to === 'all' ? `Notificação no app (todos os clientes): ${n.text}` : `Notificação no app (${n.to.length} cliente(s)): ${n.text}`, () => {
+      const list = noticeList(); list.push(n);
+      const keep = list.filter(x => x.at > now - NOTICE_DAYS * 86400000).slice(-200); list.splice(0, list.length, ...keep);
+    });
+    return n;
+  }
+  function noticesFor(m, now = Date.now()) {
+    return noticeList().filter(n => n.at > now - NOTICE_DAYS * 86400000 && (n.to === 'all' || (Array.isArray(n.to) && n.to.includes(m.id))))
+      .slice(-30).reverse().map(n => ({id: n.id, at: n.at, text: n.text}));
+  }
   // ---------- token do cliente ----------
   const fp = m => crypto.createHash('sha256').update(String(m.passwordHash || '')).digest('hex').slice(0, 16);
   const sign = (mid, exp, m) => crypto.createHmac('sha256', secret()).update(`${mid}.${exp}.${fp(m)}`).digest('base64url');
@@ -82,7 +109,8 @@ module.exports = function memberApp(store, deps = {}) {
     const l = store.state.settings.loyalty || {};
     return {name: m.name, username: m.username, balanceSeconds: Math.max(0, Math.round(m.creditSeconds || 0)), medals: (m.pointsMilli || 0) / 1000,
       session: sessionOf(m), loyalty: {enabled: m.loyaltyEnabled !== false && (l.thresholdMilli || 0) > 0 && (l.rewardMinutes || 0) > 0, threshold: (l.thresholdMilli || 0) / 1000, rewardMinutes: l.rewardMinutes || 0},
-      achievements: achievements ? achievements.progressOf(m.id).filter(a => a.done).length : 0};
+      achievements: achievements ? achievements.progressOf(m.id).filter(a => a.done).length : 0,
+      support: {whatsapp: cfg().whatsapp || ''}};
   }
   function stations(now = Date.now()) {
     return store.state.stations.filter(s => s.active !== false && !s.removedAt).map(s => {
@@ -129,6 +157,7 @@ module.exports = function memberApp(store, deps = {}) {
       case 'stations': memberOf(r.auth); return {stations: stations()};
       case 'achievements': { const m = memberOf(r.auth); return {achievements: achievements ? achievements.progressOf(m.id) : []}; }
       case 'history': return history(memberOf(r.auth));
+      case 'notices': return {notices: noticesFor(memberOf(r.auth))};
       // 1.3.9: Ranking (os mesmos Top 10 do painel): só o nick de cada cliente; nas recargas, a quantidade (sem valores em R$)
       case 'ranking': {
         const m = memberOf(r.auth), rk = require('./events').ranking(store, {}), me = String(m.username || '');
@@ -249,7 +278,7 @@ module.exports = function memberApp(store, deps = {}) {
   function start() { if (running || deps.noTimer) return; running = true; loop = run(); }
   function stop() { running = false; try { ctrl?.abort(); } catch { } if (wake) wake(); }
   function restart() { if (!running) return; restarting = true; hello = true; try { ctrl?.abort(); } catch { } if (wake) { restarting = false; wake(); } }
-  return {status, save, handle, answer, serve, diagnose, sendPanelCode, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
+  return {status, save, handle, addNotice, noticesFor, answer, serve, diagnose, sendPanelCode, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
 };
 module.exports.CATEGORY = CATEGORY;
 module.exports.categoryOf = categoryOf;
