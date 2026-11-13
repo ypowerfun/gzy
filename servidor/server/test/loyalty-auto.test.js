@@ -11,7 +11,7 @@ test('todos os membros entram automaticamente no programa e o prêmio é automá
  const sale=store.credit(m.id,{promotionId:promo(store,60)},'admin',Date.now());
  assert.equal(store.state.settings.loyalty.enabled,true);assert.equal(store.state.settings.loyalty.thresholdMilli,10000);assert.equal(store.state.settings.loyalty.rewardMinutes,60);
  assert.equal(m.pointsMilli,0);assert.equal(m.creditSeconds,7200);
- assert.deepEqual(sale.autoReward,{rewardId:'automatic-program',rewardName:'Tempo fidelidade',count:1,minutes:60});
+ assert.deepEqual(sale.autoReward,{rewardId:'automatic-program',rewardName:'Tempo fidelidade',count:1,minutes:60,costMilli:10000});/* 1.4.4: custo guardado para o cancelamento desfazer o prêmio */
  assert.equal(store.state.loyaltyNotices.length,1);assert.equal(store.state.loyaltyNotices[0].memberId,m.id);assert.equal(store.state.loyaltyNotices[0].minutes,60);
  assert.match(store.state.loyaltyLedger.at(-1).reason,/Resgate automático do programa fidelidade/);
 });

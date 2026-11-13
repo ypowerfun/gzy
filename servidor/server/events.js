@@ -6,7 +6,20 @@ const PAYMENTS = {cash: 'Dinheiro', pix: 'Pix', card: 'Cartão'};
 const KIND = {corujao: 'Corujão', viradao: 'Viradão'};
 const localDate = (t, tz) => new Intl.DateTimeFormat('en-CA', {timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'}).format(t);
 
-function init(store) { const s = store.state; s.events ??= []; s.settings.eventMedalsMilli ??= 1000; }
+// 1.4.4 (bug): instalação nova sem medalha automática por Corujão/Viradão (antes 1 medalha sem ninguém configurar).
+// Servidor que já existia: o 1 padrão (nunca configurado — nada no Log) vira 0, uma vez só; valor configurado pelo administrador continua.
+function init(store) {
+  const s = store.state; s.events ??= [];
+  if (s.settings.eventMedalsMilli === undefined) { s.settings.eventMedalsMilli = 0; s.settings.eventMedalsChecked = true; return; }
+  if (s.settings.eventMedalsChecked) return;
+  s.settings.eventMedalsChecked = true;
+  let configured = false;
+  try { configured = store.db.prepare("SELECT COUNT(*) AS n FROM logs WHERE detail LIKE 'Medalhas por participação no Corujão/Viradão:%'").get().n > 0; } catch { }
+  if (!configured && s.settings.eventMedalsMilli === 1000) {
+    s.settings.eventMedalsMilli = 0;
+    try { store.log('sistema', 'fidelidade', 'Medalhas do Corujão/Viradão: o valor padrão (1 medalha, nunca configurado) passou para 0. Configure em Fidelidade › Medalhas Corujão/Viradão.'); } catch { }
+  }
+}
 const sale = (store, p) => p.saleId ? (store.state.shopSales || []).find(s => s.id === p.saleId && s.status !== 'canceled') : null;
 const isPaid = (store, p) => !!(p.free || sale(store, p));
 function find(store, eventId) { return store.state.events.find(e => e.id === String(eventId) && !e.removedAt) || fail('Corujão/Viradão não encontrado.'); }

@@ -68,7 +68,7 @@ class Store{
   if(loyaltyChanged)this.log(actor,'fidelidade',(loyaltyEnabled?'Programa fidelidade ATIVADO para ':'Programa fidelidade DESATIVADO para ')+name+(saved.username?' (@'+saved.username+')':''));
   return saved;
  }
- quote(input){if(input.promotionId){const p=this.state.promotions.find(p=>p.id===input.promotionId&&p.active);if(!p)fail('Promoção indisponível.');return{minutes:p.minutes,cents:p.cents,label:p.name,promotionId:p.id}}
+ quote(input){if(input.promotionId){const p=this.state.promotions.find(p=>p.id===input.promotionId&&p.active&&!p.removedAt);/* 1.4.4: removida nunca vale */if(!p)fail('Promoção indisponível.');return{minutes:p.minutes,cents:p.cents,label:p.name,promotionId:p.id}}
   // 3.0.28: recarga informada em VALOR. O cliente paga exatamente o valor informado e recebe os minutos
   // proporcionais ao valor da hora, arredondados para o minuto mais proximo.
   if(input.mode==='value'||(input.cents!==undefined&&input.minutes===undefined)){const hour=Number(this.state.settings.hourCents)||0;if(hour<=0)fail('Configure o valor da hora antes de recarregar por valor.');const cents=integer(input.cents,1,100000000,'Valor da recarga');const minutes=Math.round(cents*60/hour);if(minutes<1)fail('Valor insuficiente para 1 minuto.');if(minutes>43200)fail('Valor acima do limite de 720 horas.');return{minutes,cents,label:'R$ '+(cents/100).toFixed(2).replace('.',',')+' ('+minutes+' minutos)',promotionId:null,byValue:true}}const minutes=integer(input.minutes,1,43200,'Minutos');return{minutes,cents:Math.round(minutes*this.state.settings.hourCents/60),label:minutes+' minutos',promotionId:null}}
