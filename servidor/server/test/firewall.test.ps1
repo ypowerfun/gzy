@@ -5,9 +5,15 @@ $server=@(Get-GzFirewallPlan server 'C:\Arena Test\Servidor')
 $client=@(Get-GzFirewallPlan client 'C:\Arena Test\Cliente')
 foreach($rule in @($server)+@($client)) {
     Assert ($rule.Profile -eq 'Any') 'Todos os perfis devem ser incluidos'
+    $cloud = ($rule.Name -like '*-cloud-out')
+    if ($cloud) {
+        # 1.4.1: unica regra para a internet: SAIDA TCP 443 do node.exe do servidor (gamezoney.com)
+        Assert ($rule.Direction -eq 'Outbound' -and $rule.Protocol -eq 'TCP' -and $rule.RemotePort -eq '443') 'Internet so por saida HTTPS 443'
+    } else {
     Assert ($rule.RemoteAddress -contains 'LocalSubnet') 'Alcance local obrigatorio'
     foreach($net in @('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16')) { Assert ($rule.RemoteAddress -contains $net) "Sub-redes da arena (outros roteadores/Wi-Fi): $net" }
     Assert (!($rule.RemoteAddress -contains 'Any')) 'Nunca liberar para a internet'
+    }
     Assert ($rule.Program.EndsWith('\runtime\node.exe')) 'Programa deve ser limitado ao runtime'
     if ($rule.Direction -eq 'Inbound') { Assert ($rule.EdgeTraversalPolicy -eq 'Block') 'Entrada sem edge traversal' }
     else { Assert (!$rule.ContainsKey('EdgeTraversalPolicy')) 'Regra de saida nao pode informar edge traversal' }
@@ -17,6 +23,8 @@ foreach($rule in @($server)+@($client)) {
 Assert (@($server|Where-Object {$_.Direction -eq 'Inbound' -and $_.LocalPort -eq '3443' -and $_.Protocol -eq 'TCP'}).Count -eq 1) 'HTTPS de entrada do servidor'
 Assert (@($server|Where-Object {$_.Direction -eq 'Inbound' -and $_.LocalPort -eq '3000' -and $_.Protocol -eq 'TCP'}).Count -eq 1) 'Apps moveis pela rede local'
 Assert (@($client|Where-Object {$_.Direction -eq 'Inbound' -and $_.Protocol -eq 'TCP'}).Count -eq 0) 'Cliente nao deve abrir servidor TCP'
+Assert (@(@($server)+@($client)|Where-Object {$_.Direction -eq 'Inbound' -and $_.RemoteAddress -contains 'Any'}).Count -eq 0) 'Nenhuma entrada liberada para a internet'
+Assert (@($server|Where-Object {$_.Name -like '*-cloud-out'}).Count -eq 1 -and @($client|Where-Object {$_.Name -like '*-cloud-out'}).Count -eq 0) 'Saida 443 so no servidor'
 Assert (@($client|Where-Object {$_.RemoteAddress -contains '255.255.255.255' -and $_.RemotePort -eq '3444' -and $_.Direction -eq 'Outbound'}).Count -eq 1) 'Broadcast somente para descoberta'
 Assert ($server[0].Name -eq @(Get-GzFirewallPlan server 'c:\arena test\servidor')[0].Name) 'Nomes estaveis em atualizacao'
 Assert ($server[0].Name -ne @(Get-GzFirewallPlan server 'C:\Outro servidor')[0].Name) 'Nao tocar outra instalacao'
@@ -30,12 +38,12 @@ $params='[CmdletBinding()]param($Name,$DisplayName,$Description,$Program,$Profil
 Set-Item Function:New-NetFirewallRule ([scriptblock]::Create($params+'if($script:deny){throw "Acesso negado simulado"};$script:created++;$script:rules[$Name]=@{Enabled=$Enabled;Action=$Action}'))
 foreach($command in @('Get-NetFirewallRule','New-NetFirewallRule','Remove-NetFirewallRule')) { Assert ((Get-Command $command).CommandType -eq 'Function') 'Teste exige mocks, nao cmdlets reais' }
 $w=@(Sync-GzFirewallRules $server Install)
-Assert ($script:created -eq 4 -and $w.Count -eq 0) 'Criar quatro regras de servidor'
+Assert ($script:created -eq 5 -and $w.Count -eq 0) 'Criar cinco regras de servidor'
 $w=@(Sync-GzFirewallRules $server Install)
-Assert ($script:created -eq 8 -and $script:rules.Count -eq 6) 'Recriar sem duplicar'
+Assert ($script:created -eq 10 -and $script:rules.Count -eq 7) 'Recriar sem duplicar'
 $w=@(Sync-GzFirewallRules $client Install)
 Assert (!$script:rules.ContainsKey($legacy)) 'Regra com nome antigo removida'
-Assert ($script:rules.Count -eq 8) 'Servidor e cliente coexistem com regras externas'
+Assert ($script:rules.Count -eq 9) 'Servidor e cliente coexistem com regras externas'
 $w=@(Sync-GzFirewallRules $server Remove)
 Assert ($script:rules.Count -eq 4 -and $script:rules.ContainsKey('Unrelated')) 'Remover somente regras da instalacao'
 $w=@(Sync-GzFirewallRules $server Remove)

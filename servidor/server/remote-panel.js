@@ -20,11 +20,15 @@ const path = require('node:path');
 const BLOCK = [/^\/api\/setup$/, /^\/api\/machine-settings/, /^\/api\/operators/, /^\/api\/backup/, /^\/api\/network/, /^\/api\/self-service/,
   /^\/api\/pc-notices/, /^\/api\/prints\/settings/, /^\/api\/diskless/, /^\/api\/units/, /^\/api\/branding/, /^\/api\/update/, /^\/api\/member-app/,
   /^\/api\/achievements/, /^\/api\/fiscal\/(settings|test)/, /^\/api\/pairing\/import/, /^\/api\/remote-panel/];
+const BAD_PATH = /(^|\/)\.\.?(\/|$)|%2e|%2f|%5c|\\|\/\//i;
 const STATIC = /^\/[a-z0-9][a-z0-9._-]{0,60}\.(js|css|png|jpg|ico)$/i;
 const NOT_HERE = 'Esta área abre só no painel do próprio servidor (Configuração e Gerenciar App não abrem pelo app da recepção).';
 const TEXT = /^(text\/|application\/(json|javascript|xml)|image\/svg)/i;
 const MAX_BODY = 4 * 1024 * 1024, MAX_OUT = 48 * 1024 * 1024, MAX_SEND = 8 * 1024 * 1024; // a ligação com o site aceita até 12 MB por envio
 const REMOTE_TTL = 12 * 3600000;
+// auditoria 1.4.2: a página do painel só roda scripts dos próprios arquivos (texto com <script> gravado em nome de cliente,
+// produto, nota, impressão etc. nunca executa) e não abre dentro de outro site — no servidor e pelo link
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 module.exports = function remotePanel(store, deps = {}) {
   const secret = crypto.randomBytes(24).toString('hex');
@@ -39,7 +43,7 @@ module.exports = function remotePanel(store, deps = {}) {
     fs.readFile(path.join(__dirname, 'public', 'index.html'), 'utf8', (e, html) => {
       if (e) return res.status(404).end();
       html = html.replace('<head>', `<head><base href="${base()}"><meta name="gz-remote" content="1">`).replace('<body>', '<body class="gz-remote">');
-      res.set('Cache-Control', 'no-cache').type('html').send(html);
+      res.set({'Cache-Control': 'no-cache', 'Content-Security-Policy': CSP, 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer'}).type('html').send(html);
     });
   }
 
@@ -51,12 +55,16 @@ module.exports = function remotePanel(store, deps = {}) {
     req.gzRemote = {ip: String(req.headers['x-gz-remote-ip'] || '').slice(0, 60)};
     const p = req.path;
     if (!enabled()) return res.status(404).json({error: 'O app da recepção está desligado nesta arena.'});
+    // auditoria 1.4.2: o Express ignora maiúsculas e a barra do fim nas rotas (/api/OPERATORS = /api/operators):
+    // o bloqueio confere o caminho em minúsculas e sem barra no fim; caminho com .., %2e, %2f, \ ou // é recusado
+    if (BAD_PATH.test(req.originalUrl.split('?')[0])) return res.status(404).type('text').send('Não encontrado.');
+    const lp = p.toLowerCase().replace(/\/+$/, '') || '/';
     if (p === '/' || p === '/index.html') return sendIndex(res);
-    if (p.startsWith('/api/')) {
-      if (BLOCK.some(r => r.test(p)) || (p.startsWith('/api/license/') && req.method !== 'GET')) return res.status(403).json({error: NOT_HERE});
+    if (lp.startsWith('/api/')) {
+      if (BLOCK.some(r => r.test(lp)) || (lp.startsWith('/api/license/') && req.method !== 'GET')) return res.status(403).json({error: NOT_HERE});
       return next();
     }
-    if (STATIC.test(p) && p !== '/cliente.html') return next();
+    if (STATIC.test(p) && lp !== '/cliente.html') return next();
     return res.status(404).type('text').send('Não encontrado.');
   }
 
@@ -68,7 +76,7 @@ module.exports = function remotePanel(store, deps = {}) {
       const method = b.method === 'POST' ? 'POST' : b.method === 'HEAD' ? 'HEAD' : 'GET';
       const target = String(b.path || '/');
       if (!enabled()) return done(404, {status: 404, headers: {'content-type': 'application/json'}, body: Buffer.from(JSON.stringify({error: 'O app da recepção está desligado nesta arena.'})).toString('base64')});
-      if (!target.startsWith('/') || target.startsWith('//') || target.length > 2048 || /[\s\\]/.test(target)) return done(400, {error: 'Endereço inválido.'});
+      if (!target.startsWith('/') || target.length > 2048 || /[\s\\]/.test(target) || BAD_PATH.test(target.split('?')[0])) return done(400, {error: 'Endereço inválido.'});
       const body = method === 'POST' ? Buffer.from(String(b.body || ''), 'base64') : Buffer.alloc(0);
       if (body.length > MAX_BODY) return done(413, {error: 'Arquivo grande demais.'});
       const cookie = /^[a-f0-9]{64}$/.test(String(b.session || '')) ? 'gz_session=' + b.session : '';
@@ -115,7 +123,7 @@ module.exports = function remotePanel(store, deps = {}) {
   }
   // quem pode entrar de fora
   function mayLogin(op) { return cfg().who !== 'admins' || op.role === 'admin'; }
-  return {middleware, forward, status, save, disconnect, mayLogin, enabled, REMOTE_TTL, BLOCK, get secret() { return secret; }};
+  return {middleware, forward, status, save, disconnect, mayLogin, enabled, REMOTE_TTL, BLOCK, CSP, get secret() { return secret; }};
 };
 module.exports.BLOCK = BLOCK;
 module.exports.REMOTE_TTL = REMOTE_TTL;

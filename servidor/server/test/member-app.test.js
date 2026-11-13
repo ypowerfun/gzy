@@ -163,6 +163,10 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   t.after(async () => { running = false; inst.memberApp.stop(); await loop; });
   await new Promise(r => setTimeout(r, 150));
 
+  // Testar conexão: só saída HTTPS, tudo certo
+  const diag = await call('/api/member-app/test', {});
+  assert.equal(diag.ok, true, JSON.stringify(diag)); assert.deepEqual(diag.checks.map(c => c.ok), [true, true, true, true, true]);
+  assert.match(diag.checks[1].detail, /Nenhuma porta de entrada/);
   const origin = s.siteBase; let jar = '';
   const rp = async (p, body, status = 200, headers = {}) => {
     const r = await fetch(s.siteBase + '/servidor/arena-r' + p, {redirect: 'manual', method: body === undefined ? 'GET' : 'POST', headers: {'Content-Type': 'application/json', Origin: origin, ...(jar ? {Cookie: jar} : {}), ...headers}, body: body === undefined ? undefined : JSON.stringify(body)});
@@ -200,10 +204,14 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   // a sessão de fora NÃO vale no servidor
   assert.equal((await fetch('http://127.0.0.1:' + inst.server.address().port + '/api/state', {headers: {Cookie: remoteCookie}})).status, 401);
   // Configuração e Gerenciar App: bloqueados mesmo chamando a rota direto
-  for (const [p, b] of [['/api/operators'], ['/api/member-app', {enabled: false, slug: 'x'}], ['/api/remote-panel', {enabled: false}], ['/api/remote-panel/disconnect', {}], ['/api/backup', {}], ['/api/branding'],
+  for (const [p, b] of [['/api/operators'], ['/api/member-app', {enabled: false, slug: 'x'}], ['/api/member-app/test', {}], ['/api/remote-panel', {enabled: false}], ['/api/remote-panel/disconnect', {}], ['/api/backup', {}], ['/api/branding'],
     ['/api/license/logout', {}], ['/api/achievements'], ['/api/network'], ['/api/self-service'], ['/api/machine-settings', {}], ['/api/setup', {username: 'x', password: '1234'}], ['/api/update']])
     assert.match((await rp(p, b, 403)).json().error, /Configuração e Gerenciar App/, p);
   assert.match((await rp('/api/settings', {serverUrl: 'http://1.2.3.4:3000'}, 400)).json().error, /endereço do servidor/);
+  // maiúsculas, barra no fim e caminhos com .. ou codificados não furam o bloqueio (o Express ignora maiúsculas nas rotas)
+  for (const p of ['/api/OPERATORS', '/api/Operators/', '/API/operators', '/api/setup/', '/api/Member-App', '/api/BACKUP', '/api/License/logout', '/api/../internal/stop', '/api/%2e%2e/internal/stop', '/api/x/..%2f..%2fpc/state'])
+    assert.ok([403, 404, 400].includes((await fetch(s.siteBase + '/servidor/arena-r' + p, {method: p.includes('logout') || p.includes('stop') ? 'POST' : 'GET', headers: {'Content-Type': 'application/json', Origin: origin, Cookie: jar}, body: p.includes('logout') || p.includes('stop') ? '{}' : undefined})).status), p);
+  assert.equal(loja.state.operators.length, 1, 'nada mudou');
   // o resto do painel funciona: cadastro de cliente e planilha (binário)
   await rp('/api/members', {name: 'Cliente Remoto', username: 'remoto'});
   assert.ok(loja.state.members.some(m => m.username === 'remoto'));
@@ -215,6 +223,9 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   assert.equal((await fetch('http://127.0.0.1:' + inst.server.address().port + '/api/state', {headers: {'x-gz-remote': 'chute', Cookie: remoteCookie}})).status, 404);
   // só administradores: operador não entra de fora
   await call('/api/operators', {username: 'caixa', password: 'caixa123', role: 'operator'});
+  // senha curta (4–7) não entra de fora, mesmo certa, e a resposta é igual à da senha errada
+  await call('/api/operators', {username: 'curta', password: '1234', role: 'admin'});
+  jar = ''; assert.match((await rp('/api/login', {username: 'curta', password: '1234'}, 401)).json().error, /pelo menos 8 caracteres/);
   await call('/api/remote-panel', {enabled: true, who: 'admins'});
   jar = ''; assert.match((await rp('/api/login', {username: 'caixa', password: 'caixa123'}, 403)).json().error, /só para administradores/);
   // 5 senhas erradas no mesmo usuário = espera (mesmo com a certa depois)

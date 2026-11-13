@@ -101,7 +101,9 @@
   }
   async function stations() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
-    const paint = list => {
+    // auditoria: situação só dos valores conhecidos (o texto vem da arena e entra num atributo class)
+    const STATUS = ['free', 'busy', 'maintenance', 'offline'];
+    const paint = list0 => { const list = (Array.isArray(list0) ? list0 : []).map(x => ({...x, status: STATUS.includes(x.status) ? x.status : 'offline'}));
       const cats = new Set(list.map(catOf));
       const shown = list.filter(x => filter === 'all' || catOf(x) === filter);
       const free = list.filter(x => x.status === 'free').length;

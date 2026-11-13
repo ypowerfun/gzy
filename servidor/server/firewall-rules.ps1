@@ -25,7 +25,10 @@ function Get-GzFirewallPlan {
             @{ Key='https-in'; Direction='Inbound'; Protocol='TCP'; LocalPort='3443'; RemotePort='Any' },
             @{ Key='mobile-in'; Direction='Inbound'; Protocol='TCP'; LocalPort='3000'; RemotePort='Any' },
             @{ Key='discovery-in'; Direction='Inbound'; Protocol='UDP'; LocalPort='3444'; RemotePort='Any' },
-            @{ Key='discovery-out'; Direction='Outbound'; Protocol='UDP'; LocalPort='3444'; RemotePort='Any' }
+            @{ Key='discovery-out'; Direction='Outbound'; Protocol='UDP'; LocalPort='3444'; RemotePort='Any' },
+            # 1.4.2: SAIDA HTTPS (443) do node.exe para o gamezoney.com (licenca, app do cliente e app da recepcao).
+            # So saida: nenhuma porta de ENTRADA e aberta para a internet. Util quando o Windows/antivirus bloqueia saidas.
+            @{ Key='cloud-out'; Direction='Outbound'; Protocol='TCP'; LocalPort='Any'; RemotePort='443'; RemoteAddress='Any' }
         )
     } else {
         $definitions = @(

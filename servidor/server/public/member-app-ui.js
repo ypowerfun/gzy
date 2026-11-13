@@ -22,7 +22,7 @@ function memberAppSection(st) {
       <label class="check"><input type="checkbox" name="enabled" ${st.enabled ? 'checked' : ''}> Ligar o app do cliente</label>
       <label>Endereço do app<div style="display:flex;align-items:center;gap:6px"><span class="subtext" style="white-space:nowrap;margin:0">app.gamezoney.com/</span><input name="slug" maxlength="40" placeholder="arena-centro" value="${esc(st.slug)}" autocomplete="off" spellcheck="false" style="flex:1"></div></label>
       <p class="hint">Use letras minúsculas, números e hífen (ex.: arena-centro). Os clientes abrem app.gamezoney.com/ seguido do endereço (ex.: app.gamezoney.com/arena-centro): divulgue no balcão, nas redes sociais e no papel de parede dos PCs. O tipo de cada estação no filtro do app (PC, Console/VR ou Simulador) fica em Painel de controle › configurar a estação.</p>
-      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button></div>
+      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button>${gzAppTestButton()}</div>
       <p class="error" id="ma-error" role="alert"></p>
     </form>`;
   sec.querySelector('#ma-form').onsubmit = async e => {
@@ -32,6 +32,16 @@ function memberAppSection(st) {
   };
   return sec;
 }
+// 1.4.2: Testar conexão (o que falta para o app funcionar, sem precisar de suporte)
+function gzAppTestButton() { return '<button type="button" data-app-test style="flex:0 0 auto">Testar conexão</button>'; }
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-app-test]'); if (!b) return;
+  b.disabled = true; const old = b.textContent; b.textContent = 'Testando…';
+  try {
+    const r = await api('/member-app/test', {});
+    modal('Testar conexão', `<p class="hint">Não é preciso abrir nenhuma porta no roteador: o servidor só usa a saída HTTPS (porta 443) até o gamezoney.com.</p>${r.checks.map(c => `<div class="balance"><span>${c.ok ? '✔' : '✖'} ${esc(c.label)}</span><span style="text-align:right;max-width:62%;color:${c.ok ? 'var(--green)' : '#ffb84d'}">${esc(c.detail)}</span></div>`).join('')}<p class="hint" style="margin-top:10px">${r.ok ? 'Tudo certo.' : 'Corrija o item marcado com ✖ e clique em Testar conexão de novo.'}</p>`);
+  } catch (err) { toast(err.message); } finally { b.disabled = false; b.textContent = old; }
+});
 const gzMedals = n => String(Math.round(n * 1000) / 1000).replace('.', ',');
 function achievementsSection(d) {
   const sec = document.createElement('section'); sec.className = 'panel'; sec.id = 'achievements-section';
@@ -68,12 +78,13 @@ function receptionSection(st) {
     <p class="hint">Abra o painel deste servidor de qualquer lugar (celular, notebook ou outro computador) pelo navegador, com o mesmo usuário e senha do painel. Ficam disponíveis todas as telas (Painel de controle, Clientes, Fidelidade, Corujão/Viradão, Sessão, Log, Faturas, Estatística, Caixa, Produtos/Serviços, Ranking…), menos a Configuração e o Gerenciar App, que só abrem aqui no servidor. Não é preciso abrir porta no roteador: o servidor liga para o gamezoney.com e precisa estar aberto e com internet.</p>
     <div class="balance"><span>Situação</span><span style="text-align:right">${state_}</span></div>
     ${link ? `<div class="balance"><span>Endereço</span><strong style="font-size:15px" data-no-i18n>${esc(link)}</strong></div>` : '<p class="hint" style="color:#ffb84d">Escolha antes o endereço na aba App do cliente (o app da recepção usa o mesmo endereço).</p>'}
+    ${st.enabled && !st.connected && st.lastError ? `<p class="hint" style="color:#ffb84d">${esc(st.lastError)}</p>` : ''}
     <div class="balance"><span>Acessos conectados</span><strong style="font-size:15px">${st.sessions}</strong></div>
     <form id="rp-form" style="margin-top:12px">
       <label class="check"><input type="checkbox" name="enabled" ${st.enabled ? 'checked' : ''}> Ligar o app da recepção</label>
       <label>Quem pode entrar<select name="who"><option value="all" ${st.who !== 'admins' ? 'selected' : ''}>Todos os usuários do painel</option><option value="admins" ${st.who === 'admins' ? 'selected' : ''}>Só administradores</option></select></label>
-      <p class="hint">Segurança: o acesso de fora cai depois de 12 horas sem uso; 5 senhas erradas seguidas travam o usuário por 15 minutos; cada entrada fica no Log com o IP. Use senhas fortes nos usuários do painel.</p>
-      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button><button type="button" id="rp-disconnect" style="flex:0 0 auto" ${st.sessions ? '' : 'disabled'}>Desconectar todos</button></div>
+      <p class="hint">Segurança: o acesso de fora cai depois de 12 horas sem uso; a senha precisa ter pelo menos 8 caracteres; 5 senhas erradas seguidas travam o usuário por 15 minutos; cada entrada fica no Log com o IP. Use senhas fortes nos usuários do painel.</p>
+      <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button>${gzAppTestButton()}<button type="button" id="rp-disconnect" style="flex:0 0 auto" ${st.sessions ? '' : 'disabled'}>Desconectar todos</button></div>
       <p class="error" id="rp-error" role="alert"></p>
     </form>`;
   sec.querySelector('#rp-form').onsubmit = async e => {

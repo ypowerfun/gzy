@@ -68,8 +68,9 @@ module.exports = function memberApp(store, deps = {}) {
   }
   // tentativas de senha: 5 erros por nick ou 20 por IP em 15 min = espera
   const tries = new Map();
-  function tooMany(key) { const t = tries.get(key); return t && t.until > Date.now() && t.n >= (key.startsWith('ip:') ? 20 : 5); }
-  function miss(key) { const now = Date.now(); let t = tries.get(key); if (!t || t.until < now) { t = {n: 0, until: now + 900000}; tries.set(key, t); } t.n++; }
+  function tooMany(key) { if (tries.size > 5000) return true; // ataque em massa: espera (bloqueios feitos não são apagados antes da hora)
+    const t = tries.get(key); return t && t.until > Date.now() && t.n >= (key.startsWith('ip:') ? 20 : 5); }
+  function miss(key) { const now = Date.now(); if (tries.size > 2000) for (const [k, v] of tries) if (v.until < now) tries.delete(k); if (tries.size > 5000) return; let t = tries.get(key); if (!t || t.until < now) { t = {n: 0, until: now + 900000}; tries.set(key, t); } t.n++; }
 
   // ---------- dados ----------
   function sessionOf(m, now = Date.now()) {
@@ -207,10 +208,36 @@ module.exports = function memberApp(store, deps = {}) {
     if (!ok) outbox.unshift(...list); // tenta de novo na próxima volta da ligação
     flushing = false; if (ok) kick();
   }
+  // 1.4.2: Testar conexão (Gerenciar App): mostra em português o que falta para o app funcionar, sem precisar de suporte.
+  //        Não precisa abrir porta: só a SAÍDA HTTPS (443) até o gamezoney.com.
+  async function diagnose() {
+    const out = [], add = (ok, label, detail) => out.push({ok, label, detail});
+    const host = new URL(SITE()).hostname, dns = require('node:dns').promises;
+    try { await dns.lookup(host); add(true, 'Internet e DNS', host + ' encontrado.'); }
+    catch { add(false, 'Internet e DNS', 'Não foi possível encontrar ' + host + '. Confira se este computador está com internet (abra gamezoney.com no navegador).'); }
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000); t.unref?.();
+    try {
+      const r = await fetchImpl(SITE() + '/api/config', {signal: ctl.signal}); await r.arrayBuffer().catch(() => null);
+      add(r.ok, 'Saída HTTPS (porta 443)', r.ok ? 'O servidor conversa com o gamezoney.com. Nenhuma porta de entrada precisa ser aberta no roteador.' : 'O gamezoney.com respondeu com erro (HTTP ' + r.status + '). Tente de novo em alguns minutos.');
+    } catch (e) {
+      const code = String(e?.cause?.code || e?.code || e?.name || '');
+      const why = /CERT|SELF_SIGNED|UNABLE_TO_VERIFY|TLS/i.test(code) ? 'Um antivírus ou proxy está interceptando o HTTPS deste computador. Libere o GameZoney (pasta do programa) na proteção web/HTTPS do antivírus.'
+        : /Abort|TIMEDOUT|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH/i.test(code) ? 'A saída pela porta 443 está bloqueada (firewall do Windows, antivírus ou firewall da rede). Use "Reparar conexão de rede" no menu Iniciar do GameZoney ou libere o GameZoney no antivírus.'
+        : 'Sem acesso ao gamezoney.com (' + (code || 'erro') + '). Confira a internet deste computador.';
+      add(false, 'Saída HTTPS (porta 443)', why);
+    } finally { clearTimeout(t); }
+    const token = lic?.planToken?.();
+    add(!!token && allowed(), 'Conta do plano Pro', !token ? 'Entre com a conta gamezoney.com em Configuração › Licença.' : allowed() ? 'Plano Pro ativo neste computador.' : 'A conta deste computador não está no plano Pro. Assine o Pro em gamezoney.com e clique em Atualizar plano.');
+    const c = cfg(), on = !!c.enabled || panelOn();
+    add(!!c.slug, 'Endereço do app', c.slug ? 'app.gamezoney.com/' + c.slug : 'Escolha o endereço na aba App do cliente.');
+    const st = status();
+    add(on && st.connected, 'Ligação com o app.gamezoney.com', !on ? 'Ligue o app do cliente ou o app da recepção.' : st.connected ? 'Conectado.' : (live.lastError || 'Conectando… aguarde alguns segundos e teste de novo.'));
+    return {ok: out.every(x => x.ok), checks: out};
+  }
   function start() { if (running || deps.noTimer) return; running = true; loop = run(); }
   function stop() { running = false; try { ctrl?.abort(); } catch { } if (wake) wake(); }
   function restart() { if (!running) return; restarting = true; hello = true; try { ctrl?.abort(); } catch { } if (wake) { restarting = false; wake(); } }
-  return {status, save, handle, answer, serve, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
+  return {status, save, handle, answer, serve, diagnose, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
 };
 module.exports.CATEGORY = CATEGORY;
 module.exports.categoryOf = categoryOf;

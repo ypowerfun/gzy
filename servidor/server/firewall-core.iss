@@ -72,11 +72,14 @@ begin
     GzFwAdd(Script, 'mobile-in', 'dir=in protocol=TCP localport=3000 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16 edge=no');
     GzFwAdd(Script, 'discovery-in', 'dir=in protocol=UDP localport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16 edge=no');
     GzFwAdd(Script, 'discovery-out', 'dir=out protocol=UDP localport=3444 remoteip=localsubnet,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16');
+    { 1.4.2: so SAIDA HTTPS (443) para o gamezoney.com (licenca, app do cliente e app da recepcao); nenhuma porta de entrada. }
+    GzFwAdd(Script, 'cloud-out', 'dir=out protocol=TCP remoteport=443 remoteip=any');
   end else begin
     GzFwDelete(Script, 'https-in');
     GzFwDelete(Script, 'mobile-in');
     GzFwDelete(Script, 'discovery-in');
     GzFwDelete(Script, 'discovery-out');
+    GzFwDelete(Script, 'cloud-out');
   end;
 #else
   if Install then begin
