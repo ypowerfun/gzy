@@ -71,7 +71,7 @@ module.exports = function seo(app, {publicDir, SITE, plans}) {
     const m = RE.exec(req.path); if (!m) return req.path.startsWith('/en/') || req.path.startsWith('/es/') ? res.status(404).sendFile(path.join(publicDir, '404.html')) : next();
     const lang = m[1] || 'pt', page = m[2] || 'index';
     let html; try { html = render(lang, page); } catch { return next(); }
-    res.set('Cache-Control', 'public, max-age=300').type('html').send(html);
+    res.set('Cache-Control', 'no-cache').type('html').send(html);
   });
   app.get('/robots.txt', (req, res) => res.type('text').set('Cache-Control', 'public, max-age=3600').send(
     ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /conta', 'Disallow: /carrinho', 'Disallow: /entrar', 'Disallow: /redefinir', 'Disallow: /api/', 'Disallow: /download/', 'Disallow: /guia', '', `Sitemap: ${SITE}/sitemap.xml`, ''].join('\n')));

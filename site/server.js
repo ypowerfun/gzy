@@ -587,10 +587,16 @@ function createApp(options = {}) {
   track.routes(app, {needAdmin, jsonOnly, api, fail});
   // 2.6: páginas públicas com SEO por idioma (/, /en/, /es/), robots.txt e sitemap.xml
   require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans});
-  app.get('/conta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'conta.html')));
-  app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+  app.get('/conta', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'public', 'conta.html')));
+  app.get('/admin', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'public', 'admin.html')));
   app.get('/entrar', (req, res) => res.redirect('/entrar.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '')));
-  app.use(express.static(path.join(__dirname, 'public'), {extensions: ['html'], maxAge: '1h'}));
+  // 2.18: página HTML sempre conferida (no-cache + ETag) para nunca juntar página nova com .js/.css antigo guardado no navegador
+  // (Minha conta ficava em "Carregando sua conta…"); .js/.css com ?v= ficam guardados 1 dia; sem ?v= são conferidos a cada abertura
+  app.use(express.static(path.join(__dirname, 'public'), {extensions: ['html'], maxAge: '1h', setHeaders: (res, file) => {
+    const ext = path.extname(file).toLowerCase();
+    if (ext === '.html') res.setHeader('Cache-Control', 'no-cache');
+    else if (ext === '.js' || ext === '.css') res.setHeader('Cache-Control', /[?&]v=/.test(res.req.originalUrl || '') ? 'public, max-age=86400' : 'no-cache');
+  }}));
   app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'public', '404.html')));
   // 1.3: qualquer erro não tratado (JSON inválido, arquivo inexistente…) responde sem detalhes internos
   app.use((err, req, res, next) => {

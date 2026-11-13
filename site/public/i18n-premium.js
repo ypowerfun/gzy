@@ -254,6 +254,8 @@ Object.assign(window.GZ_SITE_DICT.exact, {
   'Depois do cadastro, você acessa os downloads e o guia.':['After registration, you can access downloads and the guide.','Tras el registro, podrá acceder a las descargas y la guía.'],
   'Criar conta e continuar a compra':['Create account and continue purchase','Crear cuenta y continuar la compra'],
   'Carregando sua conta…':['Loading your account…','Cargando su cuenta…'],
+  'Não foi possível carregar sua conta.':['Could not load your account.','No fue posible cargar su cuenta.'],
+  'Tentar novamente':['Try again','Intentar de nuevo'],
   'Central da arena':['Arena hub','Central de la arena'],
   'Visão geral':['Overview','Resumen'],
   'Sair da conta':['Sign out','Cerrar sesión'],

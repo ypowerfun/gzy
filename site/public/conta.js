@@ -4,6 +4,19 @@
   const STATUS = {paid: ['Pago', 'ok'], pending: ['Aguardando pagamento', 'wait'], expired: ['Vencido', 'bad'], canceled: ['Cancelado', 'bad']};
   const METHOD = o => o.method === 'card' ? 'Cartão' : 'PIX';
   const size = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.ceil(b / 1024) + ' KB';
+  // 2.18: a conta começa a carregar ANTES de montar os botões da página; qualquer erro mostra o aviso com
+  // "Tentar novamente" em vez de deixar "Carregando sua conta…" para sempre (antes um botão que saiu da página travava tudo)
+  let ready = false;
+  document.addEventListener('gz:account-ready', () => { ready = true; });
+  function loadError(e) {
+    if (window.console) console.error(e);
+    const box = document.querySelector('.account-loading'); if (ready || !box) return;
+    box.textContent = 'Não foi possível carregar sua conta. ';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = 'Tentar novamente';
+    b.addEventListener('click', () => location.reload()); box.appendChild(b);
+  }
+  window.addEventListener('error', e => loadError(e.error || e.message));
+  load().catch(loadError);
   async function load() {
     me = await loadMe();
     if (!me.user) { location.href = '/entrar.html?next=' + encodeURIComponent(location.pathname + location.hash); return; }
@@ -36,7 +49,7 @@
     if (o.status === 'paid') {
       clearInterval(poll); poll = null;
       box.innerHTML = `<div class="msg ok" style="display:block;margin-top:18px">Pagamento confirmado! Sua chave de licença vitalícia:<br><span class="key" style="font-size:22px">${esc(o.licenseKey || '')}</span><br>Ative no GameZoney Servidor em Configuração › Licença. Também enviamos por e-mail.</div>`;
-      load(); return;
+      load().catch(loadError); return;
     }
     if (o.status !== 'pending') { clearInterval(poll); poll = null; box.innerHTML = '<p class="msg err" style="display:block">Este PIX venceu. Clique em Pagar com PIX para gerar outro.</p>'; return; }
     if (o.method === 'brick') { if (!poll) poll = setInterval(async () => { try { const n = (await api('/api/orders/' + o.id)).order; if (n.status === 'paid' || n.pixCode) showOrder(n, false); } catch { } }, 5000); return; }
@@ -53,7 +66,7 @@
     $('#copy-pix').onclick = () => { if (navigator.clipboard?.writeText) navigator.clipboard.writeText(o.pixCode).then(() => { $('#copy-pix').textContent = 'Copiado!'; }, () => { $('#pix-code').select(); }); else $('#pix-code').select(); };
     if (!poll) poll = setInterval(async () => { try { showOrder((await api('/api/orders/' + o.id)).order, false); } catch { } }, 5000);
   }
-  $('#buy').onclick = () => busy($('#buy'), async () => { try { showOrder((await api('/api/checkout', {method: 'pix'})).order); load(); } catch (e) { showMsg($('#buy-msg'), e.message); } });
+  $('#buy').onclick = () => busy($('#buy'), async () => { try { showOrder((await api('/api/checkout', {method: 'pix'})).order); load().catch(loadError); } catch (e) { showMsg($('#buy-msg'), e.message); } });
   // cartão de crédito ou débito: vai para o Checkout do Mercado Pago e volta para /conta?pedido=...
   $('#buy-card').onclick = () => busy($('#buy-card'), async () => { try { const o = (await api('/api/checkout', {method: 'card'})).order; if (o.status === 'paid') return showOrder(o); location.href = o.checkoutUrl; } catch (e) { showMsg($('#buy-msg'), e.message); } });
   // 1.9: Checkout Bricks — PIX, crédito e débito num só quadro do Mercado Pago, dentro desta página (sem ir para o Mercado Pago).
@@ -132,13 +145,13 @@
     sf.files.value = ''; paintTicketThumbs();
   };
   sf.onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button.btn'), async () => {
-    try { await api('/api/support', {subject: f.subject.value, message: f.message.value, images: ticketImgs}); f.reset(); ticketImgs = []; paintTicketThumbs(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load(); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
+    try { await api('/api/support', {subject: f.subject.value, message: f.message.value, images: ticketImgs}); f.reset(); ticketImgs = []; paintTicketThumbs(); showMsg($('#support-msg'), 'Chamado enviado! Responderemos pelo e-mail da sua conta.', true); load().catch(loadError); } catch (err) { showMsg($('#support-msg'), err.message); } }); };
   // 2.4: redefinir a senha pelo link enviado ao e-mail da conta (também serve para criar senha numa conta Google)
   $('#password-reset').onclick = () => busy($('#password-reset'), async () => {
     try { const r = await api('/api/auth/forgot', {email: me.user.email}); showMsg($('#profile-msg'), r.mail === false ? 'O envio de e-mails está indisponível agora. Fale com o suporte.' : 'Enviamos para ' + me.user.email + ' um link para criar uma nova senha (vale 1 hora). Confira também o spam.', r.mail !== false); }
     catch (err) { showMsg($('#profile-msg'), err.message); } });
   $('#profile-form').onsubmit = e => { e.preventDefault(); const f = e.target; busy(f.querySelector('button'), async () => {
-    try { await api('/api/profile', {name: f.name.value, phone: f.phone.value, organization: f.organization.value, marketing: f.marketing.checked}); showMsg($('#profile-msg'), 'Dados salvos.', true); load(); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
+    try { await api('/api/profile', {name: f.name.value, phone: f.phone.value, organization: f.organization.value, marketing: f.marketing.checked}); showMsg($('#profile-msg'), 'Dados salvos.', true); load().catch(loadError); } catch (err) { showMsg($('#profile-msg'), err.message); } }); };
   // ---------- 1.2: avaliação (1 a 5 estrelas, texto e até 2 imagens .jpg/.png) ----------
   let stars = 0, kept = [], added = [];
   const pick = $('#star-pick');
@@ -185,5 +198,4 @@
     catch (err) { showMsg(rmsg, err.message); } }); };
   // o cliente não exclui mais a avaliação pelo site (pedido do dono); pode editar uma vez
   api('/api/reviews/mine').then(r => { mine = r.review; canWrite = r.canWrite !== false; paintStars(); paintThumbs(); showReview(); }).catch(() => { paintStars(); showReview(); });
-  load();
 })();
