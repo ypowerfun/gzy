@@ -134,11 +134,12 @@ module.exports = function community(app, ctx) {
     if (r.handoff) { const {online, T} = handoff(c); return say(c, (r.text ? r.text + '\n\n' : (first ? bot.texts(c.lang).hello(name) + '\n' : '')) + (online ? T.online : T.offline(c.email))); }
     say(c, r.text);
   }
-  // 2.14: cliente que não responde o assistente em 5 min (sem ter chamado especialista): a conversa é encerrada; só abrindo outra
-  const IDLE = Number(ctx.chatIdleMs) || 5 * 60000;
-  const IDLE_TEXT = {pt: 'Encerramos esta conversa porque não recebemos resposta em 5 minutos. Se precisar, é só abrir uma nova conversa.',
-    en: 'We closed this conversation because we got no reply within 5 minutes. If you need anything, just start a new conversation.',
-    es: 'Cerramos esta conversación porque no recibimos respuesta en 5 minutos. Si lo necesitas, abre una nueva conversación.'};
+  // 2.14: cliente que não responde o assistente (sem ter chamado especialista): a conversa é encerrada; só abrindo outra.
+  // 2.16 (pedido do dono): o chat fica aberto esperando por 10 min (antes 5)
+  const IDLE = Number(ctx.chatIdleMs) || 10 * 60000;
+  const IDLE_TEXT = {pt: 'Encerramos esta conversa porque não recebemos resposta em 10 minutos. Se precisar, é só abrir uma nova conversa.',
+    en: 'We closed this conversation because we got no reply within 10 minutes. If you need anything, just start a new conversation.',
+    es: 'Cerramos esta conversación porque no recibimos respuesta en 10 minutos. Si lo necesitas, abre una nueva conversación.'};
   function expire(c, now = Date.now()) {
     if (!c || c.status !== 'open' || !c.bot || c.handoff) return c;
     const last = db.get('SELECT sender, at FROM chat_messages WHERE chat_id=? ORDER BY id DESC LIMIT 1', c.id);
