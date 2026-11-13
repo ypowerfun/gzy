@@ -5,7 +5,7 @@ const {createApp}=require('../server');
 
 async function boot(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-bot-'));const {privateKey}=crypto.generateKeyPairSync('ed25519');const mails=[];
- const app=createApp({env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:true,send:async(to,subject,text)=>{mails.push({to,subject,text});return true}},log:{log(){},error(){}}});
+ const app=createApp({botDelayMs:0,env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:true,send:async(to,subject,text)=>{mails.push({to,subject,text});return true}},log:{log(){},error(){}}});
  const server=await new Promise(r=>{const s=app.listen(0,'127.0.0.1',()=>r(s))});const base='http://127.0.0.1:'+server.address().port;
  t.after(()=>{server.close();app.locals.close();fs.rmSync(dir,{recursive:true,force:true,maxRetries:5})});
  const client=()=>{const jar={};return async(url,body,status=200)=>{const cookie=Object.entries(jar).map(([k,v])=>k+'='+v).join('; ');
@@ -96,7 +96,7 @@ test('assistente: banco base sem ids repetidos e guia igual ao GUIA-GAMEZONEY.md
 
 test('assistente: sem resposta do cliente em 5 min (sem especialista) a conversa é encerrada; com especialista não',async t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-idle-'));const {privateKey}=crypto.generateKeyPairSync('ed25519');
- const app=createApp({chatIdleMs:300,env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:true,send:async()=>true},log:{log(){},error(){}}});
+ const app=createApp({botDelayMs:0,chatIdleMs:300,env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:true,send:async()=>true},log:{log(){},error(){}}});
  const server=await new Promise(r=>{const s=app.listen(0,'127.0.0.1',()=>r(s))});const base='http://127.0.0.1:'+server.address().port;
  t.after(()=>{server.close();app.locals.close();fs.rmSync(dir,{recursive:true,force:true,maxRetries:5})});
  const client=()=>{const jar={};return async(url,body,status=200)=>{const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Origin:'http://site.test',Cookie:Object.entries(jar).map(([k,v])=>k+'='+v).join('; ')},body:body===undefined?undefined:JSON.stringify(body)});
@@ -120,4 +120,26 @@ test('assistente acompanha as atualizações: cards novos respondidos, guia em d
  const nov=bot.reply('quais as novidades?',{lang:'pt'});assert.equal(nov.id,'novidades');assert.ok(nov.text.includes(news[0].q),'novidades começam pelo card mais novo');
  // recursos que saíram do produto não podem aparecer nas respostas
  for(const b of base)assert.doesNotMatch(b.a,/Atualização do sistema|Verificar atualização|licença vitalícia|R\$ ?89,90|Pacote (Padrão|Premium)|layout personalizado|Servidor em nuvem|servidor também na nuvem/i,b.id);
+});
+
+test('2.15: o assistente espera 2 a 3 s antes de responder ("lendo sua mensagem"); a resposta não se perde e o /admin vê na hora',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-site-delay-'));const {privateKey}=crypto.generateKeyPairSync('ed25519');
+ const app=createApp({botDelayMs:[2000,3000],env:{SITE_URL:'http://site.test',COOKIE_SECURE:'0',DATA_DIR:dir,DOWNLOADS_DIR:path.join(dir,'dl'),ADMIN_EMAILS:'dono@gamezoney.com',ADMIN_MFA:'0',LICENSE_PRIVATE_KEY:privateKey.export({type:'pkcs8',format:'pem'}),MP_ACCESS_TOKEN:'',GOOGLE_CLIENT_ID:'',SMTP_HOST:''},mail:{enabled:false,send:async()=>true},log:{log(){},error(){}}});
+ const server=await new Promise(r=>{const s=app.listen(0,'127.0.0.1',()=>r(s))});const base='http://127.0.0.1:'+server.address().port;
+ t.after(()=>{server.close();app.locals.close();fs.rmSync(dir,{recursive:true,force:true,maxRetries:5})});
+ let cookie='';const call=async(url,body)=>{const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Origin:'http://site.test',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body)});
+  for(const c of r.headers.getSetCookie?.()||[]){const [kv]=c.split(';');if(kv.startsWith('gzc='))cookie=kv}const j=await r.json();assert.equal(r.status,200,url+' '+JSON.stringify(j));return j};
+ const t0=Date.now();
+ let r=await call('/api/chat/start',{name:'Ana',email:'ana@arena.com',message:'[Compra] Quanto custa o plano Pro?',lang:'pt'});
+ // na hora: só a mensagem do cliente; o chat mostra "lendo" pelo tempo que falta (2 a 3 s)
+ assert.deepEqual(r.messages.map(m=>m.sender),['user']);assert.ok(r.typingMs>=1500&&r.typingMs<=3000,'espera '+r.typingMs);
+ r=await call('/api/chat?after='+r.messages[0].id);assert.equal(r.messages.length,0,'ainda não respondeu');assert.ok(r.typingMs>0);
+ await new Promise(res=>setTimeout(res,r.typingMs+60));
+ r=await call('/api/chat?after=1');assert.equal(r.messages[0].sender,'bot');assert.match(r.messages[0].text,/R\$ 129,90/);assert.equal(r.typingMs,0);
+ assert.ok(Date.now()-t0>=2000,'respondeu depois de pelo menos 2 s');
+ // segunda pergunta: o cursor não pula a resposta (ela aparece depois, na ordem certa)
+ const last=r.messages.at(-1).id;r=await call('/api/chat/send',{text:'tem limite de PCs?',after:last});
+ assert.deepEqual(r.messages.map(m=>m.sender),['user']);assert.ok(r.typingMs>=1500);
+ const after=r.messages.at(-1).id;await new Promise(res=>setTimeout(res,r.typingMs+60));
+ r=await call('/api/chat?after='+after);assert.equal(r.messages.length,1);assert.equal(r.messages[0].sender,'bot');assert.match(r.messages[0].text,/ilimitados/);
 });

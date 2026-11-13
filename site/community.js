@@ -77,7 +77,18 @@ module.exports = function community(app, ctx) {
   const adminOnline = () => Date.now() - adminSeenAt < 120000;
   const CHAT = 'gzc';
   const chatOf = req => { const t = String(req.headers.cookie || '').split(/;\s*/).map(c => c.split('=')).find(([k]) => k === CHAT)?.[1]; return t ? db.get('SELECT * FROM chats WHERE token_hash=?', sha(t)) : null; };
-  const messages = (chatId, after = 0) => db.all('SELECT id, sender, text, at FROM chat_messages WHERE chat_id=? AND id>? ORDER BY id LIMIT 200', chatId, Number(after) || 0);
+  // 2.15: o assistente não responde na hora — a resposta é gravada com o horário 2 a 3 s à frente (sorteado) e só é entregue ao
+  // cliente quando chega a hora; até lá o chat mostra "Assistente está lendo sua mensagem…" (typingUntil). A entrega para no 1º
+  // recado ainda escondido (nada passa na frente dele, então o cursor "after" nunca pula a resposta). O /admin vê tudo na hora.
+  const BOT_DELAY = Array.isArray(ctx.botDelayMs) ? ctx.botDelayMs : ctx.botDelayMs != null ? [Number(ctx.botDelayMs), Number(ctx.botDelayMs)] : [2000, 3000];
+  const botDelay = () => Math.round(BOT_DELAY[0] + Math.random() * Math.max(0, BOT_DELAY[1] - BOT_DELAY[0]));
+  const allMessages = (chatId, after = 0) => db.all('SELECT id, sender, text, at FROM chat_messages WHERE chat_id=? AND id>? ORDER BY id LIMIT 200', chatId, Number(after) || 0);
+  function visible(chatId, after = 0, now = Date.now()) {
+    const out = [];
+    for (const m of allMessages(chatId, after)) { if (m.sender === 'bot' && m.at > now) return {messages: out, typingMs: m.at - now}; out.push(m); }
+    return {messages: out, typingMs: 0};
+  }
+  const messages = allMessages;
   const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
   const LANGS = ['pt', 'en', 'es'], langIn = l => (LANGS.includes(l) ? l : 'pt');
 
@@ -96,7 +107,8 @@ module.exports = function community(app, ctx) {
     .map(r => ({id: r.id, q: r.question, alt: JSON.parse(r.alt || '[]'), kw: JSON.parse(r.keywords || '[]'), a: r.answer, human: !!r.human, v: r.updated_at + ':' + r.answer.length}));
   const bot = require('./bot')({plansInfo: () => (ctx.plansInfo ? ctx.plansInfo() : []), answers});
 
-  const say = (c, text) => { db.run('INSERT INTO chat_messages(chat_id,sender,text,at) VALUES(?,?,?,?)', c.id, 'bot', String(text).slice(0, 4000), Date.now()); db.run('UPDATE chats SET unread_user=unread_user+1 WHERE id=?', c.id); };
+  // 2.15: depois da última mensagem ainda escondida do assistente (se houver) + 2 a 3 s
+  const say = (c, text, instant) => { const pend = db.get("SELECT MAX(at) at FROM chat_messages WHERE chat_id=? AND sender='bot' AND at>?", c.id, Date.now())?.at || 0; db.run('INSERT INTO chat_messages(chat_id,sender,text,at) VALUES(?,?,?,?)', c.id, 'bot', String(text).slice(0, 4000), instant ? Math.max(Date.now(), pend) : Math.max(Date.now(), pend) + botDelay()); db.run('UPDATE chats SET unread_user=unread_user+1 WHERE id=?', c.id); };
   // pedido de especialista: online = o assistente para e o atendente assume; offline = devolutiva por e-mail (o assistente continua ajudando)
   function handoff(c) {
     const T = bot.texts(c.lang), online = adminOnline();
@@ -131,7 +143,7 @@ module.exports = function community(app, ctx) {
     if (!c || c.status !== 'open' || !c.bot || c.handoff) return c;
     const last = db.get('SELECT sender, at FROM chat_messages WHERE chat_id=? ORDER BY id DESC LIMIT 1', c.id);
     if (!last || last.sender !== 'bot' || now - last.at < IDLE) return c;
-    say(c, IDLE_TEXT[bot.langOf(c.lang)]);
+    say(c, IDLE_TEXT[bot.langOf(c.lang)], true); // aviso do sistema: sem a espera de 2 a 3 s
     db.run("UPDATE chats SET status='closed', closed_by='timeout', last_at=? WHERE id=?", now, c.id);
     return db.get('SELECT * FROM chats WHERE id=?', c.id);
   }
@@ -143,7 +155,7 @@ module.exports = function community(app, ctx) {
     const c = expire(chatOf(req)), base = {online: adminOnline(), user: req.user ? {name: req.user.name, email: req.user.email, phone: req.user.phone} : null};
     if (!c) return {...base, chat: null};
     if (c.unread_user) db.run('UPDATE chats SET unread_user=0 WHERE id=?', c.id);
-    return {...base, chat: chatInfo(c), messages: messages(c.id, req.query.after)};
+    return {...base, chat: chatInfo(c), ...visible(c.id, req.query.after)};
   }));
   app.post('/api/chat/start', jsonOnly, limit('chat-start', 10, 3600000), api((req, res) => {
     const name = str(req.body.name, 80), email = str(req.body.email, 200).toLowerCase(), phone = str(req.body.phone, 30), text = str(req.body.message, 2000);
@@ -157,7 +169,7 @@ module.exports = function community(app, ctx) {
     // a mensagem do formulário começa com o assunto escolhido ([Compra]/[Suporte]); o assistente lê só o texto
     botTurn(db.get('SELECT * FROM chats WHERE id=?', id), text.replace(/^\[(Compra|Suporte)\]\s*/i, ''), true);
     const c = db.get('SELECT * FROM chats WHERE id=?', id);
-    return {chat: chatInfo(c), messages: messages(id), online: adminOnline()};
+    return {chat: chatInfo(c), ...visible(id), online: adminOnline()};
   }));
   app.post('/api/chat/send', jsonOnly, limit('chat-send', 60, 600000), api(req => {
     const c = expire(chatOf(req)) || fail(404, 'Conversa não encontrada. Inicie uma nova conversa.'), text = str(req.body.text, 2000);
@@ -168,7 +180,7 @@ module.exports = function community(app, ctx) {
     db.run('INSERT INTO chat_messages(chat_id,sender,text,at) VALUES(?,?,?,?)', c.id, 'user', text, now);
     db.run('UPDATE chats SET last_at=?' + (!c.bot || c.handoff ? ', unread_admin=unread_admin+1' : '') + ' WHERE id=?', now, c.id);
     botTurn(c, text, false);
-    return {chat: chatInfo(db.get('SELECT * FROM chats WHERE id=?', c.id)), messages: messages(c.id, req.body.after)};
+    return {chat: chatInfo(db.get('SELECT * FROM chats WHERE id=?', c.id)), ...visible(c.id, req.body.after)};
   }));
   // encerrar e avaliar (1 a 5 estrelas + comentário opcional; stars 0 = encerrar sem avaliar). Uma avaliação por conversa.
   app.post('/api/chat/rate', jsonOnly, limit('chat-rate', 20, 3600000), api(req => {

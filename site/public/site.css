@@ -326,3 +326,9 @@ body{background:#060709 radial-gradient(1200px 600px at 85% -10%,rgba(212,160,23
 .bot-form{display:grid;gap:10px;max-width:760px}.bot-form textarea{min-height:70px}.bot-form .check{display:flex;gap:8px;align-items:center}
 .bot-test-out{white-space:pre-wrap;background:#0b0c10;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:14px;max-width:760px}
 .bot-answer-cell{font-size:13px;color:var(--muted);max-width:420px}#assistente h4{margin:22px 0 8px}#bot-search{max-width:360px;margin-bottom:8px}
+
+/* 2.15: assistente lendo a mensagem (2 a 3 s antes de responder) */
+.chat-typing{align-self:flex-start;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-style:italic;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.04)}
+.chat-spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(253,208,52,.25);border-top-color:#FDD034;animation:chatspin .8s linear infinite;flex:none}
+@keyframes chatspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.chat-spinner{animation-duration:2.4s}}

@@ -105,8 +105,21 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
       d.innerHTML = `<p></p><small>${m.sender === 'admin' ? 'Especialista GameZoney' : m.sender === 'bot' ? 'Assistente virtual' : ''} ${time(m.at)}</small>`; if (m.sender === 'bot') d.classList.add('from-bot'); d.querySelector('p').textContent = m.text; log.appendChild(d); lastSender = m.sender; }
     // 1.3: abaixo da mensagem do cliente, até o atendente responder
     log.querySelector('.chat-wait')?.remove();
-    if (lastSender === 'user') { const w = document.createElement('div'); w.className = 'chat-wait'; w.textContent = 'Mensagem recebida, aguarde um momento...'; log.appendChild(w); }
+    if (lastSender === 'user' && !typingTimer) { const w = document.createElement('div'); w.className = 'chat-wait'; w.textContent = 'Mensagem recebida, aguarde um momento...'; log.appendChild(w); }
     log.scrollTop = log.scrollHeight;
+  }
+  // 2.15: o assistente "lê" a mensagem por 2 a 3 s antes de responder: bolinha girando no canto do chat e envio bloqueado até a resposta
+  let typingTimer = null;
+  function typing(ms) {
+    clearTimeout(typingTimer); typingTimer = null; log.querySelector('.chat-typing')?.remove();
+    const sendBox = room.querySelector('.chat-send'), on = Number(ms) > 0;
+    sendBox.text.disabled = on; sendBox.querySelector('button').disabled = on; room.querySelector('.chat-human').disabled = on;
+    if (!on) return;
+    log.querySelector('.chat-wait')?.remove();
+    const t = document.createElement('div'); t.className = 'chat-typing'; t.setAttribute('role', 'status');
+    t.innerHTML = '<span class="chat-spinner" aria-hidden="true"></span><span></span>'; t.lastChild.textContent = 'Assistente está lendo sua mensagem…';
+    log.appendChild(t); log.scrollTop = log.scrollHeight;
+    typingTimer = setTimeout(() => { typingTimer = null; refresh(); }, Math.min(10000, Number(ms)) + 150);
   }
   const status = online => { box.querySelector('.chat-status').textContent = online ? '● Especialista online' : 'Assistente virtual 24 horas'; box.querySelector('.chat-status').classList.toggle('on', online); };
   // 2.4: conversa encerrada pelo administrador: some o campo de resposta e aparece o botão para abrir outra
@@ -132,7 +145,7 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   async function refresh() {
     try { data = await api('/api/chat' + (last ? '?after=' + last : '')); } catch { return; }
     status(data.online);
-    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); if (!rating) ended(data.chat.status === 'closed', data.chat); }
+    if (data.chat) { start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(data.messages); typing(data.typingMs); if (!rating) ended(data.chat.status === 'closed', data.chat); }
     else { start.classList.remove('hidden'); room.classList.add('hidden');
       if (data.user) { start.elements.namedItem('name').value ||= data.user.name || ''; start.email.value ||= data.user.email || ''; start.phone.value ||= data.user.phone || ''; } }
   }
@@ -149,15 +162,15 @@ const IG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentC
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.classList.contains('hidden')) closeChat(); });
   document.addEventListener('click', e => { const trigger = e.target.closest('[data-open-chat]'); if (trigger) openChat(trigger.dataset.openChat); });
   start.onsubmit = e => { e.preventDefault(); busy(start.querySelector('[type=submit]'), async () => {
-    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value, lang: lang()}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); data = {...(data || {}), chat: r.chat}; rating = false; ended(false, r.chat); }
+    try { const r = await api('/api/chat/start', {name: start.elements.namedItem('name').value, email: start.email.value, phone: start.phone.value, message: (intent === 'suporte' ? '[Suporte] ' : '[Compra] ') + start.message.value, lang: lang()}); start.message.value = ''; last = 0; lastSender = ''; log.innerHTML = ''; status(r.online); start.classList.add('hidden'); room.classList.remove('hidden'); addMessages(r.messages); typing(r.typingMs); data = {...(data || {}), chat: r.chat}; rating = false; ended(false, r.chat); }
     catch (err) { showMsg(box.querySelector('.chat-msg'), err.message); } }); };
   const send = room.querySelector('.chat-send');
   const sendText = text => busy(send.querySelector('button'), async () => {
-    try { const r = await api('/api/chat/send', {text, after: last, lang: lang()}); send.text.value = ''; addMessages(r.messages); if (r.chat) { data = {...(data || {}), chat: r.chat}; ended(false, r.chat); } } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; refresh(); } });
+    try { const r = await api('/api/chat/send', {text, after: last, lang: lang()}); send.text.value = ''; addMessages(r.messages); typing(r.typingMs); if (r.chat) { data = {...(data || {}), chat: r.chat}; ended(false, r.chat); } } catch (err) { let error = room.querySelector('.chat-send-error'); if (!error) { error = document.createElement('p'); error.className = 'msg err chat-send-error'; error.setAttribute('role', 'alert'); room.appendChild(error); } error.textContent = err.message; refresh(); } });
   send.onsubmit = e => { e.preventDefault(); const text = send.text.value.trim(); if (text) sendText(text); };
   room.querySelector('.chat-human').onclick = () => sendText(lang() === 'en' ? 'Talk to a specialist' : lang() === 'es' ? 'Hablar con un especialista' : 'Falar com especialista');
   send.text.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send.requestSubmit(); } });
-  const newChat = async () => { await api('/api/chat/end', {}).catch(() => {}); last = 0; lastSender = ''; log.innerHTML = ''; room.querySelector('.chat-send-error')?.remove(); rating = false; ended(false); await refresh(); start.message?.focus(); };
+  const newChat = async () => { await api('/api/chat/end', {}).catch(() => {}); typing(0); last = 0; lastSender = ''; log.innerHTML = ''; room.querySelector('.chat-send-error')?.remove(); rating = false; ended(false); await refresh(); start.message?.focus(); };
   room.querySelector('.chat-new').onclick = newChat; room.querySelector('.chat-new-ended').onclick = newChat;
 })();
 
