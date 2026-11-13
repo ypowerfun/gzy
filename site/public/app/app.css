@@ -164,3 +164,9 @@ button{font:inherit;cursor:pointer}
 /* 2.22 (pedido do dono): no Início o Online fica do lado do nome de usuário (linha "Olá, nome @usuário"); nas outras telas continua embaixo do sino/engrenagem */
 .hello{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px}
 .hello #arena-status{margin-left:8px;font-size:13px}
+/* 2.23: ✕ em cada notificação e Limpar todas */
+.notice{position:relative;padding-right:46px}
+.notice-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.45);color:var(--muted);font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.notice-x:hover{color:var(--text);border-color:var(--accent2)}
+.sheet-head h2{flex:1}
+.link-btn{border:0;background:none;color:var(--accent2);font:700 13px system-ui,sans-serif;cursor:pointer;padding:8px 10px;margin-right:6px}

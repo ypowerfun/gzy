@@ -50,20 +50,27 @@
   const seenAt = () => { try { return Number(localStorage.getItem(seenKey())) || 0; } catch { return 0; } };
   const rich = t => esc(t).replace(/\*([^*\n]+)\*/g, '<b class="gold">$1</b>').replace(/\n/g, '<br>'); // *texto* = destaque, como no PC
   function paintBell() { const n = notices.filter(x => x.at > seenAt()).length, d = $('#bell-n'); d.textContent = n > 9 ? '9+' : String(n); d.classList.toggle('hidden', !n); }
-  async function loadNotices() { try { notices = (await call('notices')).notices || []; paintBell(); if (!$('#sheet').classList.contains('hidden')) paintSheet(); } catch { } }
+  // 2.23 (pedido do dono): o cliente remove as notificações que já leu (✕ em cada uma ou Limpar todas) — fica guardado neste aparelho
+  const hiddenKey = () => KEY + ':hidden:' + (String(token).split('.')[1] || '');
+  const hiddenIds = () => { try { const v = JSON.parse(localStorage.getItem(hiddenKey()) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+  function hide(ids) { const set = new Set([...hiddenIds(), ...ids]); try { localStorage.setItem(hiddenKey(), JSON.stringify([...set].slice(-300))); } catch { } notices = notices.filter(n => !set.has(n.id)); paintBell(); paintSheet(); }
+  async function loadNotices() { try { const hidden = new Set(hiddenIds()); notices = ((await call('notices')).notices || []).filter(n => !hidden.has(n.id)); paintBell(); if (!$('#sheet').classList.contains('hidden')) paintSheet(); } catch { } }
   function topButtons(on) {
     $('#top-btns').classList.toggle('hidden', !on); closeMenus();
     clearInterval(noticeTimer); noticeTimer = null;
     if (on) { loadNotices(); noticeTimer = setInterval(loadNotices, 60000); }
   }
   function paintSheet() {
-    $('#sheet-list').innerHTML = notices.length ? notices.map(n => `<div class="notice"><span class="lbl">Aviso da arena</span><p>${rich(n.text)}</p><small>${esc(when(n.at))}</small></div>`).join('')
+    $('#sheet-clear').classList.toggle('hidden', notices.length < 2);
+    $('#sheet-list').innerHTML = notices.length ? notices.map(n => `<div class="notice"><button type="button" class="notice-x" data-del="${esc(n.id)}" aria-label="Remover notificação">✕</button><span class="lbl">Aviso da arena</span><p>${rich(n.text)}</p><small>${esc(when(n.at))}</small></div>`).join('')
       : '<div class="empty">Nenhuma notificação por enquanto. Os avisos da recepção aparecem aqui.</div>';
   }
   function closeMenus() { $('#gear-menu').classList.add('hidden'); $('#sheet').classList.add('hidden'); $('#gear').setAttribute('aria-expanded', 'false'); }
   $('#bell').onclick = () => { const open = $('#sheet').classList.contains('hidden'); closeMenus(); if (!open) return;
     paintSheet(); $('#sheet').classList.remove('hidden'); try { localStorage.setItem(seenKey(), String(Math.max(Date.now(), ...notices.map(n => n.at)))); } catch { } paintBell(); loadNotices(); };
   $('#sheet-x').onclick = closeMenus;
+  $('#sheet-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) hide([b.dataset.del]); });
+  $('#sheet-clear').onclick = () => hide(notices.map(n => n.id));
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeMenus(); });
   $('#gear').onclick = async e => { e.stopPropagation(); const m = $('#gear-menu'), open = m.classList.contains('hidden'); closeMenus(); if (!open) return;
     if (!me) { try { me = (await call('me')).me; } catch { } }

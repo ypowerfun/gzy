@@ -9,12 +9,12 @@
 <link rel="icon" type="image/png" sizes="64x64" href="/app/img/icon-64.png"><link rel="apple-touch-icon" href="/app/img/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,800;1,900&display=swap">
-<link rel="stylesheet" href="/app/app.css?v=20261113-6">
+<link rel="stylesheet" href="/app/app.css?v=20261113-7">
 </head>
 <body>
 <div id="app">
   <header class="top"><img id="logo" src="/app/img/gz.png" alt="GZ"><strong id="arena-name">GameZoney</strong><div class="top-r"><div class="top-btns hidden" id="top-btns"><button type="button" class="round" id="bell" aria-label="Notificações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg><span class="dot hidden" id="bell-n"></span></button><button type="button" class="round" id="gear" aria-label="Configurações" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8l1.6 2.3 2.7-.7.7 2.7 2.3 1.6-1.2 2.5 1.2 2.5-2.3 1.6-.7 2.7-2.7-.7L12 21.2l-1.6-2.3-2.7.7-.7-2.7-2.3-1.6L5.9 12 4.7 9.5 7 7.9l.7-2.7 2.7.7z"/></svg></button><div class="menu hidden" id="gear-menu" role="menu"></div></div><small id="arena-status"></small></div></header>
-  <div class="sheet hidden" id="sheet" role="dialog" aria-modal="true" aria-label="Notificações"><div class="sheet-box"><div class="sheet-head"><h2>Notificações</h2><button type="button" class="round" id="sheet-x" aria-label="Fechar">✕</button></div><div id="sheet-list"></div></div></div>
+  <div class="sheet hidden" id="sheet" role="dialog" aria-modal="true" aria-label="Notificações"><div class="sheet-box"><div class="sheet-head"><h2>Notificações</h2><button type="button" class="link-btn hidden" id="sheet-clear">Limpar todas</button><button type="button" class="round" id="sheet-x" aria-label="Fechar">✕</button></div><div id="sheet-list"></div></div></div>
   <main id="screen"><div class="loading">Carregando…</div></main>
   <nav class="tabs hidden" id="tabs">
     <button data-tab="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
@@ -24,6 +24,6 @@
     <button data-tab="history"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg><span>Histórico</span></button>
   </nav>
 </div>
-<script src="/app/app.js?v=20261113-6"></script>
+<script src="/app/app.js?v=20261113-7"></script>
 </body>
 </html>
