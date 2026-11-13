@@ -25,8 +25,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falha no CertTool.' }
     & $csc /nologo /target:exe /out:BackupTool.exe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll /reference:System.Web.Extensions.dll BackupTool.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no BackupTool.' }
-    & $csc /nologo /target:winexe /out:ClearAll.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll ClearAll.cs
-    if ($LASTEXITCODE -ne 0) { throw 'Falha no ClearAll.' }
+    # 1.4.3: ClearAd (redefinir a senha do administrador principal) no lugar do ClearAll
+    & $csc /nologo /target:winexe /out:ClearAd.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll ClearAd.cs
+    if ($LASTEXITCODE -ne 0) { throw 'Falha no ClearAd.' }
     # 3.0.68: painel em janela própria (WebView2) e ícone do app embutido (bandeja e janela).
     & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.dev.cs
     if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador.' }
@@ -77,7 +78,7 @@ try {
             & $csc /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.cs
             if ($LASTEXITCODE -ne 0) { throw 'Falha no iniciador protegido.' }
         } finally { Pop-Location }
-        Invoke-GzSign @('GameZoney.exe','BackupTool.exe','CertTool.exe','ClearAll.exe' | ForEach-Object { Join-Path $stage $_ })
+        Invoke-GzSign @('GameZoney.exe','BackupTool.exe','CertTool.exe','ClearAd.exe' | ForEach-Object { Join-Path $stage $_ })
         & $InnoCompiler @(Get-GzInnoSignArgs) "/O$outputRoot" (Join-Path $stage 'installer.iss')
         if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar instalador do servidor.' }
     } finally {

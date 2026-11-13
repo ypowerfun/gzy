@@ -15,7 +15,7 @@ const ACTIONS = new Set(['login', 'me', 'stations', 'achievements', 'history', '
 const HOLD_MS = 25000, ONLINE_MS = 60000;
 
 module.exports = function memberApp(app, ctx) {
-  const {db, api, fail, str, limit, plans, planActivation, log, express, env = {}, publicDir} = ctx;
+  const {db, api, fail, str, limit, plans, planActivation, log, express, env = {}, publicDir, notify, mail} = ctx;
   const APP_URL = String(env.APP_URL || 'https://app.gamezoney.com').replace(/\/+$/, '');
   const APP_HOST = (() => { try { return new URL(APP_URL).hostname; } catch { return 'app.gamezoney.com'; } })();
   const replyTimeout = ctx.replyTimeoutMs || 15000;
@@ -97,6 +97,35 @@ module.exports = function memberApp(app, ctx) {
       if (a.waiter) finish(a.waiter, [reqObj]); else a.queue.push(reqObj);
     });
   }
+
+  // ---------- 1.4.3: código por e-mail do login do app da recepção ----------
+  // O Servidor da arena confere usuário e senha, cria o código de 6 dígitos e pede aqui o envio ao e-mail da CONTA do plano
+  // (a conta gamezoney.com que está em Configuração › Licença). O site não guarda o código: só manda o e-mail.
+  const codeCount = new Map();
+  app.post('/api/app/panel-code', limit('panelcode', 30, 15 * 60000), api(async req => {
+    const b = req.body || {}, installId = str(b.installId, 80), slug = str(b.slug, 40), code = String(b.code || '');
+    if (!/^[0-9a-f-]{20,80}$/i.test(installId) || !SLUG_RE.test(slug)) fail(400, 'Pedido inválido.');
+    if (!/^\d{6}$/.test(code)) fail(400, 'Código inválido.');
+    const cert = planActivation.verify(b.token);
+    if (!cert || cert.v !== 2 || cert.kind !== 'plan' || cert.installId !== installId || !cert.uid) fail(401, 'Certificado do plano inválido.');
+    if (plans.planOf(cert.uid)?.plan !== 'pro') fail(402, 'O app da recepção faz parte do plano Pro.');
+    const bound = db.get('SELECT install_id FROM plan_installs WHERE user_id=?', cert.uid);
+    if (!bound || bound.install_id !== installId) fail(409, 'Esta conta passou a ser usada em outro computador.');
+    const arenaRow = db.get('SELECT plan_uid, name FROM app_arenas WHERE slug=?', slug);
+    if (!arenaRow || arenaRow.plan_uid !== cert.uid) fail(409, 'Endereço do app não registrado.');
+    const now = Date.now(); let n = codeCount.get(cert.uid); if (!n || n.until < now) { n = {count: 0, until: now + 15 * 60000}; codeCount.set(cert.uid, n); }
+    if (++n.count > 10) fail(429, 'Muitos códigos pedidos. Aguarde 15 minutos.');
+    if (codeCount.size > 5000) for (const [k, v] of codeCount) if (v.until < now) codeCount.delete(k);
+    const u = db.get('SELECT email, name FROM users WHERE id=?', cert.uid); if (!u) fail(404, 'Conta não encontrada.');
+    const op = str(b.operator, 40).replace(/[^\p{L}\p{N} ._@-]/gu, ''), ip = str(b.ip, 60).replace(/[^0-9a-fA-F:.]/g, '');
+    const sent = notify ? await Promise.resolve(notify(u.email, 'GameZoney: código de acesso ao app da recepção', {preheader: 'Código para entrar no app da recepção da sua arena.',
+      lines: [`Olá, ${u.name}!`, `O usuário "${op}" acertou a senha e está entrando no app da recepção da arena ${arenaRow.name}${ip ? ` (IP ${ip})` : ''}.`, 'Para concluir a entrada, use o código abaixo:'],
+      title: 'Código de acesso', code, codeNote: 'O código vale por 10 minutos e só funciona nesta tentativa de entrada.',
+      after: ['Se não foi você nem alguém da sua equipe, não passe este código para ninguém e troque a senha desse usuário no painel do servidor (Perfil › Alterar senha).']})).catch(() => false) : false;
+    log.log?.(`App da recepção: código de acesso pedido para ${slug} (${op}${ip ? ', IP ' + ip : ''})`);
+    if (!sent || (mail && mail.enabled === false)) fail(503, 'O envio de e-mail do gamezoney.com está indisponível agora. Tente de novo em alguns minutos.');
+    return {sent: true, to: String(u.email).replace(/^(.{2}).*(@.*)$/, '$1***$2')};
+  }));
 
   // ---------- app do celular ----------
   const row = slug => (SLUG_RE.test(slug) ? db.get('SELECT * FROM app_arenas WHERE slug=?', slug) : null);

@@ -121,9 +121,32 @@ module.exports = function remotePanel(store, deps = {}) {
     if (!quiet) store.log(actor, 'config', `App da recepção: ${n} acesso(s) desconectado(s)`);
     return {...status(), disconnected: n};
   }
+  // 1.4.3: código de 6 dígitos por e-mail no login de fora (como o /admin do site). Vai para o e-mail da conta gamezoney.com
+  // do plano (o site manda; aqui fica só o resumo SHA-256 preso ao pedido, 10 min, 5 tentativas). null = código certo.
+  const challenges = new Map(), CODE_MS = 10 * 60000;
+  const digest = (id, code) => crypto.createHash('sha256').update(id + ':' + code).digest('hex');
+  async function codeStep(op, body, ip, send) {
+    const now = Date.now(); for (const [k, c] of challenges) if (c.until < now) challenges.delete(k);
+    const id = String(body?.challenge || ''), code = String(body?.code || '').replace(/\s/g, '');
+    if (id && code) {
+      const c = challenges.get(id);
+      if (!c || c.opId !== op.id) return {status: 401, json: {error: 'O código venceu. Clique em Entrar para receber um código novo.', expired: true}};
+      if (!/^\d{6}$/.test(code) || !same(digest(id, code), c.hash)) {
+        c.tries++; const left = 5 - c.tries; if (left <= 0) challenges.delete(id);
+        return {status: 401, wrong: true, json: left > 0 ? {error: `Código incorreto. Restam ${left} tentativa(s).`, needCode: true, challenge: id, to: c.to} : {error: 'Código incorreto 5 vezes. Clique em Entrar para receber um código novo.', expired: true}};
+      }
+      challenges.delete(id); return null;
+    }
+    if (challenges.size > 500) return {status: 429, json: {error: 'Muitas tentativas. Aguarde 15 minutos.'}};
+    const fresh = String(crypto.randomInt(0, 1000000)).padStart(6, '0'), nid = crypto.randomBytes(24).toString('hex');
+    const r = await send({code: fresh, operator: op.username, ip});
+    for (const [k, c] of challenges) if (c.opId === op.id) challenges.delete(k); // só o código mais novo vale
+    challenges.set(nid, {opId: op.id, hash: digest(nid, fresh), until: now + CODE_MS, tries: 0, to: String(r?.to || '')});
+    return {status: 200, sent: true, json: {needCode: true, challenge: nid, to: String(r?.to || '')}};
+  }
   // quem pode entrar de fora
   function mayLogin(op) { return cfg().who !== 'admins' || op.role === 'admin'; }
-  return {middleware, forward, status, save, disconnect, mayLogin, enabled, REMOTE_TTL, BLOCK, CSP, get secret() { return secret; }};
+  return {middleware, forward, status, save, disconnect, mayLogin, codeStep, enabled, REMOTE_TTL, BLOCK, CSP, get secret() { return secret; }};
 };
 module.exports.BLOCK = BLOCK;
 module.exports.REMOTE_TTL = REMOTE_TTL;

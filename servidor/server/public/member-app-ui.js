@@ -83,7 +83,7 @@ function receptionSection(st) {
     <form id="rp-form" style="margin-top:12px">
       <label class="check"><input type="checkbox" name="enabled" ${st.enabled ? 'checked' : ''}> Ligar o app da recepção</label>
       <label>Quem pode entrar<select name="who"><option value="all" ${st.who !== 'admins' ? 'selected' : ''}>Todos os usuários do painel</option><option value="admins" ${st.who === 'admins' ? 'selected' : ''}>Só administradores</option></select></label>
-      <p class="hint">Segurança: o acesso de fora cai depois de 12 horas sem uso; a senha precisa ter pelo menos 8 caracteres; 5 senhas erradas seguidas travam o usuário por 15 minutos; cada entrada fica no Log com o IP. Use senhas fortes nos usuários do painel.</p>
+      <p class="hint">Segurança: o acesso de fora cai depois de 12 horas sem uso; a senha precisa ter pelo menos 8 caracteres; a entrada pede um código enviado ao e-mail da conta gamezoney.com do plano; 5 senhas erradas seguidas travam o usuário por 15 minutos; cada entrada fica no Log com o IP. Use senhas fortes nos usuários do painel.</p>
       <div class="dialog-actions" style="justify-content:flex-start"><button class="primary" style="flex:0 0 auto">Salvar</button>${gzAppTestButton()}<button type="button" id="rp-disconnect" style="flex:0 0 auto" ${st.sessions ? '' : 'disabled'}>Desconectar todos</button></div>
       <p class="error" id="rp-error" role="alert"></p>
     </form>`;

@@ -234,10 +234,22 @@ module.exports = function memberApp(store, deps = {}) {
     add(on && st.connected, 'Ligação com o app.gamezoney.com', !on ? 'Ligue o app do cliente ou o app da recepção.' : st.connected ? 'Conectado.' : (live.lastError || 'Conectando… aguarde alguns segundos e teste de novo.'));
     return {ok: out.every(x => x.ok), checks: out};
   }
+  // 1.4.3: pede ao gamezoney.com o envio do código do login do app da recepção ao e-mail da conta do plano
+  async function sendPanelCode({code, operator, ip}) {
+    const c = cfg(), ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000); t.unref?.();
+    try {
+      const res = await fetchImpl(SITE() + '/api/app/panel-code', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: ctl.signal,
+        body: JSON.stringify({token: lic?.planToken?.(), installId: store.state.runtime.installId, slug: c.slug, code, operator: String(operator || '').slice(0, 40), ip: String(ip || '').slice(0, 60)})});
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.sent) throw new Error(data.error || 'Não foi possível enviar o código por e-mail agora. Tente de novo em alguns minutos.');
+      return {to: String(data.to || '')};
+    } catch (e) { throw new Error(e.name === 'AbortError' ? 'O gamezoney.com não respondeu ao enviar o código. Tente de novo.' : e.message); }
+    finally { clearTimeout(t); }
+  }
   function start() { if (running || deps.noTimer) return; running = true; loop = run(); }
   function stop() { running = false; try { ctrl?.abort(); } catch { } if (wake) wake(); }
   function restart() { if (!running) return; restarting = true; hello = true; try { ctrl?.abort(); } catch { } if (wake) { restarting = false; wake(); } }
-  return {status, save, handle, answer, serve, diagnose, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
+  return {status, save, handle, answer, serve, diagnose, sendPanelCode, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
 };
 module.exports.CATEGORY = CATEGORY;
 module.exports.categoryOf = categoryOf;

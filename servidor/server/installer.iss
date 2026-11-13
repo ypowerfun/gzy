@@ -4,7 +4,7 @@ AppId={{F2DD5917-D41D-43CE-8B51-A2F783C8DC89}
 AppName=GameZoney Servidor
 ; 1.1.9: sem número de versão nas telas do instalador (a versão continua nos detalhes do arquivo, para a equipe)
 AppVerName=GameZoney Servidor
-AppVersion=1.4.2
+AppVersion=1.4.3
 AppPublisher=GameZoney
 ; 1.1.9: fornecedor GameZoney nos detalhes do instalador e em Programas instalados
 AppPublisherURL=https://gamezoney.com
@@ -27,7 +27,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 OutputDir=..\outputs
-OutputBaseFilename=GameZoney-Servidor-1.4.2-Setup
+OutputBaseFilename=GameZoney-Servidor-1.4.3-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -39,7 +39,7 @@ InfoBeforeFile=INSTALACAO-en.txt
 ; 1.0.5: instalador em inglês por padrão; a primeira tela deixa trocar para Português (Brasil) ou manter English.
 ShowLanguageDialog=yes
 LanguageDetectionMethod=none
-VersionInfoVersion=1.4.2.0
+VersionInfoVersion=1.4.3.0
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl; InfoBeforeFile: INSTALACAO-en.txt
@@ -64,6 +64,9 @@ Name: desktopicon; Description: "{cm:GzDesktopIcon}"; Flags: checkedonce
 
 ; 3.0.70: app GameZoney SV retirado — arquivos dele saem de instalações anteriores
 [InstallDelete]
+; 1.4.3: ClearAll (apagava todos os registros) substituído pelo ClearAd (redefinir a senha do administrador principal)
+Type: files; Name: "{app}\ClearAll.exe"
+Type: files; Name: "{app}\clear-all.js"
 ; 1.0.5: guias unificados em GUIA-GAMEZONEY.md e app web antigo de celular retirado (arquivos sem uso)
 Type: files; Name: "{app}\GUIA-*.md"
 Type: filesandordirs; Name: "{app}\public\mobile"
@@ -111,8 +114,8 @@ Source: "stats.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "excel.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "history.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "BackupTool.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "ClearAll.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "clear-all.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "ClearAd.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "clear-admin.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "BackupTool.exe.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "backups.js"; DestDir: "{app}"; Flags: ignoreversion
 Source: "business.js"; DestDir: "{app}"; Flags: ignoreversion
@@ -150,6 +153,7 @@ Source: "node_modules\*"; DestDir: "{app}\node_modules"; Flags: ignoreversion re
 Name: "{group}\Restaurar backup GameZoney"; Filename: "{app}\GameZoney.exe"; Parameters: "/restore"; WorkingDir: "{app}"
 Name: "{group}\Reparar conexao de rede"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\firewall.ps1"" -Role server -Action Install -Interactive"; WorkingDir: "{app}"; IconFilename: "{app}\GameZoney.exe"; Flags: runminimized
 Name: "{group}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; WorkingDir: "{app}"
+Name: "{group}\Redefinir senha do administrador (ClearAd)"; Filename: "{app}\ClearAd.exe"; WorkingDir: "{app}"
 Name: "{autodesktop}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 Name: "{userstartup}\GameZoney Servidor"; Filename: "{app}\GameZoney.exe"; Parameters: "/silent"; WorkingDir: "{app}"
 

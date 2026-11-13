@@ -24,7 +24,7 @@ Passos (rode um por vez, no PowerShell, e guarde a saída de cada um):
    `cd <raiz>\servidor\server`
    `& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe /out:CertTool.exe CertTool.cs`
    `& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe /out:BackupTool.exe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll /reference:System.Web.Extensions.dll BackupTool.cs`
-   `& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:ClearAll.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll ClearAll.cs`
+   `& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:ClearAd.exe /win32icon:gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll ClearAd.cs`
    `& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:GameZoney.exe /win32icon:gamezoney.ico /resource:gamezoney.ico,gamezoney.ico /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:Microsoft.Web.WebView2.Core.dll /reference:Microsoft.Web.WebView2.WinForms.dll Launcher.cs GzIntegrity.dev.cs`
 5. Testes COMPLETOS do servidor, do jeito que o gerador roda (compila o Cliente C# e limpa variáveis NODE_*):
    `cd <raiz>\servidor; node scripts\testServer.cjs`
@@ -37,7 +37,7 @@ Passos (rode um por vez, no PowerShell, e guarde a saída de cada um):
    e `Start-Process .\GameZoneyCliente.exe -ArgumentList '/policy-test',"$env:TEMP\gz-policy.txt" -Wait; Get-Content "$env:TEMP\gz-policy.txt"`
    (o resultado começa com PASS: ou mostra o erro).
 7. NÃO rode o Cliente normalmente (ele trava a tela do PC). NÃO rode instaladores.
-8. No fim, apague os .exe que você compilou dentro de `servidor\server` e `cliente\windows-client-1.0.5` (CertTool.exe, BackupTool.exe, ClearAll.exe, GameZoney.exe, GameZoneyCliente.exe, MonitorGZ.exe) e a pasta `cliente\windows-client-1.0.5\runtime` se ela foi criada pelo teste.
+8. No fim, apague os .exe que você compilou dentro de `servidor\server` e `cliente\windows-client-1.0.5` (CertTool.exe, BackupTool.exe, ClearAd.exe, GameZoney.exe, GameZoneyCliente.exe, MonitorGZ.exe) e a pasta `cliente\windows-client-1.0.5\runtime` se ela foi criada pelo teste.
 
 Responda EXATAMENTE neste formato (um bloco só, sem resumir os erros):
 

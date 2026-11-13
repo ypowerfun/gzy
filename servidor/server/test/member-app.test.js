@@ -36,7 +36,7 @@ async function boot(t) {
     await call('/api/setup', {name: 'Dono', username: 'admin', password: 'senha123'}); await call('/api/login', {username: 'admin', password: 'senha123'});
     return {inst, call, state: inst.store.state};
   }
-  return {web, dono, gz, siteBase};
+  return {web, dono, gz, siteBase, mails};
 }
 
 test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com nick/senha, estações por tipo, histórico, sem dados no site', {skip: !createApp && 'site não encontrado'}, async t => {
@@ -194,8 +194,21 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   // senha errada: 401 e Log com o IP
   await rp('/api/login', {username: 'admin', password: 'errada'}, 401);
   assert.ok(inst.store.db.prepare("SELECT COUNT(*) n FROM logs WHERE detail LIKE '%app da recepção, IP%'").get().n > 0);
+  // 1.4.3: senha certa = código de 6 dígitos no e-mail da conta gamezoney.com do plano (ana@arena.com); sem código, sem cookie
+  const codeOf = () => { const m = [...s.mails].reverse().find(x => x.to === 'ana@arena.com' && /app da recepção/.test(x.subject)); return m && m.text.match(/\b(\d{6})\b/)[1]; };
+  let step = await rp('/api/login', {username: 'admin', password: 'senha123'});
+  assert.equal(step.json().needCode, true); assert.equal(step.sc.length, 0, 'sem cookie antes do código'); assert.match(step.json().to, /^an\*\*\*@arena\.com$/);
+  const mail1 = [...s.mails].reverse().find(x => /app da recepção/.test(x.subject)); assert.match(mail1.text, /"admin"/); assert.match(mail1.text, /10 minutos/);
+  assert.equal(inst.store.db.prepare("SELECT COUNT(*) n FROM logs WHERE detail LIKE 'Código de acesso enviado por e-mail%'").get().n, 1);
+  const good = codeOf(), bad = good === '000000' ? '111111' : '000000';
+  x = await rp('/api/login', {username: 'admin', password: 'senha123', challenge: step.json().challenge, code: bad}, 401); assert.match(x.json().error, /Código incorreto. Restam 4/);
+  await rp('/api/login', {username: 'admin', password: 'errada', challenge: step.json().challenge, code: good}, 401); // o código não dispensa a senha
+  // pedir outro código anula o anterior
+  const old = step.json().challenge;
+  step = await rp('/api/login', {username: 'admin', password: 'senha123'}); assert.notEqual(step.json().challenge, old);
+  assert.equal((await rp('/api/login', {username: 'admin', password: 'senha123', challenge: old, code: good}, 401)).json().expired, true);
+  x = await rp('/api/login', {username: 'admin', password: 'senha123', challenge: step.json().challenge, code: codeOf()});
   // login certo: cookie só neste endereço
-  x = await rp('/api/login', {username: 'admin', password: 'senha123'});
   assert.match(x.sc.join('\n'), /gz_session=[a-f0-9]{64}; Path=\/servidor\/arena-r\/; HttpOnly; SameSite=Strict/);
   const remoteCookie = jar;
   assert.deepEqual([(await rp('/api/auth')).json().remote, (await rp('/api/auth')).json().operator.username], [true, 'admin']);
@@ -224,7 +237,9 @@ test('1.4.1: app da recepção (Pro) — painel de fora pelo site, sem Configura
   // só administradores: operador não entra de fora
   await call('/api/operators', {username: 'caixa', password: 'caixa123', role: 'operator'});
   // senha curta (4–7) não entra de fora, mesmo certa, e a resposta é igual à da senha errada
-  await call('/api/operators', {username: 'curta', password: '1234', role: 'admin'});
+  // 1.4.3: senha curta só existe em conta antiga (criar já exige 8): simulada direto no banco
+  assert.match((await call('/api/operators', {username: 'curta', password: '1234', role: 'admin'}, 400)).error, /entre 8 e 24/);
+  inst.store.state.operators.push({id: 'oc', username: 'curta', hash: require('../store').passwordHash('1234', undefined, 4), role: 'admin', active: true, createdAt: Date.now()}); inst.store.persist();
   jar = ''; assert.match((await rp('/api/login', {username: 'curta', password: '1234'}, 401)).json().error, /pelo menos 8 caracteres/);
   await call('/api/remote-panel', {enabled: true, who: 'admins'});
   jar = ''; assert.match((await rp('/api/login', {username: 'caixa', password: 'caixa123'}, 403)).json().error, /só para administradores/);

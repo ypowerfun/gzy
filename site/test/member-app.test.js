@@ -67,6 +67,11 @@ test('1.4.1: app da recepção — repasse do painel só no app.gamezoney.com, o
   const installId = crypto.randomUUID(), {token} = await post('/api/plan/login', {email: 'pro@a.com', password: 'senha-forte-1', installId});
   const relay = extra => post('/api/app/relay', {token, installId, slug: 'arena-p', info: {name: 'P'}, ...extra});
   await relay({hello: true});
+  // 1.4.3: código do login do app da recepção — só com certificado Pro deste computador e endereço desta conta; sem e-mail = 503
+  assert.match((await post('/api/app/panel-code', {token, installId, slug: 'arena-p', code: '12ab56'}, 400)).error, /Código inválido/);
+  assert.match((await post('/api/app/panel-code', {token: 'x', installId, slug: 'arena-p', code: '123456'}, 401)).error, /Certificado/);
+  assert.match((await post('/api/app/panel-code', {token, installId, slug: 'outra-arena', code: '123456'}, 409)).error, /não registrado/);
+  assert.match((await post('/api/app/panel-code', {token, installId, slug: 'arena-p', code: '123456', operator: '<b>x</b>'}, 503)).error, /e-mail/);
   // pedido HTTP cru (para escolher o Host como o Caddy entrega)
   const req = (p, {method = 'GET', host = 'app.gamezoney.com', headers = {}, body} = {}) => new Promise((res, rej) => {
     const r = http.request({host: '127.0.0.1', port, path: p, method, headers: {Host: host, ...headers}}, x => { const c = []; x.on('data', d => c.push(d)); x.on('end', () => res({status: x.statusCode, headers: x.headers, body: Buffer.concat(c)})); });

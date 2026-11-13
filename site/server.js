@@ -562,7 +562,7 @@ function createApp(options = {}) {
   // 2.9: Multi-Unidade (plano Pro): resumo de cada loja em Minha conta › Unidades
   require('./units')(app, {db, needUser, needAdmin, jsonOnly, api, fail, str, limit, plans, planActivation, log});
   // Servidor 1.3.7: app do cliente em app.gamezoney.com (repasse até o GameZoney Servidor da arena; nada de clientes gravado aqui)
-  const memberApp = require('./member-app')(app, {db, api, fail, str, limit, plans, planActivation, log, express, env, publicDir: path.join(__dirname, 'public'), holdMs: options.appHoldMs, replyTimeoutMs: options.appReplyMs, panelHosts: options.panelHosts, panelReplyMs: options.panelReplyMs});
+  const memberApp = require('./member-app')(app, {db, api, fail, str, limit, plans, planActivation, log, express, env, notify, mail, publicDir: path.join(__dirname, 'public'), holdMs: options.appHoldMs, replyTimeoutMs: options.appReplyMs, panelHosts: options.panelHosts, panelReplyMs: options.panelReplyMs});
   app.locals.memberApp = memberApp;
 
   // 1.3: capturas do sistema só são entregues para exibir na página (<img>); abrir/baixar o endereço direto é recusado
