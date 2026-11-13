@@ -18,10 +18,10 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;
 .top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'logo name right';align-items:center;column-gap:12px;padding:14px 0 12px;position:relative}
 .top img{grid-area:logo;height:46px;width:auto;max-width:120px;object-fit:contain}
 .top strong{grid-area:name;display:block;font:italic 900 21px/1.1 Montserrat,system-ui,sans-serif;letter-spacing:.3px;text-transform:uppercase;overflow-wrap:anywhere}
-.top #arena-status{white-space:nowrap;text-shadow:0 1px 4px #000,0 0 8px #000;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
-.top #arena-status::before{content:"";width:8px;height:8px;border-radius:50%;background:#666}
-.top #arena-status.on{color:var(--text)}
-.top #arena-status.on::before{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+#arena-status{white-space:nowrap;text-shadow:0 1px 4px #000,0 0 8px #000;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+#arena-status::before{content:"";width:8px;height:8px;border-radius:50%;background:#666}
+#arena-status.on{color:var(--text)}
+#arena-status.on::before{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
 h1{font:italic 900 26px/1.15 Montserrat,system-ui,sans-serif;margin:10px 0 2px;text-transform:uppercase;background:linear-gradient(180deg,#fff 0%,var(--accent2) 55%,var(--accent) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 p.sub{color:var(--muted);margin:0 0 16px}
 /* cartões escuros com borda dourada */
@@ -161,3 +161,6 @@ button{font:inherit;cursor:pointer}
 .notice .lbl{display:block;color:var(--accent2);font:800 11px Montserrat,system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
 .notice p{margin:6px 0 4px;color:var(--text)}.notice small{color:var(--muted)}
 .gold{color:var(--accent2)}
+/* 2.22 (pedido do dono): no Início o Online fica do lado do nome de usuário (linha "Olá, nome @usuário"); nas outras telas continua embaixo do sino/engrenagem */
+.hello{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px}
+.hello #arena-status{margin-left:8px;font-size:13px}

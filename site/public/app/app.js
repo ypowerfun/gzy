@@ -96,7 +96,10 @@
     return d;
   }
   // ---------- login ----------
+  // 2.22: o Online sai do Início (linha do nome de usuário) e volta para o topo antes de trocar de tela
+  const statusHome = on => { const st = $('#arena-status'), h = on && screen.querySelector('.hello'); if (h) h.appendChild(st); else if (st.parentElement !== $('.top-r')) $('.top-r').appendChild(st); };
   function loginScreen() {
+    statusHome(false);
     stopTimers(); $('#tabs').classList.add('hidden');
     screen.innerHTML = `<h1>Entrar</h1><p class="sub">Use o mesmo usuário (nick) e senha que você usa nos PCs da arena.</p>
       <form id="f" class="card"><label>Usuário / Nick<input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="32"></label>
@@ -111,6 +114,7 @@
   // ---------- abas ----------
   function start() { $('#tabs').classList.remove('hidden'); topButtons(true); show(tab); }
   function show(t) {
+    statusHome(false);
     tab = t; stopTimers(); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t)); window.scrollTo(0, 0);
     ({home, stations, achievements, ranking, history})[t]().catch(err => { screen.innerHTML = `<div class="card"><p class="error">${esc(err.message)}</p><button class="btn ghost" id="again">Tentar de novo</button></div>`; const a = $('#again'); if (a) a.onclick = () => show(tab); });
   }
@@ -160,6 +164,7 @@
       <button class="btn ghost out" id="out">Sair</button>`;
     if (s) countdown('#cd', Date.now() + s.remainingSeconds * 1000);
     screen.querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
+    statusHome(true);
     $('#out').onclick = () => logout();
   }
   async function stations() {
