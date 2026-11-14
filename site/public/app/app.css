@@ -169,3 +169,10 @@ button{font:inherit;cursor:pointer}
 .notice-x:hover{color:var(--text);border-color:var(--accent2)}
 .sheet-head h2{flex:1}
 .link-btn{border:0;background:none;color:var(--accent2);font:700 13px system-ui,sans-serif;cursor:pointer;padding:8px 10px;margin-right:6px}
+/* 2.25: notificações no celular (ativar, situação) + aviso rápido */
+.push-ask,.push-ok,.push-off{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:8px 0 4px;background:rgba(0,0,0,.35);color:var(--text);font-size:14px}
+.push-ask p{margin:0 0 10px}.push-ok{color:var(--accent2);border-style:solid}.push-off{color:var(--muted)}
+.btn.small{display:inline-block;width:auto;padding:10px 16px;font-size:13px}
+.push-card{position:relative;padding:6px 52px 6px 6px}.push-card .push-ask,.push-card .push-off{border:0;background:none;margin:0}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;z-index:60;max-width:90vw;background:rgba(10,10,12,.95);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}

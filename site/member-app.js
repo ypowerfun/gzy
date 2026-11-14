@@ -200,6 +200,15 @@ module.exports = function memberApp(app, ctx) {
     });
 
   // /admin: quais arenas usam o app (sem dados de clientes)
-  return {list: () => db.all('SELECT slug,name,plan_uid,updated_at FROM app_arenas ORDER BY updated_at DESC').map(r => ({...r, online: online(r.slug)})), APP_URL, APP_HOST,
+  // ---------- 2.25: notificação no celular com o app fechado (Web Push) + manifesto para instalar o app na tela inicial ----------
+  const push = require('./app-push')(app, {...ctx, ask, row, SLUG_RE, APP_URL});
+  app.get('/api/app/a/:slug/manifest.webmanifest', limit('appmanifest', 120, 60000), (req, res) => {
+    const r = row(req.params.slug); if (!r) return res.status(404).json({error: 'Arena não encontrada.'});
+    const base = req.hostname === APP_HOST ? '/' : '/app/';
+    res.set('Cache-Control', 'no-cache').type('application/manifest+json').send(JSON.stringify({name: (r.name || 'Arena') + ' • App', short_name: String(r.name || 'Arena').slice(0, 24),
+      start_url: base + r.slug, scope: base, display: 'standalone', background_color: '#050506', theme_color: '#0b0b12', lang: 'pt-BR',
+      icons: [{src: '/app/img/icon-192.png', sizes: '192x192', type: 'image/png'}, {src: '/app/img/icon-512.png', sizes: '512x512', type: 'image/png'}]}));
+  });
+  return {push, list: () => db.all('SELECT slug,name,plan_uid,updated_at FROM app_arenas ORDER BY updated_at DESC').map(r => ({...r, online: online(r.slug)})), APP_URL, APP_HOST,
     stop() { for (const slug of [...live.keys()]) drop(slug); }};
 };

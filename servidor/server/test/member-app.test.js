@@ -15,10 +15,10 @@ const dataUrl = b => 'data:image/png;base64,' + b.toString('base64');
 const {createServer} = require('../server');
 let createApp; try { ({createApp} = require('../../../site/server')); } catch { }
 
-async function boot(t) {
+async function boot(t, siteOpts = {}) {
   const {publicKey, privateKey} = crypto.generateKeyPairSync('ed25519'), pub = publicKey.export({type: 'spki', format: 'pem'});
   const siteDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-app-site-')), mails = [];
-  const site = createApp({campaignIntervalMs: 0, planSyncIntervalMs: 0, appHoldMs: 300, panelHosts: ['127.0.0.1'], env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: siteDir, DOWNLOADS_DIR: path.join(siteDir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
+  const site = createApp({...siteOpts, campaignIntervalMs: 0, planSyncIntervalMs: 0, appHoldMs: 300, panelHosts: ['127.0.0.1'], env: {SITE_URL: 'http://site.test', COOKIE_SECURE: '0', DATA_DIR: siteDir, DOWNLOADS_DIR: path.join(siteDir, 'dl'), ADMIN_EMAILS: 'dono@gamezoney.com', ADMIN_MFA: '0',
     LICENSE_PRIVATE_KEY: privateKey.export({type: 'pkcs8', format: 'pem'}), MP_ACCESS_TOKEN: '', GOOGLE_CLIENT_ID: '', SMTP_HOST: '', APP_URL: 'https://app.gamezoney.com'}, mail: {enabled: true, send: async (to, subject, text) => { mails.push({to, subject, text}); return true; }}, log: {log() {}, error() {}}});
   const siteServer = await new Promise(r => { const s = site.listen(0, '127.0.0.1', () => r(s)); }); const siteBase = 'http://127.0.0.1:' + siteServer.address().port;
   const old = process.env.GZ_SITE_URL; process.env.GZ_SITE_URL = siteBase;
@@ -36,7 +36,7 @@ async function boot(t) {
     await call('/api/setup', {name: 'Dono', username: 'admin', password: 'senha123'}); await call('/api/login', {username: 'admin', password: 'senha123'});
     return {inst, call, state: inst.store.state};
   }
-  return {web, dono, gz, siteBase, mails};
+  return {web, dono, gz, siteBase, mails, site};
 }
 
 test('1.3.7: Conquistas e app do cliente (Pro) — relay pelo site, login com nick/senha, estações por tipo, histórico, sem dados no site', {skip: !createApp && 'site não encontrado'}, async t => {
@@ -301,4 +301,90 @@ test('1.4.5: notificação no app (Ações › Enviar mensagem › "Enviar tamb�
   assert.equal((await app('me', {}, tj)).me.support.whatsapp, '');
   // sem token: recusado
   await app('notices', {}, '', 401);
+});
+
+// navegador simulado: decifra a notificação (RFC 8291 aes128gcm) como o celular faria
+function openPush(body, ecdh, auth) {
+  const salt = body.subarray(0, 16), idlen = body[20], as = body.subarray(21, 21 + idlen), ct = body.subarray(21 + idlen);
+  const ua = ecdh.getPublicKey(), shared = ecdh.computeSecret(as);
+  const hk = (ikm, s2, info, n) => Buffer.from(crypto.hkdfSync('sha256', ikm, s2, info, n));
+  const ikm = hk(shared, auth, Buffer.concat([Buffer.from('WebPush: info\0'), ua, as]), 32);
+  const d = crypto.createDecipheriv('aes-128-gcm', hk(ikm, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16), hk(ikm, salt, Buffer.from('Content-Encoding: nonce\0'), 12));
+  d.setAuthTag(ct.subarray(ct.length - 16));
+  const plain = Buffer.concat([d.update(ct.subarray(0, ct.length - 16)), d.final()]);
+  assert.equal(plain[plain.length - 1], 2, 'último registro'); return JSON.parse(plain.subarray(0, plain.length - 1).toString());
+}
+function checkVapid(header, publicKeyB64, endpoint) {
+  const m = /^vapid t=([^,]+), k=(.+)$/.exec(header); assert.ok(m, header); assert.equal(m[2], publicKeyB64);
+  const [h, p, sig] = m[1].split('.'), raw = Buffer.from(publicKeyB64, 'base64url');
+  const key = crypto.createPublicKey({key: {kty: 'EC', crv: 'P-256', x: raw.subarray(1, 33).toString('base64url'), y: raw.subarray(33).toString('base64url')}, format: 'jwk'});
+  assert.ok(crypto.verify('sha256', Buffer.from(h + '.' + p), {key, dsaEncoding: 'ieee-p1363'}, Buffer.from(sig, 'base64url')), 'assinatura VAPID');
+  const claims = JSON.parse(Buffer.from(p, 'base64url')); assert.equal(claims.aud, new URL(endpoint).origin); assert.ok(claims.exp * 1000 > Date.now());
+}
+
+test('1.4.6: aviso da recepção chega no celular com o app fechado (Web Push cifrado, só para quem ativou)', {skip: !createApp && 'site não encontrado'}, async t => {
+  const sent = [], gone = new Set();
+  const s = await boot(t, {pushFetch: async (url, init) => { sent.push({url, init}); return new Response(null, {status: gone.has(url) ? 410 : 201}); }});
+  const ana = s.web();
+  await ana('/api/auth/register', {name: 'Ana', email: 'ana@arena.com', password: 'senha-forte-1'});
+  await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'pro', months: 1});
+  const loja = await s.gz(); const {inst, call} = loja;
+  await call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1'});
+  const joana = inst.store.memberSave({name: 'Joana', username: 'joana', password: 'senha12'}, 'admin');
+  inst.store.memberSave({name: 'Bia', username: 'bia', password: 'senha34'}, 'admin');
+  inst.store.memberSave({name: 'Caio', username: 'caio', password: 'senha56'}, 'admin');
+  inst.store.credit(joana.id, {minutes: 120, paymentMethod: 'pix'}, 'admin');
+  await call('/api/member-app', {enabled: true, slug: 'arena-p'});
+  let running = true, replies = [];
+  const loop = (async () => { while (running) { try { replies = (await inst.memberApp.cycle(replies)).map(r => inst.memberApp.answer(r)); } catch { if (running) await new Promise(r => setTimeout(r, 50)); } } })();
+  t.after(async () => { running = false; inst.memberApp.stop(); await loop; });
+  await new Promise(r => setTimeout(r, 100));
+  const post = async (url, body, auth, status = 200) => { const r = await fetch(s.siteBase + url, {method: 'POST', headers: {'Content-Type': 'application/json', ...(auth ? {Authorization: 'Bearer ' + auth} : {})}, body: JSON.stringify(body)}); const text = await r.text(); assert.equal(r.status, status, url + ' ' + text); return JSON.parse(text); };
+  const login = async (u, p) => (await post('/api/app/a/arena-p/login', {username: u, password: p})).token;
+  const tj = await login('joana', 'senha12'), tb = await login('bia', 'senha34');
+  const browser = () => { const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys(); return {ecdh, auth: crypto.randomBytes(16)}; };
+  const sub = (endpoint, b) => ({subscription: {endpoint, keys: {p256dh: b.ecdh.getPublicKey().toString('base64url'), auth: b.auth.toString('base64url')}}});
+  const bj = browser(), bb = browser(), EJ = 'https://fcm.googleapis.com/fcm/send/joana-1', EB = 'https://updates.push.services.mozilla.com/wpush/v2/bia-1';
+  const {key} = await (await fetch(s.siteBase + '/api/app/push-key')).json(); assert.equal(Buffer.from(key, 'base64url').length, 65);
+  // segurança: só serviços de push conhecidos, https, chaves válidas e cliente conferido pela arena
+  for (const bad of ['http://fcm.googleapis.com/x', 'https://127.0.0.1/x', 'https://evil.example/push', 'https://fcm.googleapis.com.evil.example/x', 'https://fcm.googleapis.com:8443/x'])
+    await post('/api/app/push/arena-p', sub(bad, bj), tj, 400);
+  await post('/api/app/push/arena-p', {subscription: {endpoint: EJ, keys: {p256dh: 'abc', auth: 'x'}}}, tj, 400);
+  await post('/api/app/push/arena-p', sub(EJ, bj), '', 401);
+  await post('/api/app/push/arena-p', sub(EJ, bj), tj.replace(/.$/, c => c === 'A' ? 'B' : 'A'), 401); // token adulterado: a arena recusa
+  await post('/api/app/push/nao-existe', sub(EJ, bj), tj, 404);
+  await post('/api/app/push/arena-p', sub(EJ, bj), tj); await post('/api/app/push/arena-p', sub(EB, bb), tb);
+  assert.equal(s.site.locals.memberApp.push.count('arena-p'), 2);
+  const waitSent = async n => { for (let i = 0; i < 100 && sent.length < n; i++) await new Promise(r => setTimeout(r, 20)); assert.equal(sent.length, n); };
+  // todos: chega nos dois celulares; o texto vai cifrado e sem os *asteriscos*
+  await call('/api/pc/message', {scope: 'all', text: 'Promoção *2x1* hoje!', seconds: 10, app: true});
+  assert.deepEqual(await inst.memberApp.pushDone(), {queued: 2, error: ''});
+  await waitSent(2);
+  for (const x of sent) {
+    const b = x.url === EJ ? bj : bb; assert.ok(!x.init.body.toString().includes('2x1'), 'cifrado');
+    const msg = openPush(Buffer.from(x.init.body), b.ecdh, b.auth);
+    assert.equal(msg.body, 'Promoção 2x1 hoje!'); assert.equal(msg.title, 'GameZoney'); assert.equal(msg.url, 'https://app.gamezoney.com/arena-p');
+    assert.equal(x.init.headers['Content-Encoding'], 'aes128gcm'); checkVapid(x.init.headers.Authorization, key, x.url);
+  }
+  // PC específico: só o celular de quem está jogando nele
+  inst.store.start('2', joana.id, 'admin'); sent.length = 0;
+  await call('/api/pc/message', {scope: 'one', stationId: '2', text: 'Sua sessão vai acabar', seconds: 10, app: true});
+  assert.equal((await inst.memberApp.pushDone()).queued, 1); await waitSent(1); assert.equal(sent[0].url, EJ);
+  assert.equal(openPush(Buffer.from(sent[0].init.body), bj.ecdh, bj.auth).body, 'Sua sessão vai acabar');
+  // sem a opção do app: nenhuma notificação
+  sent.length = 0; await call('/api/pc/message', {scope: 'all', text: 'Só nos PCs', seconds: 10});
+  await new Promise(r => setTimeout(r, 100)); assert.equal(sent.length, 0);
+  // inscrição vencida (410) sai da lista
+  gone.add(EB); sent.length = 0;
+  await call('/api/pc/message', {scope: 'all', text: 'Aviso 3', seconds: 10, app: true}); await inst.memberApp.pushDone(); await waitSent(2);
+  for (let i = 0; i < 50 && s.site.locals.memberApp.push.count('arena-p') !== 1; i++) await new Promise(r => setTimeout(r, 20));
+  assert.equal(s.site.locals.memberApp.push.count('arena-p'), 1);
+  // desativar (sair da conta no celular): para de receber
+  await post('/api/app/push/arena-p/remove', {endpoint: EJ});
+  assert.equal(s.site.locals.memberApp.push.count('arena-p'), 0);
+  // /api/app/notify só aceita o certificado Pro da própria arena
+  await post('/api/app/notify', {token: 'x', installId: inst.store.state.runtime.installId, slug: 'arena-p', notice: {id: 'a', text: 'oi'}, to: 'all'}, '', 401);
+  // manifesto para instalar o app na tela inicial
+  const mf = await (await fetch(s.siteBase + '/api/app/a/arena-p/manifest.webmanifest')).json();
+  assert.equal(mf.start_url, '/app/arena-p'); assert.equal(mf.display, 'standalone'); assert.ok(mf.icons.some(i => i.sizes === '512x512'));
 });

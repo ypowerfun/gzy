@@ -42,7 +42,7 @@
     if (!r.ok) throw new Error(data.error || 'Não foi possível falar com a arena agora.');
     return data;
   }
-  function logout(quiet) { token = ''; me = null; notices = []; try { localStorage.removeItem(KEY); } catch { } $('#tabs').classList.add('hidden'); topButtons(false); stopTimers(); if (!quiet) loginScreen(); else setTimeout(loginScreen, 0); }
+  function logout(quiet) { disablePush(); token = ''; me = null; notices = []; try { localStorage.removeItem(KEY); } catch { } $('#tabs').classList.add('hidden'); topButtons(false); stopTimers(); if (!quiet) loginScreen(); else setTimeout(loginScreen, 0); }
 
   // ---------- 2.21: sino (notificações da recepção) e engrenagem (Suporte pelo WhatsApp e Sair da conta) ----------
   let notices = [], noticeTimer = null;
@@ -58,12 +58,59 @@
   function topButtons(on) {
     $('#top-btns').classList.toggle('hidden', !on); closeMenus();
     clearInterval(noticeTimer); noticeTimer = null;
-    if (on) { loadNotices(); noticeTimer = setInterval(loadNotices, 60000); }
+    if (on) { loadNotices(); noticeTimer = setInterval(loadNotices, 30000); if (pushState() === 'granted') enablePush(false).catch(() => {}); }
   }
+  // ---------- 2.25: avisos no celular mesmo com o app fechado (Web Push) ----------
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  // granted | denied | default | ios (iPhone fora da Tela de Início) | unsupported
+  const pushState = () => (pushSupported() ? Notification.permission : isIOS && !standalone() ? 'ios' : 'unsupported');
+  const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const fromB64u = k => Uint8Array.from(atob(k.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - k.length % 4) % 4)), c => c.charCodeAt(0));
+  async function enablePush(askUser) {
+    if (!pushSupported() || !token) return false;
+    let perm = Notification.permission;
+    if (perm === 'default' && askUser) perm = await Notification.requestPermission();
+    if (perm !== 'granted') return false;
+    const reg = await navigator.serviceWorker.register(base + 'sw.js', {scope: base}); await navigator.serviceWorker.ready;
+    const {key} = await (await fetch('/api/app/push-key')).json();
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey && b64u(sub.options.applicationServerKey) !== key) { await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: fromB64u(key)});
+    const r = await fetch('/api/app/push/' + encodeURIComponent(slug), {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + token}, body: JSON.stringify({subscription: sub.toJSON()})});
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Não foi possível ativar as notificações agora.');
+    return true;
+  }
+  // sair da conta: este celular para de receber os avisos dessa conta
+  async function disablePush() {
+    try { const reg = pushSupported() && await navigator.serviceWorker.getRegistration(base), sub = reg && await reg.pushManager.getSubscription();
+      if (sub) { fetch('/api/app/push/' + encodeURIComponent(slug) + '/remove', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({endpoint: sub.endpoint})}).catch(() => {}); await sub.unsubscribe(); } } catch { }
+  }
+  function pushBox() {
+    const st = pushState();
+    if (st === 'granted') return '<p class="push-ok">🔔 Notificações ativadas neste celular: os avisos chegam mesmo com o app fechado.</p>';
+    if (st === 'default') return '<div class="push-ask"><p>Receba os avisos da arena no celular, mesmo com o app fechado.</p><button type="button" class="btn small" data-push-on>Ativar notificações</button></div>';
+    if (st === 'denied') return '<p class="push-off">As notificações estão bloqueadas neste navegador. Para receber os avisos, libere em Configurações do navegador › Notificações deste site.</p>';
+    if (st === 'ios') return '<p class="push-off">No iPhone: toque em Compartilhar › Adicionar à Tela de Início e abra o app pelo ícone para ativar as notificações.</p>';
+    return '<p class="push-off">Este navegador não recebe notificações com o app fechado. No Android use o Chrome; no iPhone, adicione o app à Tela de Início.</p>';
+  }
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-push-on]'); if (!b) return;
+    b.disabled = true;
+    try { const ok = await enablePush(true); toastMsg(ok ? 'Notificações ativadas neste celular.' : 'As notificações não foram permitidas.'); } catch (err) { toastMsg(err.message); }
+    b.disabled = false; if (!$('#sheet').classList.contains('hidden')) paintSheet(); const card = $('#push-card'); if (card && pushState() !== 'default') card.remove();
+  });
+  if (pushSupported()) navigator.serviceWorker.addEventListener('message', e => {
+    if (!token) return;
+    if (e.data && e.data.type === 'gz-notice') loadNotices();
+    if (e.data && e.data.type === 'gz-open-notices' && $('#sheet').classList.contains('hidden')) $('#bell').click();
+  });
+  function toastMsg(t) { let el = $('#toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); } el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3500); }
   function paintSheet() {
     $('#sheet-clear').classList.toggle('hidden', notices.length < 2);
-    $('#sheet-list').innerHTML = notices.length ? notices.map(n => `<div class="notice"><button type="button" class="notice-x" data-del="${esc(n.id)}" aria-label="Remover notificação">✕</button><span class="lbl">Aviso da arena</span><p>${rich(n.text)}</p><small>${esc(when(n.at))}</small></div>`).join('')
-      : '<div class="empty">Nenhuma notificação por enquanto. Os avisos da recepção aparecem aqui.</div>';
+    $('#sheet-list').innerHTML = pushBox() + (notices.length ? notices.map(n => `<div class="notice"><button type="button" class="notice-x" data-del="${esc(n.id)}" aria-label="Remover notificação">✕</button><span class="lbl">Aviso da arena</span><p>${rich(n.text)}</p><small>${esc(when(n.at))}</small></div>`).join('')
+      : '<div class="empty">Nenhuma notificação por enquanto. Os avisos da recepção aparecem aqui.</div>');
   }
   function closeMenus() { $('#gear-menu').classList.add('hidden'); $('#sheet').classList.add('hidden'); $('#gear').setAttribute('aria-expanded', 'false'); }
   $('#bell').onclick = () => { const open = $('#sheet').classList.contains('hidden'); closeMenus(); if (!open) return;
@@ -76,6 +123,7 @@
     if (!me) { try { me = (await call('me')).me; } catch { } }
     const wa = /^\d{10,15}$/.test(me?.support?.whatsapp || '') ? me.support.whatsapp : '';
     m.innerHTML = (wa ? `<a role="menuitem" href="https://wa.me/${wa}" target="_blank" rel="noopener"><span class="mi">💬</span>Suporte (WhatsApp)</a>` : '<span role="menuitem" aria-disabled="true" class="off"><span class="mi">💬</span>Suporte (WhatsApp)<small>A arena ainda não informou o número</small></span>')
+      + (pushState() === 'default' ? '<button type="button" role="menuitem" data-push-on><span class="mi">🔔</span>Ativar notificações</button>' : '')
       + '<button type="button" role="menuitem" id="gear-out"><span class="mi">⎋</span>Sair da conta</button>';
     m.classList.remove('hidden'); $('#gear').setAttribute('aria-expanded', 'true');
     $('#gear-out').onclick = () => { closeMenus(); logout(); };
@@ -99,6 +147,8 @@
     $('#arena-name').textContent = d.name || 'Arena'; document.title = (d.name || 'Arena') + ' • App';
     const st = $('#arena-status'); st.textContent = d.online ? 'Online' : 'Sem conexão no momento'; st.className = d.online ? 'on' : '';
     applyColor(d.color);
+    // 2.25: manifesto do app desta arena (instalar na Tela de Início; no iPhone é o que libera as notificações)
+    if (!document.querySelector('link[rel=manifest]')) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = `/api/app/a/${encodeURIComponent(slug)}/manifest.webmanifest`; document.head.appendChild(l); }
     if (d.logo) $('#logo').src = `/api/app/a/${encodeURIComponent(slug)}/logo?v=${encodeURIComponent(d.logoRev)}`;
     return d;
   }
@@ -154,7 +204,9 @@
     const medalsTop = Array.isArray(rkR?.medals) ? rkR.medals : null, pos = medalsTop ? medalsTop.findIndex(x => x.me) + 1 : 0;
     const prog = l.enabled && l.threshold ? Math.min(100, me.medals / l.threshold * 100) : 0, missing = l.enabled ? Math.max(0, l.threshold - me.medals) : 0;
     const first = esc(me.name?.split(' ')[0] || me.username);
-    screen.innerHTML = `<p class="hello">Olá, <b>${first}</b> <span>@${esc(me.username)}</span></p>
+    const askKey = KEY + ':pushask', showAsk = ['default', 'ios'].includes(pushState()) && (() => { try { return !localStorage.getItem(askKey); } catch { return true; } })();
+    screen.innerHTML = `<p class="hello"><b>${first}</b> <span>@${esc(me.username)}</span></p>
+      ${showAsk ? `<div class="card push-card" id="push-card"><button type="button" class="notice-x" id="push-later" aria-label="Agora não">✕</button>${pushBox()}</div>` : ''}
       <div class="card hero${s ? ' playing' : ''}">${HOURGLASS}
         <span class="lbl">${s ? `Jogando agora • ${esc(s.station)}` : 'Seu tempo disponível'}</span>
         <div class="big" id="cd">${clock(s ? s.remainingSeconds : me.balanceSeconds)}</div>
@@ -170,6 +222,7 @@
         <button class="link" data-go="achievements">Ver conquistas ${ARROW}</button></div>`;
     if (s) countdown('#cd', Date.now() + s.remainingSeconds * 1000);
     screen.querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
+    const later = $('#push-later'); if (later) later.onclick = () => { try { localStorage.setItem(askKey, '1'); } catch { } $('#push-card').remove(); };
     statusHome(true);
   }
   async function stations() {

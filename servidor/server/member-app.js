@@ -74,7 +74,21 @@ module.exports = function memberApp(store, deps = {}) {
       const list = noticeList(); list.push(n);
       const keep = list.filter(x => x.at > now - NOTICE_DAYS * 86400000).slice(-200); list.splice(0, list.length, ...keep);
     });
+    pushing = pushToSite(n); // não fica no aviso (o aviso é gravado no estado)
     return n;
+  }
+  // 1.4.6: o aviso também vira notificação no celular (mesmo com o app fechado): o site manda para quem ativou as notificações.
+  // Fora da fila do painel e sem esperar (internet lenta nunca segura o envio da mensagem); falhar aqui não desfaz nada.
+  let pushing = Promise.resolve({queued: 0});
+  function pushToSite(n) {
+    const c = cfg(), token = lic?.planToken?.();
+    if (!c.enabled || !c.slug || !token) return Promise.resolve({queued: 0});
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
+    return fetchImpl(SITE() + '/api/app/notify', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: ctl.signal,
+      body: JSON.stringify({token, installId: store.state.runtime.installId, slug: c.slug, notice: {id: n.id, text: n.text}, to: n.to})})
+      .then(async r => { const d = await r.json().catch(() => ({})); live.lastPush = {at: Date.now(), ok: r.ok, queued: d.queued || 0, error: r.ok ? '' : String(d.error || r.status)}; return {queued: d.queued || 0, error: live.lastPush.error}; })
+      .catch(e => { live.lastPush = {at: Date.now(), ok: false, queued: 0, error: e.name === 'AbortError' ? 'tempo esgotado' : 'sem conexão'}; return {queued: 0, error: live.lastPush.error}; })
+      .finally(() => clearTimeout(t));
   }
   function noticesFor(m, now = Date.now()) {
     return noticeList().filter(n => n.at > now - NOTICE_DAYS * 86400000 && (n.to === 'all' || (Array.isArray(n.to) && n.to.includes(m.id))))
@@ -278,7 +292,7 @@ module.exports = function memberApp(store, deps = {}) {
   function start() { if (running || deps.noTimer) return; running = true; loop = run(); }
   function stop() { running = false; try { ctrl?.abort(); } catch { } if (wake) wake(); }
   function restart() { if (!running) return; restarting = true; hello = true; try { ctrl?.abort(); } catch { } if (wake) { restarting = false; wake(); } }
-  return {status, save, handle, addNotice, noticesFor, answer, serve, diagnose, sendPanelCode, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
+  return {status, save, handle, addNotice, noticesFor, pushDone: () => pushing, answer, serve, diagnose, sendPanelCode, info, start, stop, restart, cycle, stations, issue, memberOf, CATEGORY};
 };
 module.exports.CATEGORY = CATEGORY;
 module.exports.categoryOf = categoryOf;
