@@ -139,7 +139,6 @@ button{font:inherit;cursor:pointer}
 .loyal p{margin:6px 0;color:var(--text);opacity:.9}.loyal p.small{color:var(--muted);font-size:13px;opacity:1}
 .link{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:6px 0;border:0;background:none;color:var(--accent2);font:800 16px Montserrat,system-ui,sans-serif;cursor:pointer}
 .link .go{width:20px;height:20px}
-.btn.out{margin-top:16px}
 @media (max-width:360px){.hero .big{font-size:40px}.hero .hourglass{width:64px}.tile strong{font-size:30px}}
 /* 2.21 (pedido do dono): sino + engrenagem no canto direito do topo e o Online embaixo deles */
 .top-r{grid-area:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px;position:relative}

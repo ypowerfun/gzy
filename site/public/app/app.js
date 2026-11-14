@@ -167,12 +167,10 @@
         <div class="medals"><strong>${num(me.medals)}</strong><span>medalha${me.medals === 1 ? '' : 's'}</span></div>
         ${l.enabled ? `<p>${missing > 0 ? `Faltam ${num(missing)} medalha${missing === 1 ? '' : 's'} para ganhar ${hm(l.rewardMinutes * 60)} de tempo.` : `Você já tem medalhas para ganhar ${hm(l.rewardMinutes * 60)} de tempo.`}</p><div class="bar"><i style="width:${prog.toFixed(1)}%"></i></div>` : ''}
         <p class="small">${me.achievements} conquista${me.achievements === 1 ? '' : 's'} completada${me.achievements === 1 ? '' : 's'}</p>
-        <button class="link" data-go="achievements">Ver conquistas ${ARROW}</button></div>
-      <button class="btn ghost out" id="out">Sair</button>`;
+        <button class="link" data-go="achievements">Ver conquistas ${ARROW}</button></div>`;
     if (s) countdown('#cd', Date.now() + s.remainingSeconds * 1000);
     screen.querySelectorAll('[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
     statusHome(true);
-    $('#out').onclick = () => logout();
   }
   async function stations() {
     screen.innerHTML = '<div class="loading">Carregando…</div>';
