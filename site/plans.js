@@ -13,11 +13,11 @@ const DAY = 86400000, GRACE = 7 * DAY;
 const PLAN_IDS = ['free', 'standard', 'pro'], PAID = ['standard', 'pro'], PERIODS = {mensal: 1, anual: 12};
 const DEFAULT_PLANS = {
   free: {name: 'Free', monthly: 0, monthlyList: 0, annual: 0, annualList: 0, badge: '', popular: false, free: true,
-    features: ['Grátis para sempre, sem cartão', 'Não precisa de conta', 'Até 10 PCs e 2 consoles', 'Até 10 produtos, 5 serviços e 5 categorias', 'Autoatendimento no PC (PIX)', 'Seus dados ficam guardados ao assinar']},
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'PCs e Consoles limitados', 'Produtos/Serviços limitados', 'Seus dados ficam guardados ao assinar', 'Sem anúncios']},
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
-    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Emissão de NFC-e e NFS-e', 'Logo e cor da sua arena', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Emissão de NFC-e e NFS-e', 'Logo e cor da sua arena (Visual)', 'Controle de impressão', 'PCs, Consoles, VR e Simuladores ilimitados', 'Produtos/Serviços ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
-    features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Apps do cliente e da recepção (app.gamezoney.com)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Logo e cor da sua arena', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Emissão de NFC-e e NFS-e', 'Logo e cor da sua arena (Visual)', 'Controle de impressão', 'PCs, Consoles, VR e Simuladores ilimitados', 'Produtos/Serviços ilimitados', 'Apps do cliente e da recepção', 'Multi-Unidade', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
 const addMonths = (t, n) => { const d = new Date(t); const day = d.getUTCDate(); d.setUTCMonth(d.getUTCMonth() + n); if (d.getUTCDate() < day) d.setUTCDate(0); return d.getTime(); };
 
@@ -82,6 +82,12 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved) { for (const id of ['free', 'standard']) if (saved[id]) saved[id].features = [...DEFAULT_PLANS[id].features]; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Planos Free (grátis para sempre, com limites) e Standard (NFC-e/NFS-e e Logo e cor) atualizados'); }
     saveSetting('plans_features_v9', {at: Date.now()});
+  }
+  // site 2.26 (pedido do dono): itens dos três planos na lista nova (Free, Standard e Pro). Troca uma vez os itens salvos no /admin; preços continuam.
+  if (!setting('plans_features_v10')) {
+    const saved = setting('plans');
+    if (saved) { for (const id of PLAN_IDS) if (saved[id]) saved[id].features = [...DEFAULT_PLANS[id].features]; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Itens dos planos Free, Standard e Pro trocados pela lista nova'); }
+    saveSetting('plans_features_v10', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};
