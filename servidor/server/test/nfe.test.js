@@ -22,15 +22,16 @@ test('1.0.8/1.2.8: notas fiscais de entrada (só Pro; teste grátis e Standard n
   const S = inst.store.state, plan = p => { S.license.planToken = sign({v: 2, kind: 'plan', uid: 'u1', email: 'dono@arena.com', plan: p, planName: p === 'pro' ? 'Pro' : 'Standard', period: 'mensal', installId: S.runtime.installId, paidUntil: Date.now() + 20 * 86400000, graceUntil: Date.now() + 27 * 86400000, issuedAt: Date.now()}, privateKey); };
 
   // 1.1.9: teste grátis (Free) libera todas as funções, inclusive a NF-e; Standard não tem NF-e
+  // 1.4.7: Standard = impressão + visual + emissão NFC-e/NFS-e + sem limites; notas de ENTRADA continuam só no Pro
   // 1.2.8: teste grátis sem login = NF-e, App, Multi-Unidade e impressão bloqueados; autoatendimento liberado
   { const st = await call('/api/state'); assert.equal(st.pro, false); assert.deepEqual(st.features, {}); }
   assert.match((await call('/api/nfe', undefined, 400)).error, /plano Pro/); await call('/api/self-service');
   assert.match((await call('/api/prints/settings', {enabled: true}, 400)).error, /Standard e Pro/); assert.equal((await call('/api/prints')).allowed, false);
-  plan('standard'); { const st = await call('/api/state'); assert.equal(st.pro, false); assert.deepEqual(st.features, {print: true}); } await call('/api/prints/settings', {enabled: true}); assert.equal((await call('/api/state')).printControl, true); await call('/api/nfe/import', {xml: xml()}, 400);
+  plan('standard'); { const st = await call('/api/state'); assert.equal(st.pro, false); assert.deepEqual(st.features, {print: true, layout: true, fiscal: true, unlimited: true}); } await call('/api/prints/settings', {enabled: true}); assert.equal((await call('/api/state')).printControl, true); await call('/api/nfe/import', {xml: xml()}, 400);
   assert.match((await call('/api/nfe', undefined, 400)).error, /plano Pro/);
   // Standard: PIX no PC (autoatendimento) e Controle de impressão funcionam
   await call('/api/self-service'); await call('/api/prints'); await call('/api/pc-notices');
-  plan('pro'); { const st = await call('/api/state'); assert.equal(st.pro, true); assert.deepEqual(st.features, {print: true, nfe: true, app: true, units: true, layout: true}); }
+  plan('pro'); { const st = await call('/api/state'); assert.equal(st.pro, true); assert.deepEqual(st.features, {print: true, layout: true, fiscal: true, unlimited: true, nfe: true, app: true, units: true}); }
 
   // produtos com código sequencial; a Coca tem o EAN da nota
   const coke = S.products.find(p => p.name === 'Coca-cola'), bisc = S.products.find(p => p.name === 'Biscoito');

@@ -9,13 +9,13 @@
 //  - Cancelar: a cobrança automática para e o plano vale até o fim do período já pago.
 //  - Licenças vitalícias vendidas antes viram Standard com 12 meses grátis (uma vez, na primeira abertura desta versão).
 const DAY = 86400000, GRACE = 7 * DAY;
-// 2.1: Free (teste grátis de 30 dias: só vitrine, leva para os downloads) + Standard (meio, mais popular) + Pro
+// 2.1: Free (1.4.7: grátis para sempre com limites; só vitrine, leva para os downloads) + Standard (meio, mais popular) + Pro
 const PLAN_IDS = ['free', 'standard', 'pro'], PAID = ['standard', 'pro'], PERIODS = {mensal: 1, anual: 12};
 const DEFAULT_PLANS = {
   free: {name: 'Free', monthly: 0, monthlyList: 0, annual: 0, annualList: 0, badge: '', popular: false, free: true,
-    features: ['Funções essenciais por 30 dias', 'Autoatendimento no PC (PIX)', 'PCs e consoles ilimitados', 'Sem cartão de crédito', 'Seus dados ficam guardados ao assinar', 'Sem anúncios']},
+    features: ['Grátis para sempre, sem cartão', 'Não precisa de conta', 'Até 10 PCs e 2 consoles', 'Até 10 produtos, 5 serviços e 5 categorias', 'Autoatendimento no PC (PIX)', 'Seus dados ficam guardados ao assinar']},
   standard: {name: 'Standard', monthly: 2990, monthlyList: 0, annual: 29900, annualList: 35880, badge: '', popular: true,
-    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
+    features: ['Todas as funções liberadas', 'Autoatendimento no PC (PIX)', 'Emissão de NFC-e e NFS-e', 'Logo e cor da sua arena', 'Controle de impressão', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', 'Suporte completo (24 horas)', 'Sem anúncios']},
   pro: {name: 'Pro', monthly: 12990, monthlyList: 0, annual: 129900, annualList: 155880, badge: '', popular: false,
     features: ['Todas as funções liberadas', 'PCs e consoles ilimitados', 'VR e simuladores ilimitados', '1 layout personalizado (Servidor/Cliente)', 'Apps do cliente e da recepção (app.gamezoney.com)', 'Gerenciamento de NF-e', 'Emissão de NFC-e e NFS-e', 'Multi-Unidade', 'Logo e cor da sua arena', 'Autoatendimento no PC (PIX)', 'Controle de impressão', 'Suporte completo (24 horas)', 'Sem anúncios']}
 };
@@ -75,6 +75,13 @@ module.exports = function plans(app, ctx) {
     const saved = setting('plans');
     if (saved?.pro?.features) { const i = saved.pro.features.indexOf('App do cliente com conquistas (app.gamezoney.com)'); if (i >= 0) { saved.pro.features[i] = 'Apps do cliente e da recepção (app.gamezoney.com)'; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Plano Pro: item do app passa a citar o app da recepção'); } }
     saveSetting('plans_features_v8', {at: Date.now()});
+  }
+  // Servidor 1.4.7 (pedido do dono): Free vira grátis para sempre com limites (10 PCs, 2 consoles, 10 produtos, 5 serviços, 5 categorias)
+  // e o Standard ganha NFC-e/NFS-e e Logo e cor. Troca só os itens do Free e do Standard salvos no /admin (preços e o Pro continuam).
+  if (!setting('plans_features_v9')) {
+    const saved = setting('plans');
+    if (saved) { for (const id of ['free', 'standard']) if (saved[id]) saved[id].features = [...DEFAULT_PLANS[id].features]; saveSetting('plans', saved); db.audit('sistema', 'planos', 'Planos Free (grátis para sempre, com limites) e Standard (NFC-e/NFS-e e Logo e cor) atualizados'); }
+    saveSetting('plans_features_v9', {at: Date.now()});
   }
   function plansConfig() {
     const saved = setting('plans') || {}, out = {};

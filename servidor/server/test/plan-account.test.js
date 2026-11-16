@@ -29,13 +29,13 @@ async function boot(t) {
   return {web, dono, gz, privateKey, pub, mails};
 }
 
-test('1.0.6: plano da conta — entrar com e-mail e senha do site, trocar de computador, renovar e bloquear sem plano', {skip: !createApp && 'site não encontrado'}, async t => {
+test('1.0.6: plano da conta — entrar com e-mail e senha do site, trocar de computador, renovar e voltar ao Free sem plano', {skip: !createApp && 'site não encontrado'}, async t => {
   const s = await boot(t); const ana = s.web(), bia = s.web();
   await ana('/api/auth/register', {name: 'Ana', email: 'ana@arena.com', password: 'senha-forte-1'});
   await bia('/api/auth/register', {name: 'Bia', email: 'bia@arena.com', password: 'senha-forte-2'});
   await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'standard', months: 1});
   const pc1 = await s.gz();
-  let L = await pc1.call('/api/license'); assert.equal(L.mode, 'trial');
+  let L = await pc1.call('/api/license'); assert.equal(L.mode, 'free');
   assert.match((await pc1.call('/api/license/login', {email: 'ana@arena.com', password: 'errada'}, 400)).error, /incorretos/);
   const np = await pc1.call('/api/license/login', {email: 'bia@arena.com', password: 'senha-forte-2'}, 400); assert.equal(np.noPlan, true); assert.match(np.error, /não tem plano ativo/);
   L = await pc1.call('/api/license/login', {email: ' ana@arena.com ', password: 'senha-forte-1'});
@@ -46,10 +46,11 @@ test('1.0.6: plano da conta — entrar com e-mail e senha do site, trocar de com
   const busy = await pc2.call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1'}, 400); assert.equal(busy.needTransfer, true); assert.ok(busy.machine);
   assert.equal((await pc2.call('/api/license/login', {email: 'ana@arena.com', password: 'senha-forte-1', transfer: true})).mode, 'plan');
   assert.ok(s.mails.some(m => m.to === 'ana@arena.com' && /outro computador/.test(m.subject)), 'aviso por e-mail');
-  L = await pc1.call('/api/license/refresh', {}); assert.equal(L.mode, 'trial'); assert.match(L.lastError, /outro computador|passou a ser usada/);
+  L = await pc1.call('/api/license/refresh', {}); assert.equal(L.mode, 'free'); assert.match(L.lastError, /outro computador|passou a ser usada/);
+  // 1.4.7: sem plano = Free para sempre (nada bloqueia por prazo)
   pc1.state.license.trialStartedAt = Date.now() - 31 * 86400000;
-  assert.equal((await pc1.call('/api/license')).mode, 'expired');
-  const blocked = await pc1.call('/api/members', {name: 'X', username: 'xxx'}, 402); assert.match(blocked.error, /Entre com a sua conta gamezoney\.com/);
+  assert.equal((await pc1.call('/api/license')).mode, 'free');
+  await pc1.call('/api/members', {name: 'Xavier', username: 'xxx', password: 'Senha-1234'});
   // renovação: o admin dá mais meses e o computador atual recebe a nova validade
   const before = (await pc2.call('/api/license')).paidUntil;
   await s.dono('/api/admin/subscriptions/grant', {email: 'ana@arena.com', plan: 'pro', months: 3});
@@ -79,10 +80,10 @@ test('1.0.6: plano — 7 dias de tolerância, relógio voltado não estende e ce
   const cert = (paid, grace, installId = id) => sign({v: 2, kind: 'plan', uid: 'u', email: 'ana@arena.com', plan: 'standard', planName: 'Standard', period: 'mensal', installId, paidUntil: paid, graceUntil: grace, issuedAt: now}, privateKey);
   st.license.planToken = cert(now + 10 * day, now + 17 * day); assert.equal(lic().status().mode, 'plan');
   st.license.planToken = cert(now - 2 * day, now + 5 * day); let S = lic().status(); assert.equal(S.mode, 'plan-grace'); assert.equal(S.daysLeft, 5); assert.equal(lic().expired(), false);
-  st.license.planToken = cert(now - 9 * day, now - 2 * day); S = lic().status(); assert.equal(S.mode, 'expired'); assert.equal(S.planEnded, 'Standard');
-  st.license.planToken = cert(now + 10 * day, now + 17 * day, crypto.randomUUID()); assert.equal(lic().status().mode, 'expired', 'certificado de outra instalação');
-  { const [b, sg] = cert(now + 10 * day, now + 17 * day).split('.'), body = JSON.parse(Buffer.from(b, 'base64url')); body.paidUntil += 365 * day; st.license.planToken = Buffer.from(JSON.stringify(body)).toString('base64url') + '.' + sg; } assert.equal(lic().status().mode, 'expired', 'certificado adulterado');
+  st.license.planToken = cert(now - 9 * day, now - 2 * day); S = lic().status(); assert.equal(S.mode, 'free'); assert.equal(S.planEnded, 'Standard'); assert.deepEqual(lic().features(), {});
+  st.license.planToken = cert(now + 10 * day, now + 17 * day, crypto.randomUUID()); assert.equal(lic().status().mode, 'free', 'certificado de outra instalação');
+  { const [b, sg] = cert(now + 10 * day, now + 17 * day).split('.'), body = JSON.parse(Buffer.from(b, 'base64url')); body.paidUntil += 365 * day; st.license.planToken = Buffer.from(JSON.stringify(body)).toString('base64url') + '.' + sg; } assert.equal(lic().status().mode, 'free', 'certificado adulterado');
   // relógio: o servidor já viu uma data 20 dias à frente; voltar o relógio não faz o plano valer de novo
-  st.license.planToken = cert(now + 10 * day, now + 17 * day); st.license.lastSeenAt = now + 20 * day; assert.equal(lic().status().mode, 'expired');
+  st.license.planToken = cert(now + 10 * day, now + 17 * day); st.license.lastSeenAt = now + 20 * day; assert.equal(lic().status().mode, 'free');
   assert.ok(license.verifyPlan(cert(1, 2), id, pub));
 });

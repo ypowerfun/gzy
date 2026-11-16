@@ -74,7 +74,7 @@ module.exports = function createBot({plansInfo = () => [], answers = () => [], r
     .map(m => ({q: m[1].replace(/<[^>]+>/g, '').trim(), a: m[2].replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim()}));
 
   const plansText = () => (plansInfo() || []).filter(Boolean).map(p => p.free
-    ? `• ${p.name}: teste grátis de 30 dias, sem cartão.`
+    ? `• ${p.name}: grátis para sempre, sem cartão — ${p.features.join(', ')}.`
     : `• ${p.name}: ${money(p.monthly)}/mês ou ${money(p.annual)}/ano${p.popular ? ' (mais popular)' : ''}. Inclui: ${p.features.join(', ')}.`).join('\n') || '• Consulte gamezoney.com/#precos.';
   const fill = t => String(t).replace(/\{planos\}/g, () => plansText());
 

@@ -7,10 +7,10 @@ Este instalador leva tudo o que o Servidor precisa (motor Node, banco de dados, 
 O Servidor abre sozinho quando a conta entra no Windows (ícone perto do relógio). O painel abre numa janela própria do GameZoney; fechar a janela só esconde o painel.
 
 Planos:
-  - Free: teste grátis de 30 dias, a partir da primeira abertura, sem cartão de crédito: funções essenciais e autoatendimento no PC (PIX). Controle de impressão, NF-e, Gerenciar App e Multi-Unidade são liberados ao entrar com a conta do plano.
-  - Standard: todas as funções do dia a dia (sessões, caixa, vendas, clientes, fidelidade, Corujão/Viradão, PIX no PC, controle de impressão, ligar os PCs pela rede e mais).
-  - Pro: tudo do Standard + Gerenciamento NF-e, Gerenciar App e Multi-Unidade.
-PCs, consoles, VR e simuladores ilimitados em todos os planos. Assine em gamezoney.com e entre com a sua conta em Configuração > Licença. Os dados do teste continuam guardados ao assinar.
+  - Free: grátis para sempre, sem cartão e sem precisar de conta: até 10 PCs, 2 consoles, 10 produtos, 5 serviços e 5 categorias, com autoatendimento no PC (PIX).
+  - Standard: todas as funções liberadas, com PCs, consoles, VR e simuladores ilimitados, autoatendimento no PC (PIX), emissão de NFC-e e NFS-e, logo e cor da sua arena e controle de impressão.
+  - Pro: tudo do Standard + Gerenciamento NF-e completo (também as notas de entrada pelo XML), Gerenciar App (apps do cliente e da recepção) e Multi-Unidade.
+Para o Standard ou o Pro, assine em gamezoney.com e entre com a sua conta em Configuração > Licença. Seus dados continuam guardados ao assinar.
 
 No primeiro acesso, crie o usuário administrador e a senha. Em Configuração > Servidor IP, confira o endereço deste PC na rede (usado pelas TVs e pelos PCs).
 

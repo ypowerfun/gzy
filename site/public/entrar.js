@@ -15,7 +15,7 @@
     });
     login.classList.toggle('hidden', name !== 'login'); register.classList.toggle('hidden', name !== 'register'); recovery.classList.toggle('hidden', name !== 'forgot');
     $('.tabs').classList.toggle('hidden', name === 'forgot'); $('#google-wrap').classList.toggle('hidden', name === 'forgot' || !siteConfig?.google);
-    const title = name === 'forgot' ? 'Vamos recuperar seu acesso.' : name === 'register' ? (purchasing ? 'Crie sua conta para continuar.' : 'Comece seu teste de 30 dias.') : 'Bem-vindo de volta.';
+    const title = name === 'forgot' ? 'Vamos recuperar seu acesso.' : name === 'register' ? (purchasing ? 'Crie sua conta para continuar.' : 'Comece grátis no plano Free.') : 'Bem-vindo de volta.';
     const description = name === 'forgot' ? 'Informe seu e-mail para receber o link de recuperação.' : purchasing ? 'Entre ou crie uma conta para continuar com a compra da sua licença.' : name === 'register' ? 'Depois do cadastro, você acessa os downloads e o guia.' : 'Entre para acessar sua conta.';
     $('#auth-title').textContent = t(title); $('#auth-description').textContent = t(description);
     $('#register-submit').textContent = t(purchasing ? 'Criar conta e continuar a compra' : 'Criar conta e começar o teste');

@@ -7,10 +7,10 @@ This installer includes everything the Server needs (Node engine, database, tool
 The Server starts automatically when the account signs in to Windows (icon near the clock). The panel opens in its own GameZoney window; closing the window only hides the panel.
 
 Plans:
-  - Free: 30-day free trial, starting at the first launch, no credit card: essential features and self-service on the PC (PIX). Print control, NF-e, Manage App and Multi-Unit are unlocked when you sign in with the plan account.
-  - Standard: all everyday features (sessions, cash register, sales, customers, loyalty, overnight events, PIX on the PC, print control, waking PCs over the network and more).
-  - Pro: everything in Standard + NF-e management, Manage App and Multi-Unit.
-Unlimited PCs, consoles, VR and simulators on every plan. Subscribe at gamezoney.com and sign in with your account in Settings > License. Your trial data is kept when you subscribe.
+  - Free: free forever, no credit card and no account needed: up to 10 PCs, 2 consoles, 10 products, 5 services and 5 categories, with self-service on the PC (PIX).
+  - Standard: all features unlocked, with unlimited PCs, consoles, VR and simulators, self-service on the PC (PIX), NFC-e and NFS-e issuing, your arena's logo and color, and print control.
+  - Pro: everything in Standard + full NF-e management (also incoming invoices by XML), Manage App (customer and front desk apps) and Multi-Unit.
+For Standard or Pro, subscribe at gamezoney.com and sign in with your account in Settings > License. Your data is kept when you subscribe.
 
 On first access, create the administrator user and password. In Settings > Server IP, check this PC's network address (used by the TVs and PCs). The panel language can be changed in Profile > Language.
 

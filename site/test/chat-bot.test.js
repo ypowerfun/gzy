@@ -35,7 +35,7 @@ test('assistente: especialista online assume (assistente para); offline = devolu
  let r=await v('/api/chat/start',{name:'Rui',email:'rui@lan.com',message:'Qual é a capital da Mongólia?'});
  assert.match(r.messages.at(-1).text,/Não encontrei essa resposta.*não temos um especialista online.*rui@lan\.com/s);assert.equal(r.chat.handoff,true);assert.equal(r.chat.bot,true,'offline: o assistente continua ajudando');
  assert.equal(s.mails.filter(m=>/especialista/.test(m.subject)).length,1);
- r=await v('/api/chat/send',{text:'Tem teste grátis?'});assert.match(r.messages.at(-1).text,/30 dias grátis/);
+ r=await v('/api/chat/send',{text:'Tem teste grátis?'});assert.match(r.messages.at(-1).text,/grátis para sempre/);
  r=await v('/api/chat/send',{text:'atendente'});assert.match(r.messages.at(-1).text,/não temos um especialista online/);
  assert.equal(s.mails.filter(m=>/especialista/.test(m.subject)).length,1,'no máximo 1 e-mail a cada 30 min por conversa');
  let b=await s.dono('/api/admin/bot');assert.deepEqual(b.misses.map(m=>m.text),['Qual é a capital da Mongólia?']);

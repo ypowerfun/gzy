@@ -6,14 +6,15 @@ test('1.2.0: menu lateral — ordem, linhas douradas que não encolhem e itens s
   const html = pub('index.html'), nav = html.slice(html.indexOf('<nav>'), html.indexOf('</nav>'));
   const items = [...nav.matchAll(/<button data-view="([a-z]+)"|<div class="nav-sep[^"]*"/g)].map(m => m[1] || '-');
   assert.deepEqual(items, ['stations', 'members', 'loyalty', 'events', 'balance', '-', 'history', 'logs', 'finance', 'stats', '-', 'cash', 'shop', 'nfe', '-', 'ranking', '-', 'app', '-', 'settings']);
-  assert.match(nav, /data-view="nfe" data-pro="true" class="hidden"/);
+  assert.match(nav, /data-view="nfe" data-pro="fiscal" class="hidden"/); // 1.4.7: NF-e também no Standard (emissão)
   assert.match(nav, /data-view="app" data-pro="true" data-admin="true" class="hidden"/);
   const css = pub('theme-gamezoney.css'), rule = css.match(/nav \.nav-sep\{[^}]*\}/)[0];
   assert.match(rule, /flex:none/, 'a linha dourada não pode encolher dentro do menu (coluna flexível)');
   assert.match(rule, /min-height:1px/);
   // toggle('hidden', x) com x indefinido ALTERNA a classe a cada atualização (o item piscava)
   const app = pub('app.js');
-  assert.match(app, /nav \[data-pro\]'\)\.forEach\(b=>b\.classList\.toggle\('hidden',!state\.pro\|\|\(!!b\.dataset\.admin&&!isAdmin\(\)\)\)\)/);
+  assert.match(app, /const gzFeat=b=>b\.dataset\.pro==='fiscal'\?!!\(state\.pro\|\|state\.features&&state\.features\.fiscal\):!!state\.pro;/);
+  assert.match(app, /nav \[data-pro\]'\)\.forEach\(b=>b\.classList\.toggle\('hidden',!gzFeat\(b\)\|\|\(!!b\.dataset\.admin&&!isAdmin\(\)\)\)\)/);
   assert.doesNotMatch(pub('cash-ui.js'), /Notas Fiscais/, 'NF-e saiu das abas de Produtos/Serviços');
   assert.match(pub('app-manager-ui.js'), /async function renderAppManager/);
 });

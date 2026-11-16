@@ -16,7 +16,7 @@ const magicPacket = mac => { const m = Buffer.from(mac, 'hex'), b = Buffer.alloc
 module.exports = function pcDevices(store, options = {}) {
   const s = store.state;
   s.settings.printControl ??= {enabled: false, serviceId: ''};
-  // 1.2.8: Controle de impressão só nos planos Standard e Pro. Sem o plano (teste grátis), os PCs não retêm nada.
+  // 1.2.8: Controle de impressão só nos planos Standard e Pro. Sem o plano (Free), os PCs não retêm nada.
   const allowed = () => (typeof options.allowed === 'function' ? !!options.allowed() : true);
   const on = () => !!s.settings.printControl.enabled && allowed();
   s.prints ??= [];

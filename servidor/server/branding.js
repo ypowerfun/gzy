@@ -11,7 +11,7 @@ const fs = require('node:fs'), path = require('node:path');
 const {fail} = require('./store');
 
 const MAX_BYTES = 1024 * 1024, MAX_SIDE = 2048, MIN_SIDE = 16;
-const PRO_MSG = 'Personalizar visual: disponível no plano Pro. Entre com a conta gamezoney.com do plano Pro em Configuração › Licença.';
+const PRO_MSG = 'Personalizar visual: disponível nos planos Standard e Pro. Entre com a conta gamezoney.com em Configuração › Licença.'; // 1.4.7: também no Standard
 
 // ---------- cores ----------
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));

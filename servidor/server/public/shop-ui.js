@@ -51,7 +51,7 @@ async function renderShop() {
   const serviceTable = `<table><thead><tr><th>Nome do Serviço</th><th>Preço por Unidade</th><th>Ações</th></tr></thead><tbody>${shopData.services.map(s => `<tr><td>${esc(s.name)}</td><td>${money(s.priceCents)}</td>${actions('service', s.id)}</tr>`).join('') || '<tr><td colspan="3">Nenhum serviço cadastrado.</td></tr>'}</tbody></table>`;
   // 1.0.5: três áreas — Vendas (só o PDV, primeira opção), Gerenciamento de Produtos e Gerenciamento de Serviços
   const tabs = gzTabs(shopTab === 'sales' ? 'caixa' : 'produtos'); // 1.0.5: Vendas fica em Caixa
-  const manage = kind => `<div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${kind}">+ ${kind === 'product' ? 'Novo Produto' : 'Novo Serviço'}</button>${kind === 'product' ? '<button data-products-import>Importar planilha</button>' : ''}` : ''}</div>
+  const manage = kind => `${admin && typeof gzFreeNote === 'function' ? gzFreeNote([kind === 'product' ? 'products' : 'services'], shopData.limits) : ''}<div class="shop-bar">${admin ? `<button class="primary" data-shop-add="${kind}">+ ${kind === 'product' ? 'Novo Produto' : 'Novo Serviço'}</button>${kind === 'product' ? '<button data-products-import>Importar planilha</button>' : ''}` : ''}</div>
     <div class="shop-card table-wrap">${kind === 'product' ? productTable : serviceTable}</div>`;
   $('#view').innerHTML = `<div class="shop-area">${tabs}
    ${shopTab === 'categories' ? categoriesHtml(admin) : shopTab === 'products' ? manage('product') : shopTab === 'services' ? manage('service') : `
@@ -126,7 +126,7 @@ function showReceipt(sale) {
 // 1.0.5: Gerenciamento de Categoria
 function categoriesHtml(admin) {
   const rows = shopData.categories.map(c => `<tr><td>${esc(c)}</td><td>${shopData.categoryUse?.[c] || 0}</td>${admin ? `<td class="actions-cell"><button class="icon-btn" data-cat-edit="${esc(c)}" title="Editar">${ICON.edit}</button><button class="icon-btn del" data-cat-remove="${esc(c)}" title="Remover">${ICON.del}</button></td>` : '<td></td>'}</tr>`).join('');
-  return `<div class="shop-bar">${admin ? '<button class="primary" data-cat-add>+ Nova Categoria</button>' : ''}</div><div class="shop-card table-wrap"><table><thead><tr><th>Categoria</th><th>Produtos</th><th>Ações</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhuma categoria.</td></tr>'}</tbody></table></div>`;
+  return `${admin && typeof gzFreeNote === 'function' ? gzFreeNote(['categories'], shopData.limits) : ''}<div class="shop-bar">${admin ? '<button class="primary" data-cat-add>+ Nova Categoria</button>' : ''}</div><div class="shop-card table-wrap"><table><thead><tr><th>Categoria</th><th>Produtos</th><th>Ações</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhuma categoria.</td></tr>'}</tbody></table></div>`;
 }
 function categoryForm(old) {
   modal(old ? 'Editar categoria' : 'Nova categoria', `<form><label>Nome da categoria<input name="name" required maxlength="60" value="${esc(old || '')}"></label>${old ? '<p class="hint">Os produtos desta categoria passam a usar o novo nome.</p>' : ''}<div class="dialog-actions"><button class="primary">Salvar</button></div></form>`);

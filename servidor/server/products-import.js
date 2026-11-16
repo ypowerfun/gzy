@@ -104,7 +104,7 @@ function validate(store, rows) {
   });
 }
 
-function importProducts(store, rows, actor) {
+function importProducts(store, rows, actor, guard) {
   if (!Array.isArray(rows) || !rows.length) fail('Nenhuma linha para importar.');
   if (rows.length > MAX_ROWS) fail('Muitas linhas.');
   const checked = validate(store, rows.map(r => ({line: Number(r.line) || 0, code: r.code, name: r.name, category: r.category, barcode: r.barcode, ncm: String(r.ncm || '').replace(/\D/g, ''), cfop: String(r.cfop || '').replace(/\D/g, ''), cst: String(r.cst || '').replace(/\D/g, ''), costRaw: r.costRaw, priceRaw: r.priceRaw, marginRaw: r.marginRaw, stockRaw: r.stockRaw,
@@ -113,6 +113,8 @@ function importProducts(store, rows, actor) {
   const ok = checked.filter(r => r.status === 'new' || r.status === 'update');
   if (!ok.length) fail('Nenhum produto válido para importar.');
   const created = ok.filter(r => r.status === 'new').length, updated = ok.length - created;
+  // 1.4.7: plano Free (limite de produtos e categorias) — confere antes de gravar
+  if (guard) guard(created, new Set(ok.map(r => r.finalCategory).filter(c => !store.state.categories.includes(c))).size, updated);
   store.change(actor, 'produto', `Importação de produtos: ${created} novo(s), ${updated} atualizado(s)`, () => {
     const s = store.state, now = Date.now();
     for (const r of ok) {

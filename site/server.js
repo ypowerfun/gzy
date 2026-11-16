@@ -172,8 +172,8 @@ function createApp(options = {}) {
     // 1.3: boas-vindas + link de confirmação do e-mail
     const token = crypto.randomBytes(32).toString('hex');
     db.run('INSERT INTO verifications(token_hash,user_id,expires_at) VALUES(?,?,?)', sha(token), user.id, Date.now() + 7 * DAY);
-    notify(email, 'Bem-vindo ao GameZoney', {preheader: 'Sua conta foi criada. Confirme seu e-mail e teste grátis por 30 dias.', lines: [`Olá, ${name}!`, 'Sua conta no GameZoney foi criada. Confirme o seu e-mail para começar.'],
-      title: 'Confirme seu e-mail', button: {label: 'Confirmar e-mail', url: `${SITE}/api/auth/verify?t=${token}`}, after: [`Depois, baixe o sistema e use grátis por 30 dias em Minha conta: ${SITE}/conta`]});
+    notify(email, 'Bem-vindo ao GameZoney', {preheader: 'Sua conta foi criada. Confirme seu e-mail e comece grátis.', lines: [`Olá, ${name}!`, 'Sua conta no GameZoney foi criada. Confirme o seu e-mail para começar.'],
+      title: 'Confirme seu e-mail', button: {label: 'Confirmar e-mail', url: `${SITE}/api/auth/verify?t=${token}`}, after: [`Depois, baixe o sistema em Minha conta e use grátis no plano Free, sem prazo: ${SITE}/conta`]});
     return {user: publicUser(user)};
   }));
   // 1.3: no máximo 10 senhas erradas por conta a cada 15 min (contra tentativa de adivinhar a senha de vários lugares)

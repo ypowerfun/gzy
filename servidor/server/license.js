@@ -1,9 +1,9 @@
 'use strict';
 // GameZoney — software proprietário e confidencial. © 2026 GameZoney. Todos os direitos reservados.
 // Licença do GameZoney Servidor.
-//  - Teste grátis de 30 dias, contados da primeira vez que o servidor abre (state.license.trialStartedAt).
-//    Uma cópia da data fica em %LOCALAPPDATA%\GameZoney\gz-license.json (fora da pasta data), para que
-//    reinstalar ou apagar os dados não reinicie o teste.
+//  - 1.4.7: sem conta = plano FREE para sempre (antes era um teste de 30 dias), com limites em plan-limits.js
+//    (10 PCs, 2 consoles, 10 produtos, 5 serviços, 5 categorias) e sem os recursos do Standard/Pro.
+//    A data da primeira abertura (state.license.trialStartedAt) continua guardada só como informação.
 //  - 1.0.6: PLANO DA CONTA (Standard/Pro). Em Configuração › Licença o dono entra com o e-mail e a senha da conta
 //    gamezoney.com; o site devolve um certificado assinado (Ed25519) com o plano, "pago até" e o fim da tolerância de
 //    7 dias, preso a esta instalação (installId). O servidor renova o certificado sozinho quando tem internet (a cada
@@ -11,12 +11,13 @@
 //    outro computador ou o plano acabar, o site não renova e este computador volta a ficar sem plano.
 //  - Licença vitalícia antiga (certificado v1, chave GZ-...): continua valendo como Standard até 12 meses depois da
 //    primeira abertura desta versão e passa sozinha para o plano da conta quando houver internet.
-//  - Sem plano (teste encerrado ou plano vencido depois dos 7 dias): os dados ficam guardados e o painel continua
-//    abrindo; só ficam bloqueadas as ações que geram venda/tempo novo (recargas, iniciar sessão, visitantes, PDV,
-//    Corujão/Viradão, abrir caixa, novo cliente).
-//  - Relógio: o servidor guarda a maior data já vista; voltar o relógio do Windows não estende teste nem plano.
+//  - Plano vencido depois dos 7 dias (ou licença antiga vencida): volta para o Free. O que já passou dos limites do Free
+//    continua funcionando; só não dá para alterar a configuração disso (plan-limits.js) nem usar os recursos do plano.
+//  - Proteção (depurador/código injetado): só aí ficam bloqueadas as ações que geram venda/tempo novo (recargas, iniciar
+//    sessão, visitantes, PDV, Corujão/Viradão, abrir caixa, novo cliente) até abrir o GameZoney de novo.
+//  - Relógio: o servidor guarda a maior data já vista; voltar o relógio do Windows não estende o plano.
 const crypto = require('node:crypto'), fs = require('node:fs'), path = require('node:path'), os = require('node:os');
-const TRIAL_DAYS = 30, DAY = 86400000, LEGACY_DAYS = 365, REFRESH_EVERY = 6 * 3600000;
+const DAY = 86400000, LEGACY_DAYS = 365, REFRESH_EVERY = 6 * 3600000;
 const SITE = () => (process.env.GZ_SITE_URL || 'https://gamezoney.com').replace(/\/+$/, '');
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAMFrzAwdfdPAGS2NkTlKe29nnB0en88wSERUzJeOcqwM=
@@ -24,7 +25,7 @@ MCowBQYDK2VwAyEAMFrzAwdfdPAGS2NkTlKe29nnB0en88wSERUzJeOcqwM=
 const KEY_RE = /^GZ(-[A-Z0-9]{4}){4}$/;
 // 1.0.7: proteção contra alteração em funcionamento. Depurador (inspector) ligado ou código injetado no Node
 // (--require/--import/--loader, inclusive por NODE_OPTIONS) poderiam trocar a conferência da licença: nesse caso o
-// GameZoney funciona como teste vencido até ser aberto de novo do jeito normal. O GameZoney.exe já limpa NODE_* ao abrir.
+// GameZoney bloqueia vendas/tempo novo até ser aberto de novo do jeito normal. O GameZoney.exe já limpa NODE_* ao abrir.
 // Só o que injeta código ou LIGA o depurador. --inspect-port/--inspect-publish-uid sozinhos só escolhem a porta (o Node 24
 // repassa esses padrões aos processos dos testes); depurador realmente ligado é pego por inspector.url().
 const DANGER = /^(-r|--require|--import|--loader|--experimental-loader|--inspect|--inspect-brk|--inspect-wait|--debug|--debug-brk)(=|$)/;
@@ -69,7 +70,7 @@ function verifyPlan(token, installId, publicKey = PUBLIC_KEY) {
 // 1.0.7: teste grátis preso ao COMPUTADOR. Identificação anônima = SHA-256 do MachineGuid do Windows (não dá para
 // voltar ao valor original). Uma cópia do início do teste fica também no registro do Windows (HKCU\Software\GameZoney)
 // e, com internet, o gamezoney.com guarda a primeira data deste computador: desinstalar, apagar a pasta de dados e
-// reinstalar não reinicia os 30 dias.
+// reinstalar não reinicia os 30 dias. (1.4.7: sem teste de 30 dias — o Free não tem prazo; a data fica só como informação.)
 const REG_KEY = 'HKCU\\Software\\GameZoney';
 function winMachineId() {
   try {
@@ -116,8 +117,8 @@ module.exports = function license(store, options = {}) {
   if (!options.noTimer) setInterval(() => { const before = tamperReason; if (checkTamper() && !before) store.log('sistema', 'licenca', 'Proteção: ' + tamperReason + '. Recargas, sessões novas e vendas bloqueadas até abrir o GameZoney de novo.'); }, 3000).unref();
 
   function status() {
-    const t = now(), endsAt = s.license.trialStartedAt + TRIAL_DAYS * DAY, left = Math.max(0, Math.ceil((endsAt - t) / DAY));
-    const base = {installId: s.runtime.installId, trialDays: TRIAL_DAYS, trialStartedAt: s.license.trialStartedAt, trialEndsAt: endsAt, buyUrl: SITE() + '/#precos', accountUrl: SITE() + '/conta',
+    const t = now();
+    const base = {installId: s.runtime.installId, firstOpenedAt: s.license.trialStartedAt, buyUrl: SITE() + '/#precos', accountUrl: SITE() + '/conta',
       checkedAt: s.license.planCheckedAt || 0, lastError: s.license.planError || ''};
     if (checkTamper()) return {...base, mode: 'expired', daysLeft: 0, tamper: true, tamperReason};
     const p = planCert();
@@ -127,8 +128,9 @@ module.exports = function license(store, options = {}) {
     }
     const lic = licensed();
     if (lic && t <= s.license.legacyUntil) return {...base, mode: 'licensed', legacy: true, legacyUntil: s.license.legacyUntil, key: mask(lic.key), email: lic.email || '', activatedAt: lic.issuedAt};
-    if (endsAt > t) return {...base, mode: 'trial', daysLeft: left, ...(p ? {planEnded: p.planName || p.plan, email: p.email} : {})};
-    return {...base, mode: 'expired', daysLeft: 0, ...(p ? {planEnded: p.planName || p.plan, email: p.email, paidUntil: p.paidUntil} : lic ? {legacyEnded: true} : {})};
+    // 1.4.7 (pedido do dono): o teste de 30 dias virou o plano FREE para sempre (sem entrar em conta), com limites (plan-limits.js).
+    // Plano vencido (depois da tolerância) ou licença antiga vencida também voltam para o Free — nada fica bloqueado por prazo.
+    return {...base, mode: 'free', ...(p ? {planEnded: p.planName || p.plan, email: p.email, paidUntil: p.paidUntil} : lic ? {legacyEnded: true} : {})};
   }
   const expired = () => status().mode === 'expired';
   // bloqueio sem plano (somente ações que geram venda/tempo novo)
@@ -136,7 +138,7 @@ module.exports = function license(store, options = {}) {
     if (req.method === 'POST' && BLOCKED.has((req.baseUrl + req.path).replace(/\/+$/, '')) && expired()) {
       const st = status();
       const error = st.tamper ? 'Foi detectada uma tentativa de alterar o GameZoney em funcionamento. Feche o GameZoney pelo ícone perto do relógio e abra de novo. Seus dados continuam guardados.' : st.planEnded ? `O plano ${st.planEnded} venceu. Renove em gamezoney.com e clique em Atualizar plano em Configuração › Licença. Seus dados continuam guardados.`
-        : 'O teste grátis de 30 dias terminou. Entre com a sua conta gamezoney.com (com plano ativo) em Configuração › Licença. Seus dados continuam guardados.';
+        : 'Ação bloqueada pela proteção do GameZoney. Feche o GameZoney pelo ícone perto do relógio e abra de novo.';
       return res.status(402).json({error, license: 'expired'});
     }
     next();
@@ -183,7 +185,7 @@ module.exports = function license(store, options = {}) {
         } else if (licensed()) {
           const data = await call('/api/plan/from-license', {token: s.license.token});
           savePlan(data.token, actor, `Licença vitalícia passou para o plano ${data.planName || data.plan} da conta ${p0(data)}`);
-        } else await anchorTrial(actor);
+        } /* 1.4.7: sem conta = Free para sempre; a data do teste no site (anchorTrial) não é mais necessária */
       } catch (e) {
         if (!e.offline) { s.license.planError = e.message; s.license.planCheckedAt = now(); store.persist(); }
         if (e.status === 401 && s.license.planToken) { s.license.planToken = null; store.persist(); saveMarker(); }
@@ -191,17 +193,6 @@ module.exports = function license(store, options = {}) {
       return status();
     })();
     return refreshing;
-  }
-  // 1.0.7: o gamezoney.com devolve (assinada) a primeira data de teste deste computador; vale a mais antiga
-  async function anchorTrial(actor) {
-    if (!machineId) return;
-    let data; try { data = await call('/api/trial/anchor', {machineId, trialStartedAt: s.license.trialStartedAt}); } catch { return; } // sem site: vale a data local e a do registro
-    const c = readCert(data.token, publicKey);
-    if (!c || c.v !== 1 || c.kind !== 'trial' || c.machine !== machineId || !(c.startedAt > 0)) return;
-    if (c.startedAt < s.license.trialStartedAt - 60000) {
-      store.change(actor, 'licenca', `Teste grátis: este computador já usava o GameZoney desde ${new Date(c.startedAt).toLocaleDateString('pt-BR')} (a contagem de 30 dias continua dessa data)`, () => { s.license.trialStartedAt = c.startedAt; });
-      saveMarker(); registry.set(c.startedAt);
-    }
   }
   async function logout(actor) {
     const token = s.license.planToken;
@@ -222,7 +213,10 @@ module.exports = function license(store, options = {}) {
   const isPro = () => { const st = status(); return (st.mode === 'plan' || st.mode === 'plan-grace') && st.plan === 'pro'; };
   // 1.2.8: recursos por plano (pedido do dono). Teste grátis (sem entrar na conta) = Free: só o essencial + Autoatendimento.
   //  Standard: + Controle de impressão. Pro: + NF-e, Gerenciar App e Multi-Unidade. Licença vitalícia antiga = Standard.
-  const features = () => { const st = status(); if (st.mode === 'plan' || st.mode === 'plan-grace') return st.plan === 'pro' ? {print: true, nfe: true, app: true, units: true, layout: true} : {print: true}; if (st.mode === 'licensed') return {print: true}; return {}; };
+  // 1.4.7: Free (sem conta) = limites + Autoatendimento. Standard (e licença antiga) = Controle de impressão, Personalizar visual,
+  //  emissão de NFC-e/NFS-e (fiscal) e PCs/consoles/produtos sem limite. Pro = Standard + notas de entrada (nfe), Gerenciar App e Multi-Unidade.
+  const STANDARD = {print: true, layout: true, fiscal: true, unlimited: true};
+  const features = () => { const st = status(); if (st.mode === 'plan' || st.mode === 'plan-grace') return st.plan === 'pro' ? {...STANDARD, nfe: true, app: true, units: true} : {...STANDARD}; if (st.mode === 'licensed') return {...STANDARD}; return {}; };
   // (1.1.9 deixava o teste grátis com tudo; desfeito na 1.2.8)
   // 1.1.9: o plano Free (teste de 30 dias) libera TODAS as funções, inclusive as do Pro que rodam só no servidor (Notas Fiscais e
   // Gerenciamento do App). Multi-Unidade continua exigindo o Pro de verdade (o site confere o certificado do plano).
@@ -234,4 +228,4 @@ module.exports.normalizeKey = normalizeKey;
 module.exports.verifyToken = verifyToken;
 module.exports.verifyPlan = verifyPlan;
 module.exports.BLOCKED = BLOCKED;
-module.exports.TRIAL_DAYS = TRIAL_DAYS;
+

@@ -48,7 +48,7 @@ document.addEventListener('click', async e => {
 // ---------- Configuração ----------
 function printSettingsSection(data, services) {
   const c = data.settings || {}, sec = document.createElement('section'); sec.id = 'print-section'; sec.className = 'panel';
-  // 1.2.8: só nos planos Standard e Pro (teste grátis sem conta: bloqueado)
+  // 1.2.8: só nos planos Standard e Pro (plano Free sem conta: bloqueado)
   const locked = data.allowed === false;
   sec.innerHTML = `<h2>Controle de impressão</h2>${locked ? '<p class="hint" style="color:#ffb84d">🔒 Disponível nos planos Standard e Pro. Entre com a sua conta gamezoney.com em Configuração › Licença para liberar.</p>' : ''}<p class="hint">Ligado, todo documento que o cliente manda imprimir fica <strong>parado no PC</strong> até a recepção aprovar no Painel de controle (com ou sem cobrança). Evita desperdício de papel e tinta. Vale para as impressoras instaladas nos PCs, com o GameZoney Cliente atualizado. No modo administrador nada é parado.</p>
     <form id="print-form"><label class="check"><input type="checkbox" name="enabled" ${c.enabled ? 'checked' : ''}> Exigir aprovação da recepção para imprimir</label>

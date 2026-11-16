@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {createServer}=require('../server'),license=require('../license');
 const sign=(data,privateKey)=>{const body=Buffer.from(JSON.stringify(data)).toString('base64url');return body+'.'+crypto.sign(null,Buffer.from(body,'base64url'),privateKey).toString('base64url')};
 
-test('1.0.5: licença — teste de 30 dias, bloqueio só de venda/tempo novo depois do teste e ativação vitalícia assinada',async t=>{
+test('1.0.5/1.4.7: licença — sem conta é o plano Free para sempre (nada bloqueia por prazo) e ativação vitalícia assinada',async t=>{
  const {publicKey,privateKey}=crypto.generateKeyPairSync('ed25519');const pub=publicKey.export({type:'spki',format:'pem'});
  // site falso: aceita GZ-AAAA-BBBB-CCCC-DDDD e devolve o certificado assinado para o installId enviado
  let lastBody=null;const site=http.createServer((req,res)=>{let raw='';req.on('data',c=>raw+=c);req.on('end',()=>{lastBody=JSON.parse(raw);res.setHeader('Content-Type','application/json');
@@ -15,12 +15,11 @@ test('1.0.5: licença — teste de 30 dias, bloqueio só de venda/tempo novo dep
  t.after(async()=>{await instance.close();site.close();fs.rmSync(directory,{recursive:true,force:true});if(old===undefined)delete process.env.GZ_SITE_URL;else process.env.GZ_SITE_URL=old});
  async function call(url,body,status=200){const r=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body)});const text=await r.text();assert.equal(r.status,status,url+' '+text);if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return text?JSON.parse(text):null}
  await call('/api/setup',{username:'admin',password:'password123'});await call('/api/login',{username:'admin',password:'password123'});
- let L=await call('/api/license');assert.equal(L.mode,'trial');assert.equal(L.daysLeft,30);assert.ok(L.installId);
- // teste vencido: venda/tempo novo bloqueados (402), resto continua (dados guardados)
+ let L=await call('/api/license');assert.equal(L.mode,'free');assert.ok(L.installId);
+ // 1.4.7: o antigo "teste vencido" não existe mais — depois de 31 dias continua Free e nada é bloqueado (402)
  instance.store.state.license.trialStartedAt=Date.now()-31*86400000;
- L=await call('/api/license');assert.equal(L.mode,'expired');assert.equal(L.daysLeft,0);
- const blocked=await call('/api/members',{name:'Ana',username:'ana',password:'Senha-1234'},402);assert.match(blocked.error,/30 dias/);
- await call('/api/shop/sale',{items:[]},402);await call('/api/credit',{memberId:'x',minutes:60},402);
+ L=await call('/api/license');assert.equal(L.mode,'free');
+ await call('/api/members',{name:'Bia',username:'bia',password:'Senha-1234'});
  await call('/api/state');await call('/api/profile/lang',{lang:'en'});
  // chave errada / formato inválido
  await call('/api/license/activate',{key:'abc'},400);
@@ -38,11 +37,11 @@ test('1.0.5: licença — teste de 30 dias, bloqueio só de venda/tempo novo dep
  assert.equal(license.normalizeKey(' gz-aaaa bbbb-cccc-dddd '),'GZ-AAAA-BBBB-CCCC-DDDD');
 });
 
-test('1.0.5: licença — início do teste guardado fora da pasta de dados (reinstalar não reinicia o teste)',t=>{
+test('1.0.5: licença — data da primeira abertura guardada fora da pasta de dados (informação; 1.4.7: sem conta = Free)',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gz-license-marker-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const markerFile=path.join(dir,'gz-license.json'),old=Date.now()-10*86400000;fs.writeFileSync(markerFile,JSON.stringify({trialStartedAt:old}));
  const store={state:{runtime:{}}};const lic=license(store,{markerFile});
- assert.equal(store.state.license.trialStartedAt,old);assert.equal(lic.status().daysLeft,20);
+ assert.equal(store.state.license.trialStartedAt,old);assert.equal(lic.status().mode,'free');assert.deepEqual(lic.features(),{});
  const store2={state:{runtime:{},license:{trialStartedAt:Date.now()-40*86400000}}};license(store2,{markerFile});
  assert.equal(JSON.parse(fs.readFileSync(markerFile,'utf8')).trialStartedAt,store2.state.license.trialStartedAt);
 });

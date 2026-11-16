@@ -9,7 +9,9 @@ const nfeQty = (q, u) => `${Number(q).toLocaleString('pt-BR', {maximumFractionDi
 async function renderNfe() {
   const node = $('#view');
   $('#view-title').textContent = 'Gerenciamento NF-e';
-  if (!state.pro) { node.innerHTML = `<div class="shop-area"><div class="panel"><h2>Notas Fiscais</h2><p class="hint">Recurso do plano Pro. Assine o Pro em gamezoney.com e clique em Atualizar plano em Configuração › Licença.</p></div></div>`; return; }
+  // 1.4.7: Standard = Notas emitidas (NFC-e/NFS-e) + Configuração fiscal; Pro = também as Notas de entrada (XML)
+  if (!state.pro && !(state.features && state.features.fiscal)) { node.innerHTML = `<div class="shop-area"><div class="panel"><h2>Notas Fiscais</h2><p class="hint">Disponível nos planos Standard e Pro. Assine em gamezoney.com e entre com a conta em Configuração › Licença.</p></div></div>`; return; }
+  if (!state.pro && typeof nfeTab !== 'undefined' && nfeTab === 'entrada') nfeTab = 'emitidas';
   if (!isAdmin()) { node.innerHTML = '<div class="empty">Esta área é reservada ao administrador.</div>'; return; }
   if (typeof nfeTab !== 'undefined' && nfeTab !== 'entrada') return renderFiscal(node);   // 1.3.0: Notas emitidas / Configuração fiscal
   const q = new URLSearchParams(); if (nfeStatus) q.set('status', nfeStatus); if (nfeSearch) q.set('search', nfeSearch);

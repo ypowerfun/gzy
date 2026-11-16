@@ -23,10 +23,10 @@ const docs = async (call, q = '') => (await call('/fiscal' + q)).docs;
 const baseCfg = {enabled: true, env: 'homologacao', cnpj: CNPJ, razao: 'Arena Teste LTDA', ie: '123456789', im: '98765', municipio: '3550308', uf: 'SP', regime: 'simples', token: TOKEN,
   nfce: {enabled: true, auto: true, cfop: '5102', cst: '102', origem: '0', ncm: ''}, nfse: {enabled: true, auto: true, mode: 'municipal', itemLista: '1.07', aliquota: '2', services: true}};
 
-test('1.3.0: notas fiscais só no Pro; configuração valida e o token nunca volta ao painel', async t => {
+test('1.3.0/1.4.7: notas fiscais no Standard e no Pro (Free não); configuração valida e o token nunca volta ao painel', async t => {
   const s = await boot(t);
-  assert.match((await s.call('/fiscal', undefined, 400)).error, /plano Pro/);                       // teste grátis
-  s.plan('standard'); assert.match((await s.call('/fiscal', undefined, 400)).error, /plano Pro/);   // Standard
+  assert.match((await s.call('/fiscal', undefined, 400)).error, /Standard e Pro/);                  // Free
+  s.plan('standard'); assert.equal((await s.call('/fiscal')).settings.enabled, false);               // 1.4.7: Standard emite
   s.plan('pro'); const st = await s.call('/fiscal'); assert.equal(st.settings.enabled, false); assert.equal(st.settings.tokenSet, false);
   assert.match((await s.call('/fiscal/settings', {...baseCfg, cnpj: '11222333000100'}, 400)).error, /CNPJ/);
   assert.match((await s.call('/fiscal/settings', {...baseCfg, token: 'x y'}, 400)).error, /Token/);
@@ -42,7 +42,7 @@ test('1.3.0: notas fiscais só no Pro; configuração valida e o token nunca vol
   s.app.store.state.secrets.focusToken = 'outroTokenErrado1'; assert.match((await s.call('/fiscal/test', {}, 400)).error, /recusou o token/);
   s.app.store.state.secrets.focusToken = TOKEN;
   // plano venceu (volta ao teste): para de emitir, mas ainda dá para desligar
-  s.plan(null); assert.match((await s.call('/fiscal', undefined, 400)).error, /plano Pro/);
+  s.plan(null); assert.match((await s.call('/fiscal', undefined, 400)).error, /Standard e Pro/);
   assert.equal((await s.call('/fiscal/settings', {enabled: false})).enabled, false);
 });
 

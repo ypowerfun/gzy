@@ -422,3 +422,5 @@ form:has(>#balance-destination) textarea{min-height:58px;height:58px}
 #modal:has(.credit-mode),#modal:has(#balance-destination){padding-top:16px;padding-bottom:16px}
 form:has(>.credit-mode)>label,form:has(>#balance-destination)>label,#balance-destination>label{margin-bottom:8px}
 #modal-body:has(>form .credit-mode)>.balance,form:has(>.credit-mode)>.balance,form:has(>#balance-destination)>.balance{padding-top:10px;padding-bottom:10px}
+/* 1.4.7: aviso do plano Free (limites) */
+.gz-free-note{margin:0 0 12px;padding:8px 12px;border-left:3px solid var(--red2);background:rgba(212,160,23,.06)}.gz-free-note.over{border-left-color:var(--alert);background:rgba(232,30,40,.08)}.gz-free-note strong{color:var(--red2)}.gz-free-note.over strong{color:#ff8793}

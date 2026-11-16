@@ -1,12 +1,12 @@
 'use strict';
-// 1.3.0 (plano Pro): Gerenciamento NF-e › Notas emitidas (NFC-e dos produtos do PDV / NFS-e das recargas e serviços)
+// 1.3.0 (1.4.7: planos Standard e Pro): Gerenciamento NF-e › Notas emitidas (NFC-e dos produtos do PDV / NFS-e das recargas e serviços)
 // e › Configuração fiscal (Focus NFe). O token da Focus é digitado aqui, salvo só no servidor e nunca volta à tela.
 let nfeTab = 'entrada', fiscalFilter = '', fiscalKind = '';
 const FISCAL_STATUS = {pendente: ['Pendente', 'gold'], processando: ['Processando', 'gold'], autorizado: ['Autorizada', 'on'], erro: ['Com erro', 'red'], denegado: ['Denegada', 'red'], cancelado: ['Cancelada', ''], descartada: ['Descartada', '']};
 const fiscalBadge = s => { const [t, c] = FISCAL_STATUS[s] || [s, '']; return `<span class="badge ${c}">${esc(t)}</span>`; };
 function fiscalTabs() {
   const t = (k, l) => `<button type="button" data-nfe-tab="${k}" class="${nfeTab === k ? 'active' : ''}">${l}</button>`;
-  return `<div class="shop-tabs">${t('entrada', '▤ Notas de entrada (XML)')}${t('emitidas', '▣ Notas emitidas (NFC-e / NFS-e)')}${t('config', '⚙ Configuração fiscal')}</div>`;
+  return `<div class="shop-tabs">${state.pro ? t('entrada', '▤ Notas de entrada (XML)') : ''}${t('emitidas', '▣ Notas emitidas (NFC-e / NFS-e)')}${t('config', '⚙ Configuração fiscal')}</div>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-nfe-tab]'); if (!b) return; nfeTab = b.dataset.nfeTab; renderNfe().catch(x => toast(x.message)); });
 const fiscalLink = (url, label) => url ? `<a class="button-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>` : '';

@@ -25,7 +25,7 @@ test('1.3.3: recolorir troca só os tons dourados (aviso, alerta, fundo e textos
   hexes(css.toLowerCase()).forEach((h, i) => assert.ok(near(h, hexes(same)[i]), 'cor padrão = mesmo visual: ' + h + ' → ' + hexes(same)[i]));
 });
 
-test('1.3.3: personalizar visual só no Pro; logo e cor no painel e nos PCs; voltar ao padrão', async t => {
+test('1.3.3/1.4.7: personalizar visual no Standard e no Pro (Free não); logo e cor no painel e nos PCs; voltar ao padrão', async t => {
   const {license, plan} = planHelper();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gz-brand-'));
   const app = createServer({directory, noTimer: true, license});
@@ -36,10 +36,10 @@ test('1.3.3: personalizar visual só no Pro; logo e cor no painel e nos PCs; vol
   await call('/setup', {name: 'Dono', username: 'admin', password: 'senha123'}); await call('/login', {username: 'admin', password: 'senha123'});
   const original = fs.readFileSync(path.join(__dirname, '../public/logo-gamezoney.png'));
   const logo = png(64, 32), pcLogo = png(40, 40, [230, 40, 60]);
-  // teste grátis e Standard: bloqueado
+  // Free: bloqueado; 1.4.7: Standard e Pro liberados
   assert.equal((await call('/branding')).allowed, false);
-  assert.match((await call('/branding', {color: '#2f8cff', serverLogo: logo}, 400)).error, /plano Pro/);
-  plan(app, 'standard'); assert.match((await call('/branding', {color: '#2f8cff', serverLogo: logo}, 400)).error, /plano Pro/);
+  assert.match((await call('/branding', {color: '#2f8cff', serverLogo: logo}, 400)).error, /Standard e Pro/);
+  plan(app, 'standard'); assert.equal((await call('/branding')).allowed, true);
   plan(app, 'pro'); assert.equal((await call('/branding')).allowed, true);
   // validações
   assert.match((await call('/branding', {color: 'azul', serverLogo: logo}, 400)).error, /cor/);
@@ -60,9 +60,9 @@ test('1.3.3: personalizar visual só no Pro; logo e cor no painel e nos PCs; vol
   r = await fetch(base + '/logo.jpg'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), Buffer.from(pcLogo.split(',')[1], 'base64'), 'TV mostra a logo da arena');
   const tv = await (await fetch(base + '/cliente.html')).text(); assert.match(tv, /setTimeout\(function\(\)\{document\.getElementById\('idle'\)\.className='on'\},10000\)/, '1.3.5: resumo 10 s e depois o wallpaper'); assert.match(tv, /url\(\/tv-wallpaper\.jpg\)/);
   assert.equal((await fetch(base + '/tv-wallpaper.jpg')).status, 200); assert.ok(!tv.includes('#ffce3a'), 'título da TV na cor da arena'); assert.match(tv, /object-fit:contain/);
-  // plano vencido/trocado: volta ao padrão sozinho (guardado)
-  plan(app, 'standard'); assert.equal(app.brand.pcRev(), ''); r = await fetch(base + '/logo-gamezoney.png'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), original);
-  r = await fetch(base + '/logo.jpg'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), fs.readFileSync(path.join(__dirname, '../public/logo.jpg')), 'sem Pro a TV volta ao GZ');
+  // plano vencido (volta ao Free): volta ao padrão sozinho (guardado)
+  plan(app, null); assert.equal(app.brand.pcRev(), ''); r = await fetch(base + '/logo-gamezoney.png'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), original);
+  r = await fetch(base + '/logo.jpg'); assert.deepEqual(Buffer.from(await r.arrayBuffer()), fs.readFileSync(path.join(__dirname, '../public/logo.jpg')), 'sem plano a TV volta ao GZ');
   assert.ok((await (await fetch(base + '/cliente.html')).text()).includes('#ffce3a'));
   assert.ok((await (await fetch(base + '/theme-gamezoney.css')).text()).includes('#d4a017'));
   assert.equal((await call('/branding')).enabled, true);

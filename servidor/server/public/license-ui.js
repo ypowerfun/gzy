@@ -1,5 +1,5 @@
 'use strict';
-// Licença — aviso no topo (teste grátis / plano vencendo / sem plano) e seção "Licença" no início da Configuração.
+// Licença — aviso no topo (plano vencendo / plano vencido = Free) e seção "Licença" no início da Configuração.
 // 1.0.6: o plano (Standard/Pro) vem da conta gamezoney.com: o administrador entra com o e-mail e a senha do site.
 let gzLicense = null, gzLicenseAt = 0;
 async function loadLicense(force) {
@@ -12,20 +12,29 @@ function licenseBar() {
   const main = document.querySelector('#shell main'); if (!main) return;
   let bar = $('#gz-license-bar'); const L = gzLicense;
   const legacySoon = L && L.mode === 'licensed' && L.legacy && L.legacyUntil - Date.now() < 30 * 86400000;
-  const hide = !L || (L.mode === 'plan') || (L.mode === 'licensed' && !legacySoon) || (L.mode === 'trial' && L.daysLeft > 7 && view !== 'settings');
+  // 1.4.7: sem conta = plano Free para sempre (sem aviso); o aviso aparece só com plano vencendo ou que acabou de voltar ao Free
+  const hide = !L || (L.mode === 'plan') || (L.mode === 'licensed' && !legacySoon) || (L.mode === 'free' && !L.planEnded && !L.legacyEnded);
   if (hide) { if (bar) bar.remove(); return; }
   if (!bar) { bar = document.createElement('div'); bar.id = 'gz-license-bar'; main.prepend(bar); }
   const expired = L.mode === 'expired';
   bar.className = 'gz-license-bar' + (expired || L.mode === 'plan-grace' ? ' expired' : '');
   let text;
   if (expired && L.tamper) text = '<strong>Proteção do GameZoney ativada.</strong> <span>Foi detectada uma tentativa de alterar o sistema em funcionamento. Feche o GameZoney pelo ícone perto do relógio e abra de novo.</span>' + (L.tamperReason ? ` <small class="gz-tamper-reason">${esc(L.tamperReason)}</small>` : '');
-  else if (expired) text = L.planEnded ? `<strong>O plano ${esc(L.planEnded)} venceu.</strong> <span>Recargas, sessões novas e vendas estão bloqueadas. Seus dados continuam guardados.</span>` : `<strong>Teste grátis encerrado.</strong> <span>Recargas, sessões novas e vendas estão bloqueadas. Seus dados continuam guardados.</span>`;
-  else if (L.mode === 'plan-grace') text = `<strong>Renovação do plano pendente: ${L.daysLeft} dia(s) para regularizar.</strong> <span>Depois disso, recargas, sessões novas e vendas ficam bloqueadas.</span>`;
+  else if (expired) text = '<strong>Proteção do GameZoney ativada.</strong> <span>Feche o GameZoney pelo ícone perto do relógio e abra de novo.</span>';
+  else if (L.mode === 'free') text = `<strong>${L.planEnded ? `O plano ${esc(L.planEnded)} venceu` : 'A licença antiga venceu'}: o GameZoney voltou ao plano Free.</strong> <span>O que você já tem continua funcionando. Acima dos limites do Free, não dá para alterar a configuração nem usar os recursos do plano até renovar e entrar com a conta.</span>`;
+  else if (L.mode === 'plan-grace') text = `<strong>Renovação do plano pendente: ${L.daysLeft} dia(s) para regularizar.</strong> <span>Depois disso, o GameZoney volta ao plano Free (os recursos do plano ficam bloqueados).</span>`;
   else if (legacySoon) text = `<strong>A licença antiga vale até ${licDate(L.legacyUntil)}.</strong> <span>Entre com a sua conta gamezoney.com com plano ativo para continuar.</span>`;
-  else text = `<strong>Teste grátis: ${L.daysLeft} dia(s) restante(s).</strong> <span>Assine um plano e entre com a sua conta gamezoney.com para continuar usando depois do teste.</span>`;
-  const action = L.mode === 'plan-grace' ? '<button class="ghost" data-license-refresh>Atualizar plano</button>' : '<button class="ghost" data-license-login>Entrar com a conta</button>';
+  const action = L.mode === 'plan-grace' || L.planEnded ? '<button class="ghost" data-license-refresh>Atualizar plano</button>' : '<button class="ghost" data-license-login>Entrar com a conta</button>';
   bar.innerHTML = `${text}<span class="gz-license-actions">${action}<a class="primary-link" href="${esc(L.buyUrl)}" target="_blank" rel="noopener">Ver planos</a></span>`;
   licenseButtons(bar);
+}
+// 1.4.7: aviso do plano Free (limites) nas telas de estações e de produtos/serviços/categorias
+const GZ_LIMIT_NAMES = {computer: 'PCs', tv: 'consoles', products: 'produtos', services: 'serviços', categories: 'categorias'};
+function gzFreeNote(keys, src) {
+  const L = src || (state && state.limits); if (!L || !L.free) return '';
+  const over = keys.filter(k => L.used[k] > L.limits[k]);
+  const parts = keys.map(k => `${L.used[k]}/${L.limits[k]} ${GZ_LIMIT_NAMES[k]}`).join(' • ');
+  return `<p class="hint gz-free-note${over.length ? ' over' : ''}"><strong>Plano Free:</strong> <span>${parts}</span>${over.length ? ' <span>— acima do limite: continua funcionando, mas para alterar a configuração assine o Standard ou o Pro e entre com a conta em Configuração › Licença.</span>' : ' <span>— para mais, assine o Standard ou o Pro.</span>'}</p>`;
 }
 function licenseButtons(root) {
   root.querySelectorAll('[data-license-login]').forEach(b => b.onclick = () => licenseLoginModal());
@@ -86,9 +95,13 @@ function licenseSection() {
       + `<p class="hint">A licença vitalícia virou plano Standard por 12 meses. Este computador passa sozinho para o plano da sua conta quando tiver internet; você também pode entrar com a conta agora.</p>`
       + `<div class="dialog-actions" style="justify-content:flex-start;gap:10px"><button class="primary" data-license-login style="flex:0 0 auto">Entrar com a conta gamezoney.com</button><button class="ghost" data-license-refresh style="flex:0 0 auto">Atualizar plano</button></div>${L.lastError ? `<p class="hint" style="color:#ff8793">${esc(L.lastError)}</p>` : ''}${checked}`;
   } else {
-    body = row('Situação', L.mode === 'expired' ? (L.planEnded ? `Plano ${esc(L.planEnded)} vencido` : 'Teste grátis encerrado') : 'Teste grátis', L.mode === 'expired' ? '#ff8793' : 'var(--red2)')
-      + (L.mode === 'trial' ? row('Teste até', licDate(L.trialEndsAt)) + row('Dias restantes', L.daysLeft) : '')
-      + `<p class="hint">O GameZoney funciona com um plano (Standard ou Pro) da sua conta gamezoney.com. Assine no site e entre aqui com o mesmo e-mail e senha.</p>${L.lastError ? `<p class="hint" style="color:#ff8793">${esc(L.lastError)}</p>` : ''}`
+    // 1.4.7: plano Free para sempre (sem conta), com limites
+    const lim = (state && state.limits) || null;
+    const ended = L.planEnded ? `Plano ${esc(L.planEnded)} vencido — voltou ao Free` : L.legacyEnded ? 'Licença antiga vencida — voltou ao Free' : '';
+    body = row('Situação', L.mode === 'expired' ? 'Proteção ativada' : ended || 'Plano Free', L.mode === 'expired' || ended ? '#ff8793' : 'var(--green)')
+      + (lim && lim.free ? gzFreeNote(['computer', 'tv', 'products', 'services', 'categories'], lim) : '')
+      + `<p class="hint">O plano Free não tem prazo e não precisa de conta: até 10 PCs, 2 consoles, 10 produtos, 5 serviços e 5 categorias, com Autoatendimento no PC (PIX). Para PCs e consoles ilimitados, Emissão de NFC-e e NFS-e, Personalizar visual e Controle de impressão, assine o Standard (ou o Pro, que inclui também NF-e de entrada, Gerenciar App e Multi-Unidade) e entre aqui com o mesmo e-mail e senha do site.</p>`
+      + `${L.lastError ? `<p class="hint" style="color:#ff8793">${esc(L.lastError)}</p>` : ''}`
       + `<div class="dialog-actions" style="justify-content:flex-start;gap:10px"><button class="primary" data-license-login style="flex:0 0 auto">Entrar com a conta gamezoney.com</button><a class="button-link" href="${esc(L.buyUrl)}" target="_blank" rel="noopener">Ver planos</a>${L.planEnded ? '<button class="ghost" data-license-refresh style="flex:0 0 auto">Atualizar plano</button>' : ''}</div>`;
   }
   sec.innerHTML = `<h2>Licença</h2>${body}<small class="subtext">Código desta instalação: ${esc(L.installId)}</small>`;

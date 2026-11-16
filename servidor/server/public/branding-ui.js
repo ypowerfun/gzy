@@ -1,5 +1,5 @@
 'use strict';
-// 1.3.3 (plano Pro): Configuração › Personalizar visual — logo do Servidor e dos PCs (PNG) e cor de destaque.
+// 1.3.3 (1.4.7: planos Standard e Pro): Configuração › Personalizar visual — logo do Servidor e dos PCs (PNG) e cor de destaque.
 // A cor é sugerida a partir da logo (tom mais presente e saturado) e pode ser ajustada. Só muda a aparência.
 const GZ_BRAND_DEFAULT = '#d4a017';
 function gzHex(r, g, b) { return '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join(''); }
@@ -40,9 +40,9 @@ async function renderBranding(box) {
   let st; try { st = await api('/branding'); } catch (e) { box.innerHTML = ''; return; }
   const locked = !st.allowed, color = st.color || GZ_BRAND_DEFAULT;
   box.innerHTML = `<section class="panel" id="brand-section"><h2>Personalizar visual</h2>
-    ${locked ? '<p class="hint" style="color:#ffb84d">🔒 Disponível no plano Pro. Entre com a sua conta gamezoney.com do plano Pro em Configuração › Licença para liberar.</p>' : ''}
+    ${locked ? '<p class="hint" style="color:#ffb84d">🔒 Disponível nos planos Standard e Pro. Entre com a sua conta gamezoney.com em Configuração › Licença para liberar.</p>' : ''}
     <p class="hint">Troque a logo GameZoney pela logo da sua arena no painel e nos PCs, e escolha a cor de destaque (o dourado). O fundo escuro e as cores de aviso continuam iguais, para tudo seguir legível. Só muda a aparência: nada do funcionamento é alterado.</p>
-    ${st.enabled && !locked ? '<p class="hint" style="color:var(--green)">✔ Visual personalizado ativo.</p>' : st.enabled && locked ? '<p class="hint">Visual personalizado guardado: volta a valer quando o plano Pro estiver ativo.</p>' : ''}
+    ${st.enabled && !locked ? '<p class="hint" style="color:var(--green)">✔ Visual personalizado ativo.</p>' : st.enabled && locked ? '<p class="hint">Visual personalizado guardado: volta a valer quando o plano Standard ou Pro estiver ativo.</p>' : ''}
     <form id="brand-form" class="brand-form">
       <label>Logo do Servidor (painel) — PNG até 1 MB<input type="file" name="server" accept="image/png"></label>
       <label class="check" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="same" style="width:auto" ${st.clientLogo ? '' : 'checked'}> Usar a mesma logo nos PCs</label>

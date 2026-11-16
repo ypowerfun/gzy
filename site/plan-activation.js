@@ -52,7 +52,7 @@ module.exports = function planActivation(app, ctx) {
     const {installId, machine, version} = input(req); if (!ID_RE.test(installId)) fail(400, 'Instalação inválida.');
     const user = checkAccount(req.body?.email, req.body?.password);
     const plan = plans.planOf(user.id);
-    if (!plan) fail(402, 'Esta conta não tem plano ativo. Assine o Standard ou o Pro em gamezoney.com (o teste grátis continua valendo neste computador).', {noPlan: true});
+    if (!plan) fail(402, 'Esta conta não tem plano ativo. Assine o Standard ou o Pro em gamezoney.com (o plano Free continua valendo neste computador).', {noPlan: true});
     const old = binding(user.id);
     if (old && old.install_id !== installId && req.body?.transfer !== true)
       fail(409, `Esta conta já está sendo usada no computador "${old.machine || 'sem nome'}". Usar o plano neste computador? O outro deixa de usar.`, {needTransfer: true, machine: old.machine || ''});

@@ -15,9 +15,9 @@ const PAGES = ['index', 'atualizacoes', 'atendimento', 'termos', 'privacidade'];
 // textos para buscadores e compartilhamento (com os termos que as pessoas pesquisam em cada país)
 const SEO = {
   index: {
-    pt: ['GameZoney | Sistema para Lan House e Arena Gamer: PCs, Consoles, Caixa e PDV', 'Sistema completo para lan house, arena gamer e cyber café: tempo de PCs e consoles, controle de impressão, PDV, caixa, notas fiscais, fidelidade e várias lojas. Teste grátis por 30 dias.'],
-    en: ['GameZoney | LAN Center & Gaming Center Management Software: PCs, Consoles, POS', 'All-in-one software for LAN centers, gaming lounges and cyber cafés: PC and console time, print control, point of sale, cash register, invoices, loyalty and multi-store. 30-day free trial.'],
-    es: ['GameZoney | Software para Cibercafé y Centro Gamer: PCs, Consolas, Caja y TPV', 'Sistema completo para cibercafés y salas gamer: tiempo de PCs y consolas, control de impresión, punto de venta, caja, facturas, fidelidad y varias tiendas. Prueba gratis por 30 días.']
+    pt: ['GameZoney | Sistema para Lan House e Arena Gamer: PCs, Consoles, Caixa e PDV', 'Sistema completo para lan house, arena gamer e cyber café: tempo de PCs e consoles, controle de impressão, PDV, caixa, notas fiscais, fidelidade e várias lojas. Plano Free grátis para sempre.'],
+    en: ['GameZoney | LAN Center & Gaming Center Management Software: PCs, Consoles, POS', 'All-in-one software for LAN centers, gaming lounges and cyber cafés: PC and console time, print control, point of sale, cash register, invoices, loyalty and multi-store. Free plan, free forever.'],
+    es: ['GameZoney | Software para Cibercafé y Centro Gamer: PCs, Consolas, Caja y TPV', 'Sistema completo para cibercafés y salas gamer: tiempo de PCs y consolas, control de impresión, punto de venta, caja, facturas, fidelidad y varias tiendas. Plan Free gratis para siempre.']
   },
   atualizacoes: {
     pt: ['Atualizações | GameZoney – sistema para lan house', 'Novidades do GameZoney: o sistema para lan house e arena gamer que recebe melhorias constantes.'],
