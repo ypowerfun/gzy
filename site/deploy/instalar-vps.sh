@@ -31,6 +31,7 @@ id gamezoney >/dev/null 2>&1 || useradd --system --home "$DATA" --shell /usr/sbi
 mkdir -p "$APP" "$DATA/downloads" "$DATA/backups" /var/log/caddy
 rsync -a --delete --exclude node_modules --exclude data --exclude downloads --exclude '*.pem' --exclude .env "$SRC/" "$APP/"
 cd "$APP" && npm ci --omit=dev --no-audit --no-fund
+npm cache clean --force >/dev/null 2>&1 || true   # 2.27: o cache do npm não acumula a cada atualização
 # instaladores colocados em site/downloads (opcional) vão para a pasta de downloads do site
 find "$SRC/downloads" -maxdepth 1 -type f \( -iname '*.exe' -o -iname '*.zip' -o -iname '*.pdf' \) -exec cp -f {} "$DATA/downloads/" \; 2>/dev/null || true
 # chave que assina as licenças (license-private.pem): procurada na pasta do site e na pasta do usuário ubuntu
@@ -78,6 +79,18 @@ KbdInteractiveAuthentication no
 PermitRootLogin no
 SSHD
 if sshd -t 2>/dev/null; then systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true; else rm -f /etc/ssh/sshd_config.d/99-gamezoney.conf; echo "AVISO: configuração do SSH não aplicada (mantida a anterior)."; fi
+
+echo "== Limites de disco (2.27: o site não passa de 10–20 GB em 2 anos ou mais)"
+# registros do sistema (journalctl) até 500 MB e 3 meses; atualizações do Ubuntu limpam o cache e kernels antigos
+mkdir -p /etc/systemd/journald.conf.d
+printf '[Journal]\nSystemMaxUse=500M\nMaxRetentionSec=3month\n' > /etc/systemd/journald.conf.d/gamezoney.conf
+systemctl restart systemd-journald 2>/dev/null || true
+journalctl --vacuum-size=500M --vacuum-time=3months >/dev/null 2>&1 || true
+printf 'APT::Periodic::AutocleanInterval "7";\nUnattended-Upgrade::Remove-Unused-Kernel-Packages "true";\nUnattended-Upgrade::Remove-New-Unused-Dependencies "true";\n' > /etc/apt/apt.conf.d/52gamezoney-disco
+apt-get autoclean -y >/dev/null 2>&1 || true
+# backup no formato novo agora (apaga os .tgz completos de imagens das versões antigas e compacta o banco)
+/etc/cron.daily/gamezoney-site-backup || echo "AVISO: o backup do site falhou; veja a pasta $DATA/backups."
+df -h / | tail -1 | awk '{print "Disco: " $3 " usados de " $2 " (" $5 "), livres " $4}'
 
 echo "== 7/7 Firewall do Ubuntu (portas 80 e 443)"
 iptables -C INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j ACCEPT

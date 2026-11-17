@@ -43,6 +43,7 @@ module.exports = function community(app, ctx) {
     const added = Array.isArray(req.body.images) ? req.body.images : [];
     if (kept.length + added.length > 2) fail(400, 'No máximo 2 imagens.');
     const decoded = added.map(imageFile);
+    if (decoded.length && ctx.mediaRoom && !ctx.mediaRoom(decoded.reduce((n, d) => n + d.buf.length, 0))) fail(507, 'O espaço para imagens do site está cheio no momento. Envie a avaliação sem imagem.'); // 2.27
     const id = old ? old.id : uid(), files = [...kept];
     for (const d of decoded) { const f = `${id}-${crypto.randomBytes(6).toString('hex')}.${d.ext}`; fs.writeFileSync(path.join(mediaDir, f), d.buf); files.push(f); }
     for (const f of oldFiles) if (!files.includes(f)) fs.rmSync(path.join(mediaDir, f), {force: true});

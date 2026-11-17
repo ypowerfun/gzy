@@ -272,3 +272,19 @@ ls /var/lib/gamezoney-site/backups              # cópias diárias do banco
 ```bash
 cd site && npm ci && node --test test/*.test.js
 ```
+
+## Espaço em disco (2.27)
+
+Meta do dono: o site não passa de **10–20 GB** em 2 anos ou mais. O que segura isso:
+
+| O quê | Limite | Onde |
+|---|---|---|
+| Banco (`site.sqlite`) | registros temporários com prazo: Registro do /admin e downloads 2 anos (até 300 mil linhas cada), conversas do chat 1 ano (até 500 mil mensagens), perguntas sem resposta do assistente 90 dias/1 ano, destinatários de comunicados concluídos 90 dias, QR do PIX de pedido que não espera mais pagamento 7 dias, trocas de computador até 100 mil, computadores do teste antigo 2 anos. **Contas, pedidos, assinaturas, licenças, avaliações e configurações nunca saem.** `auto_vacuum` incremental + `-wal` até 64 MB | `retention.js` (1 min depois de abrir e 1 vez por dia) |
+| Imagens enviadas (avaliações, chamados, design) | até **4 GB** no total (passou = envio de imagem recusado com aviso); imagens de chamado respondido há mais de 1 ano saem, e acima de 2 GB saem as dos chamados respondidos mais antigos | `retention.js` |
+| Backups (`/var/lib/gamezoney-site/backups`) | banco compactado (gzip) 14 dias + dia 1 de cada mês por 12 meses; imagens em "fotos" diárias com hard link (o que não mudou não ocupa de novo) por 14 dias; pasta toda até **6 GB** (`GZ_BACKUP_MAX_GB`) | `deploy/backup-site.sh` (cron diário) |
+| Registros do sistema (journalctl) | 500 MB e 3 meses | `/etc/systemd/journald.conf.d/gamezoney.conf` |
+| Registros do Caddy | 6 × 20 MB por domínio | `deploy/Caddyfile` |
+| Cache do npm e do apt | limpo a cada atualização / semanal; kernels antigos removidos | `deploy/instalar-vps.sh` |
+
+Simulação de uso alto por 2 anos (20 mil contas, 20 pedidos/dia, 400 registros/dia, 30 conversas/dia com 12 mensagens, 10 chamados/dia): banco com **~170 MB** (≈ 80 MB compactado). Pior caso de tudo cheio: ~0,2 GB banco + 4 GB imagens + 6 GB backups + ~0,3 GB instaladores + ~0,8 GB registros ≈ **11 GB** (o Ubuntu ocupa à parte). O uso real esperado fica abaixo de 2 GB. O /admin › Visão geral mostra o espaço do banco, das imagens, dos backups, dos instaladores e o disco livre.
+

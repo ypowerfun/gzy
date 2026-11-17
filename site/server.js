@@ -451,6 +451,7 @@ function createApp(options = {}) {
     const imgs = Array.isArray(req.body.images) ? req.body.images : [];
     if (imgs.length > 2) fail(400, 'No máximo 2 imagens.');
     const decoded = imgs.map(d => require('./image-util').decodeImage(d, TICKET_IMAGE, fail));
+    if (decoded.length && !retention.mediaRoom(decoded.reduce((n, d) => n + d.buf.length, 0))) fail(507, 'O espaço para imagens do site está cheio no momento. Envie o chamado sem imagem.'); // 2.27
     const id = uid(), files = decoded.map((d, i) => { const f = `${id}-${i}-${crypto.randomBytes(6).toString('hex')}.${d.ext}`; fs.writeFileSync(path.join(ticketDir, f), d.buf); return f; });
     db.run('INSERT INTO tickets(id,user_id,subject,message,created_at,images) VALUES(?,?,?,?,?,?)', id, u.id, subject, message, Date.now(), JSON.stringify(files));
     for (const a of ADMINS) mail.send(a, 'GameZoney suporte: ' + subject, `${u.name} <${u.email}> ${u.phone || ''}\n\n${message}${files.length ? `\n\n(${files.length} imagem(ns) anexada(s): veja no /admin)` : ''}\n\nResponder: ${SITE}/admin`);
@@ -492,6 +493,7 @@ function createApp(options = {}) {
       stats: {users: count('SELECT COUNT(*) n FROM users'), licenses: count('SELECT COUNT(*) n FROM licenses'), activeLicenses: count('SELECT COUNT(*) n FROM licenses WHERE install_id IS NOT NULL'),
         paidOrders: count("SELECT COUNT(*) n FROM orders WHERE status='paid'"), revenueCents: db.get("SELECT COALESCE(SUM(amount_cents),0) n FROM orders WHERE status='paid'").n,
         openTickets: count("SELECT COUNT(*) n FROM tickets WHERE status='open'"), downloads: count('SELECT COUNT(*) n FROM downloads')},
+      storage: retention.usage(downloadsDir),
       users: db.all('SELECT id,email,name,phone,google_sub IS NOT NULL google,created_at,last_login_at FROM users ORDER BY created_at DESC LIMIT 300'),
       orders: db.all('SELECT o.*,u.email FROM orders o JOIN users u ON u.id=o.user_id ORDER BY o.created_at DESC LIMIT 300').map(o => ({...publicOrder(o), pixQr: '', email: o.email, note: o.note})),
       licenses: db.all('SELECT l.*,u.email,(SELECT COUNT(*) FROM license_transfers t WHERE t.license_id=l.id AND t.at>?) recent,(SELECT COUNT(DISTINCT COALESCE(t.to_install,t.from_install)) FROM license_transfers t WHERE t.license_id=l.id) machines FROM licenses l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 500', Date.now() - 30 * DAY).map(l => ({...publicLicense(l), email: l.email, note: l.note, installId: l.install_id || '', recentTransfers: l.recent, machines: l.machines, suspect: l.recent >= 3})),
@@ -546,10 +548,12 @@ function createApp(options = {}) {
   }));
 
   // ---------- avaliações e chat ao vivo (community.js) ----------
-  const extra = require('./community')(app, {db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie, plansInfo: () => plans.publicPlans(), chatIdleMs: options.chatIdleMs, botDelayMs: options.botDelayMs});
+  const extra = require('./community')(app, {mediaRoom: n => retention.mediaRoom(n), db, needUser, needAdmin, jsonOnly, api, limit, fail, str, uid, mail, ADMINS, SITE, dataDir, log, secureCookie, plansInfo: () => plans.publicPlans(), chatIdleMs: options.chatIdleMs, botDelayMs: options.botDelayMs});
   // 1.7: design do site (editor visual) e parceiros do rodapé
   require('./design')(app, {db, needAdmin, jsonOnly, api, fail, str, dataDir});
   // 1.8: comunicados e promoções por e-mail (fila) e cancelar inscrição
+  // 2.27: limpeza automática (registros temporários antigos) e medição do espaço em disco
+  const retention = require('./retention')({db, dataDir, log, intervalMs: options.retentionIntervalMs ?? options.campaignIntervalMs});
   const campaigns = require('./campaigns')(app, {db, needAdmin, jsonOnly, api, fail, str, uid, mail, SITE, env, log, intervalMs: options.campaignIntervalMs});
   app.locals.campaignTick = campaigns.tick;
   // 2.0: planos Standard/Pro por assinatura (mensal/anual, cobrança automática no cartão)
@@ -606,7 +610,8 @@ function createApp(options = {}) {
     if (req.path.startsWith('/api')) return res.status(status).json({error: status === 413 ? 'Arquivo grande demais.' : status < 500 ? 'Requisição inválida.' : 'Erro interno. Tente de novo.'});
     res.status(status === 404 ? 404 : status).sendFile(path.join(__dirname, 'public', '404.html'));
   });
-  app.locals.close = () => { memberApp.stop(); clearInterval(sweep); extra.stop(); campaigns.stop(); plans.stop(); db.close(); };
+  app.locals.retention = retention;
+  app.locals.close = () => { memberApp.stop(); clearInterval(sweep); retention.stop(); extra.stop(); campaigns.stop(); plans.stop(); db.close(); };
   return app;
 }
 
