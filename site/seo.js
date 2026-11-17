@@ -35,7 +35,7 @@ const SEO = {
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const urlOf = (lang, page) => (lang === 'pt' ? '' : '/' + lang) + '/' + (page === 'index' ? '' : page + '.html');
 
-module.exports = function seo(app, {publicDir, SITE, plans}) {
+module.exports = function seo(app, {publicDir, SITE, plans, appHost}) {
   const cache = new Map();
   const read = file => { const st = fs.statSync(file), c = cache.get(file); if (c && c.mtime === st.mtimeMs) return c.html; const html = fs.readFileSync(file, 'utf8'); cache.set(file, {mtime: st.mtimeMs, html}); return html; };
   function structured(lang) {
@@ -73,8 +73,11 @@ module.exports = function seo(app, {publicDir, SITE, plans}) {
     let html; try { html = render(lang, page); } catch { return next(); }
     res.set('Cache-Control', 'no-cache').type('html').send(html);
   });
-  app.get('/robots.txt', (req, res) => res.type('text').set('Cache-Control', 'public, max-age=3600').send(
-    ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /conta', 'Disallow: /carrinho', 'Disallow: /entrar', 'Disallow: /redefinir', 'Disallow: /api/', 'Disallow: /download/', 'Disallow: /guia', '', `Sitemap: ${SITE}/sitemap.xml`, ''].join('\n')));
+  // 2.28 (aviso do Search Console "Página com redirecionamento"): o app (app.gamezoney.com) não é para buscadores, e no
+  // site saem da busca também os endereços que só redirecionam (login do Google, app da recepção, app do cliente).
+  app.get('/robots.txt', (req, res) => res.type('text').set('Cache-Control', 'public, max-age=3600').send(appHost && req.hostname === appHost
+    ? ['User-agent: *', 'Disallow: /', ''].join('\n')
+    : ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /conta', 'Disallow: /carrinho', 'Disallow: /entrar', 'Disallow: /redefinir', 'Disallow: /api/', 'Disallow: /download/', 'Disallow: /guia', 'Disallow: /auth/', 'Disallow: /app/', 'Disallow: /servidor/', '', `Sitemap: ${SITE}/sitemap.xml`, ''].join('\n')));
   app.get('/sitemap.xml', (req, res) => {
     const mod = p => { try { return new Date(fs.statSync(path.join(publicDir, p + '.html')).mtimeMs).toISOString().slice(0, 10); } catch { return new Date().toISOString().slice(0, 10); } };
     const urls = PAGES.flatMap(p => LANGS.map(l => `<url><loc>${SITE + urlOf(l, p)}</loc><lastmod>${mod(p)}</lastmod><changefreq>${p === 'index' || p === 'atualizacoes' ? 'weekly' : 'yearly'}</changefreq><priority>${p === 'index' ? '1.0' : p === 'atualizacoes' ? '0.7' : '0.3'}</priority>${LANGS.map(a => `<xhtml:link rel="alternate" hreflang="${HTML_LANG[a]}" href="${SITE + urlOf(a, p)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SITE + urlOf('pt', p)}"/></url>`));

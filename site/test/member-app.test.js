@@ -50,6 +50,8 @@ test('1.3.7: app do cliente — só Pro, endereço de uma conta só, arena sem c
   const page = (p, host) => new Promise((res, rej) => http.get(base + p, {headers: host ? {Host: host} : {}}, x => { let b = ''; x.on('data', d => b += d); x.on('end', () => res([x.statusCode, b])); }).on('error', rej));
   for (const [p, host] of [['/app/arena-x'], ['/app/'], ['/arena-x', 'app.gamezoney.com'], ['/', 'app.gamezoney.com']]) { const [code, html] = await page(p, host); assert.equal(code, 200, p); assert.match(html, /\/app\/app\.js/); }
   assert.equal((await page('/app/app.js', 'app.gamezoney.com'))[0], 200);
+  // 2.28: o app não é para buscadores (robots.txt do app.gamezoney.com bloqueia tudo; o do site continua com o sitemap)
+  { const [c1, r1] = await page('/robots.txt', 'app.gamezoney.com'); assert.equal(c1, 200); assert.match(r1, /^User-agent: \*\nDisallow: \/\n/); const [, r2] = await page('/robots.txt'); assert.match(r2, /Sitemap:/); assert.match(r2, /Disallow: \/servidor\//); }
   assert.equal((await page('/logo-gamezoney.png', 'app.gamezoney.com'))[0], 200);
   db.close?.();
 });

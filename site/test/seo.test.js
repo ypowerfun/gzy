@@ -31,6 +31,9 @@ test('2.6: páginas públicas em 3 idiomas com título, descrição, canonical, 
   await get('/en/nao-existe', 404); await get('/en/conta', 404);
   assert.match((await get('/entrar.html')).html, /<html/, 'páginas fora do SEO continuam iguais');
   const robots = (await get('/robots.txt')).html; assert.match(robots, /Disallow: \/admin/); assert.match(robots, /Sitemap: https:\/\/gamezoney.com\/sitemap.xml/);
+  // 2.28: endereços que só redirecionam fora da busca; links para o guia (pede login) com nofollow
+  for (const d of ['/auth/', '/app/', '/servidor/', '/guia']) assert.ok(robots.includes('Disallow: ' + d), d);
+  for (const f of ['index.html', 'conta.html', 'termos.html']) assert.doesNotMatch(require('fs').readFileSync(require('path').join(__dirname, '../public', f), 'utf8'), /href="\/guia"(?! rel="nofollow")/, f);
   const map = (await get('/sitemap.xml')).html; assert.equal((map.match(/<url>/g) || []).length, 15); assert.ok(map.includes('<loc>https://gamezoney.com/es/termos.html</loc>'));
   const img = await fetch(base + '/share/og-pt.jpg'); assert.equal(img.status, 200); assert.equal(img.headers.get('cross-origin-resource-policy'), 'cross-origin', 'WhatsApp/Facebook carregam a imagem');
 });

@@ -590,7 +590,7 @@ function createApp(options = {}) {
   // ---------- páginas ----------
   track.routes(app, {needAdmin, jsonOnly, api, fail});
   // 2.6: páginas públicas com SEO por idioma (/, /en/, /es/), robots.txt e sitemap.xml
-  require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans});
+  require('./seo')(app, {publicDir: path.join(__dirname, 'public'), SITE, plans, appHost: memberApp.APP_HOST});
   app.get('/conta', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'public', 'conta.html')));
   app.get('/admin', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'public', 'admin.html')));
   app.get('/entrar', (req, res) => res.redirect('/entrar.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '')));
