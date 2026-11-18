@@ -157,7 +157,7 @@ function createApp(options = {}) {
   // "+N arenas confiam" no topo da inicial (pedido do dono): 5000 + 100 a cada 100 contas criadas (105 contas = 5100); conta guardada por 1 min
   let arenasCache = {at: 0, n: 5000};
   const arenasTrust = () => { if (Date.now() - arenasCache.at > 60000) arenasCache = {at: Date.now(), n: arenasFor(db.get('SELECT COUNT(*) n FROM users').n)}; return arenasCache.n; };
-  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, trialDays: 30, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), subscriptions: !!(pay.enabled && env.MP_PUBLIC_KEY), legacySales: env.LEGACY_SALES === '1', plans: plans.publicPlans(), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
+  app.get('/api/config', (req, res) => { const o = offer(); res.json({priceCents: o.priceCents, listPriceCents: o.listPriceCents, priceLabel: o.priceLabel, banner: o.banner, google: gg.enabled, pix: pay.enabled, card: pay.enabled, bricks: !!(pay.enabled && env.MP_PUBLIC_KEY), subscriptions: !!(pay.enabled && env.MP_PUBLIC_KEY), legacySales: env.LEGACY_SALES === '1', plans: plans.publicPlans(), mpPublicKey: pay.enabled ? (env.MP_PUBLIC_KEY || '') : '',
     supportWhatsapp: env.SUPPORT_WHATSAPP || '', supportEmail: env.SUPPORT_EMAIL || '', tracking: track.publicConfig(), arenas: arenasTrust()}); });
 
   // ---------- contas ----------

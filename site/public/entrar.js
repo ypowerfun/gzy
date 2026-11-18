@@ -18,7 +18,7 @@
     const title = name === 'forgot' ? 'Vamos recuperar seu acesso.' : name === 'register' ? (purchasing ? 'Crie sua conta para continuar.' : 'Comece grátis no plano Free.') : 'Bem-vindo de volta.';
     const description = name === 'forgot' ? 'Informe seu e-mail para receber o link de recuperação.' : purchasing ? 'Entre ou crie uma conta para continuar com a compra da sua licença.' : name === 'register' ? 'Depois do cadastro, você acessa os downloads e o guia.' : 'Entre para acessar sua conta.';
     $('#auth-title').textContent = t(title); $('#auth-description').textContent = t(description);
-    $('#register-submit').textContent = t(purchasing ? 'Criar conta e continuar a compra' : 'Criar conta e começar o teste');
+    $('#register-submit').textContent = t(purchasing ? 'Criar conta e continuar a compra' : 'Criar conta e começar grátis');
     msg.className = 'msg'; msg.textContent = '';
     if (focus) (name === 'forgot' ? $('#forgot-email') : name === 'register' ? $('#register-name') : $('#login-email')).focus();
   };

@@ -24,6 +24,9 @@ test('1.4.7/2.26: itens dos planos Free, Standard e Pro (lista do dono) — troc
  // textos do site sem o teste de 30 dias
  const pub=f=>fs.readFileSync(path.join(__dirname,'../public',f),'utf8');
  for(const f of ['index.html','carrinho.html','conta.html','termos.html','site.js','conta.js','entrar.js'])assert.ok(!/30 dias/.test(pub(f)),f+' ainda fala em 30 dias');
+ // 2.29: o site não fala mais em teste grátis/30 dias em nenhuma página (só o plano Free para sempre)
+ for(const f of fs.readdirSync(path.join(__dirname,'../public')).filter(f=>/\.(html|js)$/.test(f)&&!/^i18n-|^admin/.test(f)))assert.ok(!/30 dias|teste grátis|Testar grátis|começar o teste|teste termina/i.test(pub(f)),f+' ainda fala em teste');
+ assert.ok(!/(grátis|teste)[^.'\\]{0,40}30 dias|teste grátis/i.test(fs.readFileSync(path.join(__dirname,'../bot/perguntas.js'),'utf8').replace(/alt: \[[^\]]*\]/g,'').replace(/kw: \[[^\]]*\]/g,'')),'assistente sem teste de 30 dias');
  // 2.26: textos retirados a pedido do dono
  for(const f of fs.readdirSync(path.join(__dirname,'../public')).filter(f=>f.endsWith('.html')))for(const t of ['Gestão profissional.','Assinatura mensal ou anual no cartão.','Explore as telas reais do GameZoney.'])assert.ok(!pub(f).includes(t),f+': '+t);
 });

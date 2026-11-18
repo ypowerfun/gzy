@@ -136,7 +136,7 @@ test('site: feedback dos servidores, páginas e chaves',async t=>{
  const fb=(await dono('/api/admin/overview')).feedback;assert.equal(fb.length,1);assert.equal(fb[0].comment,'Muito bom!');
  const home=await (await fetch(s.base+'/')).text();assert.match(home,/<title>GameZoney \| Sistema para Lan House e Arena Gamer/);assert.match(home,/<meta name="description" content="Sistema completo para lan house/);/* 2.6: título e descrição com os termos buscados */assert.match(home,/10 anos de experiência/);assert.match(home,/Atualizações/);assert.match(home,/data-lang="en"/);
  assert.equal((await fetch(s.base+'/nao-existe')).status,404);
- const cfg=await anon('/api/config');assert.equal(cfg.priceCents,8990);assert.equal(cfg.trialDays,30);assert.equal(cfg.google,false);
+ const cfg=await anon('/api/config');assert.equal(cfg.priceCents,8990);assert.equal(cfg.trialDays,undefined);assert.equal(cfg.google,false);
  for(let i=0;i<50;i++)assert.match(newKey(),/^GZ(-[A-HJ-NP-Z2-9]{4}){4}$/);
  assert.equal(normalizeKey('gz abcd-efgh ijkl mnop'),'GZ-ABCD-EFGH-IJKL-MNOP');
 });
